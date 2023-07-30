@@ -17,4 +17,4 @@ jobs:
 
       - name: build
         run: |
-          gradlew --info build
+          gradle --info build
