@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "1.9.0"
     id("maven-publish")
     id("signing")
     id("pl.allegro.tech.build.axion-release") version "1.13.4"
