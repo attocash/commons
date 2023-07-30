@@ -3,12 +3,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.9.0"
     id("maven-publish")
-    id("signing")
-    id("pl.allegro.tech.build.axion-release") version "1.13.4"
 }
 
 group = "atto"
-version = scmVersion.version
 java.sourceCompatibility = JavaVersion.VERSION_17
 java.targetCompatibility = JavaVersion.VERSION_17
 
@@ -37,7 +34,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/attocash/node")
+            url = uri("https://maven.pkg.github.com/attocash/commons")
             credentials {
                 username = System.getenv("USERNAME")
                 password = System.getenv("TOKEN")
@@ -49,16 +46,7 @@ publishing {
         register<MavenPublication>("gpr") {
             from(components["java"])
             groupId = "atto"
+            artifactId = "commons"
         }
     }
-}
-
-signing {
-    isRequired = true
-    useInMemoryPgpKeys(
-        System.getenv("SIGNING_KEY_ID"),
-        System.getenv("SIGNING_PASSWORD"),
-        System.getenv("SIGNING_SECRET_KEY_RING_FILE")
-    )
-    sign(publishing.publications["gpr"])
 }
