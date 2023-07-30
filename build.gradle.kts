@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm") version "1.9.0"
     id("maven-publish")
     id("signing")
-    id("pl.allegro.tech.build.axion-release") version "1.13.4"
+    id("pl.allegro.tech.build.axion-release") version "1.15.4"
 }
 
 group = "atto"
