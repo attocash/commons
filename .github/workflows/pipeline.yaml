@@ -3,16 +3,12 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yaml
-  codeql:
-    uses: ./.github/workflows/codeql.yaml
-  publish:
-    needs:
-      - build
-      - codeql
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,11 +19,26 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - uses: actions/download-artifact@v3
+      - run: |
+          gradle --info test
+  codeql:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-      - name: publish jar
-        run: |
-          ./gradlew build publish -x test -Pversion=${GITHUB_SHA::7}-SNAPSHOT
-        env:
-          USERNAME: rotilho
-          TOKEN: ${{ secrets.TOKEN }}
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - uses: gradle/gradle-build-action@v2
+
+      - uses: github/codeql-action/init@v2
+        with:
+          languages: java
+
+      - run: |
+          gradle --info build -x test
+
+      - uses: github/codeql-action/analyze@v2
