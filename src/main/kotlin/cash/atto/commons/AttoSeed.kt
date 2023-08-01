@@ -1,4 +1,4 @@
-package atto.commons
+package cash.atto.commons
 
 import java.nio.charset.StandardCharsets
 import javax.crypto.SecretKeyFactory
