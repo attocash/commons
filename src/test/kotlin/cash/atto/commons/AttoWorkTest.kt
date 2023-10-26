@@ -1,5 +1,7 @@
 package cash.atto.commons
 
+import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
+import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

@@ -43,15 +43,13 @@ private class AttoBIP44(val key: ByteArray, val secretKeySpec: SecretKeySpec) {
             hmacSha512.init(SecretKeySpec("ed25519 seed".toByteArray(StandardCharsets.UTF_8), "HmacSHA512"))
             hmacSha512.update(seed.value, 0, seed.value.size)
 
-            val derivated = hmacSha512.doFinal()
-
             val values = path.split("/").asSequence()
                 .map { it.trim() }
                 .filter { !"M".equals(it, ignoreCase = true) }
                 .map { it.replace("'", "").toInt() }
                 .toList()
 
-            var bip44 = AttoBIP44(derivated)
+            var bip44 = AttoBIP44(hmacSha512.doFinal())
             for (v in values) {
                 bip44 = bip44.derive(v)
             }

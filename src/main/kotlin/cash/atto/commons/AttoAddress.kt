@@ -14,17 +14,21 @@ private fun leftPad(binary: String, size: Int): String {
     return builder.append(binary).toString()
 }
 
-object Dictionary {
-    private val characterMap = HashMap<String, String>()
-    private val binaryMap = HashMap<Char, String>()
+private object Dictionary {
+    private var characterMap: Map<String, String>
+    private var binaryMap: Map<Char, String>
 
     init {
+        val characterMap = HashMap<String, String>()
+        val binaryMap = HashMap<Char, String>()
         val alphabet = "13456789abcdefghijkmnopqrstuwxyz".toCharArray()
         for (i in alphabet.indices) {
             val binary: String = leftPad(Integer.toBinaryString(i), 5)
             characterMap[binary] = alphabet[i].toString()
             binaryMap[alphabet[i]] = binary
         }
+        this.characterMap = characterMap.toMap()
+        this.binaryMap = binaryMap.toMap()
     }
 
     fun getCharacter(binary: String): String? {
@@ -36,9 +40,9 @@ object Dictionary {
     }
 }
 
-fun decode(encoded: String, size: Int): ByteArray {
+private fun decode(encoded: String, size: Int): ByteArray {
     val binaryPublicKey = decodeToBinary(encoded)
-    val hexPublicKey = leftPad(cash.atto.commons.toHex(binaryPublicKey), size)
+    val hexPublicKey = leftPad(toHex(binaryPublicKey), size)
     return hexPublicKey.fromHexToByteArray()
 }
 
@@ -50,7 +54,7 @@ private fun decodeToBinary(encoded: String): String {
     return sb.toString()
 }
 
-fun encode(decoded: ByteArray, size: Int): String {
+private fun encode(decoded: ByteArray, size: Int): String {
     val binary = leftPad(toBinary(decoded.toHex()), size)
     return encode(binary)
 }
@@ -60,7 +64,7 @@ private fun encode(decoded: String): String {
     val builder = StringBuilder()
     var i = 0
     while (i < decoded.length) {
-        builder.append(cash.atto.commons.Dictionary.getCharacter(decoded.substring(i, i + codeSize)))
+        builder.append(Dictionary.getCharacter(decoded.substring(i, i + codeSize)))
         i += codeSize
     }
     return builder.toString()

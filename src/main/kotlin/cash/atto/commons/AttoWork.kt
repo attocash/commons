@@ -1,15 +1,15 @@
 package cash.atto.commons
 
-import java.time.*
+import cash.atto.commons.AttoNetwork.Companion.DOUBLING_PERIOD
+import cash.atto.commons.AttoNetwork.Companion.INITIAL_DATE
+import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
+import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Stream
 import kotlin.math.pow
 import kotlin.random.Random
-
-internal val INITIAL_LIVE_THRESHOLD = (-0x800_000_000L).toULong()
-internal val INITIAL_DATE: LocalDate = LocalDate.of(2023, 1, 1)
-internal val INITIAL_INSTANT: Instant = OffsetDateTime.of(INITIAL_DATE, LocalTime.MIN, ZoneOffset.UTC).toInstant()
-internal val DOUBLING_PERIOD = 2.0
 
 private val thresholdCache = ConcurrentHashMap<AttoNetwork, ConcurrentHashMap<Int, ULong>>()
 internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {

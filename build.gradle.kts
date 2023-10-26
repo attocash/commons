@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm") version "1.9.10"
     id("maven-publish")
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.9"
 
     signing
 }
@@ -18,6 +19,30 @@ java {
 java.sourceCompatibility = JavaVersion.VERSION_17
 java.targetCompatibility = JavaVersion.VERSION_17
 
+configurations {
+    val benchmarksCompile by creating {
+        extendsFrom(configurations["implementation"])
+    }
+
+    val benchmarksRuntime by creating {
+        extendsFrom(configurations["runtimeOnly"])
+    }
+    val benchmarksClasspath by creating {
+        extendsFrom(benchmarksCompile, benchmarksRuntime)
+    }
+}
+
+sourceSets {
+    create("benchmarks") {
+        kotlin {
+            srcDir("src/benchmarks/kotlin")
+        }
+        resources.srcDir("src/benchmarks/resources")
+        compileClasspath += configurations["benchmarksClasspath"] + sourceSets["main"].output
+        runtimeClasspath += configurations["benchmarksClasspath"] + sourceSets["main"].output
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -26,6 +51,7 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk18on:1.76")
     compileOnly("com.fasterxml.jackson.core:jackson-annotations:2.15.3")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.9")
 }
 
 tasks.withType<KotlinCompile> {
@@ -37,6 +63,12 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+benchmark {
+    targets {
+        register("benchmarks")
+    }
 }
 
 publishing {
