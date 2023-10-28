@@ -5,30 +5,35 @@ import cash.atto.commons.AttoNetwork.Companion.INITIAL_DATE
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Stream
 import kotlin.math.pow
 import kotlin.random.Random
 
-private val thresholdCache = ConcurrentHashMap<AttoNetwork, ConcurrentHashMap<Int, ULong>>()
+private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
+    val cache = mutableMapOf<AttoNetwork, Map<Int, ULong>>()
+    for (network in AttoNetwork.entries) {
+        val yearMap = mutableMapOf<Int, ULong>()
+        for (year in INITIAL_DATE.year..(LocalDateTime.now().year + 10)) {
+            val increaseFactor = (2.0).pow((year - INITIAL_DATE.year) / DOUBLING_PERIOD).toULong()
+            val initialDifficult = (ULong.MAX_VALUE - INITIAL_LIVE_THRESHOLD) * network.difficultReductionFactor
+            val difficult = initialDifficult / increaseFactor
+
+            yearMap[year] = ULong.MAX_VALUE - difficult
+        }
+        cache[network] = yearMap.toMap()
+    }
+    return cache.toMap()
+}
+
+private val thresholdCache = initializeThresholdCache()
 internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {
     if (timestamp < INITIAL_INSTANT) {
         throw IllegalArgumentException("Timestamp($timestamp) lower than initialInstant(${AttoNetwork.INITIAL_INSTANT})")
     }
-    val years = timestamp.atZone(ZoneOffset.UTC).year - INITIAL_DATE.year
 
-    val map = thresholdCache.computeIfAbsent(network) {
-        ConcurrentHashMap()
-    }
-    return map.computeIfAbsent(years) {
-        val increaseFactor = (2.0).pow(years / DOUBLING_PERIOD).toULong()
-
-        val initialDifficult = (ULong.MAX_VALUE - INITIAL_LIVE_THRESHOLD) * network.difficultReductionFactor
-        val difficult = initialDifficult / increaseFactor
-
-        ULong.MAX_VALUE - difficult
-    }
+    return thresholdCache[network]!![timestamp.atZone(ZoneOffset.UTC).year]!!
 }
 
 private fun isValid(network: AttoNetwork, timestamp: Instant, hash: ByteArray, work: ByteArray): Boolean {
@@ -61,7 +66,7 @@ private class Worker(
     private val work = ByteArray(8)
 
     fun work() {
-        while (controller.isEmpty()) {
+        while (true) {
             Random.nextBytes(work)
             for (i in work.indices) {
                 val byte = work[i]
@@ -69,6 +74,8 @@ private class Worker(
                     work[i] = b.toByte()
                     if (isValid(network, timestamp, hash, work)) {
                         controller.add(work)
+                    }
+                    if (!controller.isEmpty()) {
                         return
                     }
                 }
