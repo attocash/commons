@@ -26,13 +26,21 @@ internal class AttoWorkTest {
 
     @Test
     fun `should validate work`() {
-        val work = AttoWork("a6e485b8c9cfc073".fromHexToByteArray())
+        val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
         assertTrue(work.isValid(AttoNetwork.LIVE, AttoNetwork.INITIAL_INSTANT, hash))
     }
 
     @Test
+    fun `should validate work using decreased threshold`() {
+        val work = AttoWork("888f6824075cabc3".fromHexToByteArray())
+        val timestamp =
+            OffsetDateTime.of(AttoNetwork.INITIAL_DATE.plusYears(4), LocalTime.MIN, ZoneOffset.UTC).toInstant()
+        assertTrue(work.isValid(AttoNetwork.LIVE, timestamp, hash))
+    }
+
+    @Test
     fun `should not validate when work is below threshold`() {
-        val work = AttoWork("a6e485b8c9cfc073".fromHexToByteArray())
+        val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
         val timestamp =
             OffsetDateTime.of(AttoNetwork.INITIAL_DATE.plusYears(4), LocalTime.MIN, ZoneOffset.UTC).toInstant()
         assertFalse(work.isValid(AttoNetwork.LIVE, timestamp, hash))
@@ -41,7 +49,7 @@ internal class AttoWorkTest {
     @ParameterizedTest
     @MethodSource("provider")
     fun `should return threshold`(instant: Instant, expectedThreshold: Long) {
-        val threshold = getThreshold(AttoNetwork.LIVE, instant)
+        val threshold = AttoWork.threshold(AttoNetwork.LIVE, instant)
         assertEquals(expectedThreshold.toULong(), threshold)
     }
 
@@ -51,10 +59,8 @@ internal class AttoWorkTest {
             val calculateTimestamp = fun(years: Long): Instant {
                 return INITIAL_INSTANT.atZone(ZoneOffset.UTC).plusYears(years).toInstant()
             }
-            val calculateThreshold = fun(multiplier: UInt): Long {
-                val initialDifficult = ULong.MAX_VALUE - INITIAL_LIVE_THRESHOLD
-                val difficult = initialDifficult / multiplier
-                return (ULong.MAX_VALUE - difficult).toLong()
+            val calculateThreshold = fun(decreaseFactor: UInt): Long {
+                return (INITIAL_LIVE_THRESHOLD / decreaseFactor).toLong()
             }
             return Stream.of(
                 Arguments.of(calculateTimestamp.invoke(0), calculateThreshold(1U)),

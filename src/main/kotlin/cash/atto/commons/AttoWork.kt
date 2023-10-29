@@ -16,11 +16,10 @@ private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
     for (network in AttoNetwork.entries) {
         val yearMap = mutableMapOf<Int, ULong>()
         for (year in INITIAL_DATE.year..(LocalDateTime.now().year + 10)) {
-            val increaseFactor = (2.0).pow((year - INITIAL_DATE.year) / DOUBLING_PERIOD).toULong()
-            val initialDifficult = (ULong.MAX_VALUE - INITIAL_LIVE_THRESHOLD) * network.difficultReductionFactor
-            val difficult = initialDifficult / increaseFactor
+            val decreaseFactor = (2.0).pow((year - INITIAL_DATE.year) / DOUBLING_PERIOD).toULong()
+            val initialThreshold = INITIAL_LIVE_THRESHOLD * network.thresholdIncreaseFactor
 
-            yearMap[year] = ULong.MAX_VALUE - difficult
+            yearMap[year] = initialThreshold / decreaseFactor
         }
         cache[network] = yearMap.toMap()
     }
@@ -38,7 +37,7 @@ internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {
 
 private fun isValid(network: AttoNetwork, timestamp: Instant, hash: ByteArray, work: ByteArray): Boolean {
     val difficult = AttoHash.hash(8, work, hash).value.toULong()
-    return difficult >= getThreshold(network, timestamp)
+    return difficult <= getThreshold(network, timestamp)
 }
 
 private class WorkerController {
@@ -88,6 +87,10 @@ private class Worker(
 data class AttoWork(val value: ByteArray) {
     companion object {
         const val size = 8
+
+        fun threshold(network: AttoNetwork, timestamp: Instant): ULong {
+            return getThreshold(network, timestamp)
+        }
 
         fun isValid(network: AttoNetwork, timestamp: Instant, hash: AttoHash, work: AttoWork): Boolean {
             return isValid(network, timestamp, hash.value, work.value)
