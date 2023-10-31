@@ -2,6 +2,7 @@ package cash.atto.commons
 
 import org.bouncycastle.crypto.digests.Blake2bDigest
 
+//TODO: There a multiple type of hashes. Split this class in multiple implementation (i.e.: AttoWorkHash, AttoBlockHash, AttoPublicKeyHash etc)
 data class AttoHash(val value: ByteArray, val size: Int = defaultSize) {
 
     init {

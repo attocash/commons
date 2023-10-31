@@ -35,9 +35,13 @@ internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {
     return thresholdCache[network]!![timestamp.atZone(ZoneOffset.UTC).year]!!
 }
 
-private fun isValid(network: AttoNetwork, timestamp: Instant, hash: ByteArray, work: ByteArray): Boolean {
+private fun isValid(threshold: ULong, hash: ByteArray, work: ByteArray): Boolean {
     val difficult = AttoHash.hash(8, work, hash).value.toULong()
-    return difficult <= getThreshold(network, timestamp)
+    return difficult <= threshold
+}
+
+private fun isValid(network: AttoNetwork, timestamp: Instant, hash: ByteArray, work: ByteArray): Boolean {
+    return isValid(getThreshold(network, timestamp), hash, work)
 }
 
 private class WorkerController {
@@ -58,8 +62,7 @@ private class WorkerController {
 
 private class Worker(
     val controller: WorkerController,
-    val network: AttoNetwork,
-    val timestamp: Instant,
+    val threshold: ULong,
     val hash: ByteArray
 ) {
     private val work = ByteArray(8)
@@ -71,7 +74,7 @@ private class Worker(
                 val byte = work[i]
                 for (b in -128..126) {
                     work[i] = b.toByte()
-                    if (isValid(network, timestamp, hash, work)) {
+                    if (isValid(threshold, hash, work)) {
                         controller.add(work)
                     }
                     if (!controller.isEmpty()) {
@@ -108,9 +111,9 @@ data class AttoWork(val value: ByteArray) {
             return work(network, timestamp, publicKey.value)
         }
 
-        private fun work(network: AttoNetwork, timestamp: Instant, hash: ByteArray): AttoWork {
+        fun work(threshold: ULong, hash: ByteArray): AttoWork {
             val controller = WorkerController()
-            return Stream.generate { Worker(controller, network, timestamp, hash) }
+            return Stream.generate { Worker(controller, threshold, hash) }
                 .takeWhile { controller.isEmpty() }
                 .parallel()
                 .peek { it.work() }
@@ -118,6 +121,11 @@ data class AttoWork(val value: ByteArray) {
                 .filter { it != null }
                 .findAny()
                 .get()
+        }
+
+        private fun work(network: AttoNetwork, timestamp: Instant, hash: ByteArray): AttoWork {
+            val threshold = getThreshold(network, timestamp)
+            return work(threshold, hash)
         }
 
         fun parse(value: String): AttoWork {

@@ -16,7 +16,7 @@ enum class AttoBlockType(val code: UByte, val size: Int) {
     UNKNOWN(UByte.MAX_VALUE, 0);
 
     companion object {
-        private val map = values().associateBy(AttoBlockType::code)
+        private val map = entries.associateBy(AttoBlockType::code)
         fun from(code: UByte): AttoBlockType {
             return map.getOrDefault(code, UNKNOWN)
         }
