@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm") version "1.9.21"
     id("maven-publish")
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.9"
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.10"
 
     signing
 }
