@@ -41,6 +41,9 @@ private fun isValid(threshold: ULong, hash: ByteArray, work: ByteArray): Boolean
 }
 
 private fun isValid(network: AttoNetwork, timestamp: Instant, hash: ByteArray, work: ByteArray): Boolean {
+    if (timestamp < INITIAL_INSTANT) {
+        return false
+    }
     return isValid(getThreshold(network, timestamp), hash, work)
 }
 
