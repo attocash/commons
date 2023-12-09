@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm") version "1.9.21"
     id("maven-publish")
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.9"
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.10"
 
     signing
 }
@@ -51,7 +51,7 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk18on:1.77")
     compileOnly("com.fasterxml.jackson.core:jackson-annotations:2.16.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
-    "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.9")
+    "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.10")
 }
 
 tasks.withType<KotlinCompile> {
