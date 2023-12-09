@@ -46,6 +46,13 @@ internal class AttoWorkTest {
         assertFalse(work.isValid(AttoNetwork.LIVE, timestamp, hash))
     }
 
+    @Test
+    fun `should not validate when timestamp is before initial date`() {
+        val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
+        val timestamp = AttoNetwork.INITIAL_INSTANT.minusSeconds(1)
+        assertFalse(work.isValid(AttoNetwork.LIVE, timestamp, hash))
+    }
+
     @ParameterizedTest
     @MethodSource("provider")
     fun `should return threshold`(instant: Instant, expectedThreshold: Long) {
