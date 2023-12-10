@@ -5,7 +5,6 @@ data class AttoTransaction(
     val signature: AttoSignature,
     val work: AttoWork
 ) {
-    val byteBuffer = toByteBuffer()
     val hash = block.hash
 
     companion object {
@@ -59,13 +58,13 @@ data class AttoTransaction(
 
     fun toByteBuffer(): AttoByteBuffer {
         return AttoByteBuffer(size + block.type.size)
-            .add(block.serialized)
+            .add(block.toByteBuffer())
             .add(signature)
             .add(work)
     }
 
     override fun toString(): String {
-        return "AttoTransaction(hash=$hash, block=$block, signature=$signature, work=$work, byteBuffer=$byteBuffer, hash=$hash)"
+        return "AttoTransaction(hash=$hash, block=$block, signature=$signature, work=$work, hash=$hash)"
     }
 
 

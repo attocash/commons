@@ -43,7 +43,8 @@ interface AttoBlock {
     val balance: AttoAmount
     val timestamp: Instant
 
-    val serialized: AttoByteBuffer
+
+    fun toByteBuffer(): AttoByteBuffer
 
     companion object {
         fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoBlock? {
@@ -104,10 +105,7 @@ data class AttoSendBlock(
     override val type = AttoBlockType.SEND
 
     @JsonIgnore
-    override val serialized = toByteBuffer()
-
-    @JsonIgnore
-    override val hash = serialized.toHash()
+    override val hash = toByteBuffer().toHash()
 
     companion object {
         internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoSendBlock? {
@@ -133,7 +131,7 @@ data class AttoSendBlock(
         }
     }
 
-    private fun toByteBuffer(): AttoByteBuffer {
+    override fun toByteBuffer(): AttoByteBuffer {
         val byteBuffer = AttoByteBuffer(type.size)
         return byteBuffer
             .add(type)
@@ -166,10 +164,7 @@ data class AttoReceiveBlock(
     override val type = AttoBlockType.RECEIVE
 
     @JsonIgnore
-    override val serialized = toByteBuffer()
-
-    @JsonIgnore
-    override val hash = serialized.toHash()
+    override val hash = toByteBuffer().toHash()
 
     companion object {
         val size = 123
@@ -196,7 +191,7 @@ data class AttoReceiveBlock(
         }
     }
 
-    private fun toByteBuffer(): AttoByteBuffer {
+    override fun toByteBuffer(): AttoByteBuffer {
         val byteBuffer = AttoByteBuffer(size)
         return byteBuffer
             .add(type)
@@ -227,10 +222,7 @@ data class AttoOpenBlock(
     override val type = AttoBlockType.OPEN
 
     @JsonIgnore
-    override val serialized = toByteBuffer()
-
-    @JsonIgnore
-    override val hash = serialized.toHash()
+    override val hash = toByteBuffer().toHash()
 
     @JsonIgnore
     override val height = 1UL
@@ -259,7 +251,7 @@ data class AttoOpenBlock(
         }
     }
 
-    private fun toByteBuffer(): AttoByteBuffer {
+    override fun toByteBuffer(): AttoByteBuffer {
         val byteBuffer = AttoByteBuffer(size)
         return byteBuffer
             .add(type)
@@ -287,10 +279,7 @@ data class AttoChangeBlock(
     override val type = AttoBlockType.CHANGE
 
     @JsonIgnore
-    override val serialized = toByteBuffer()
-
-    @JsonIgnore
-    override val hash = serialized.toHash()
+    override val hash = toByteBuffer().toHash()
 
     companion object {
         val size = 123
@@ -317,7 +306,7 @@ data class AttoChangeBlock(
         }
     }
 
-    private fun toByteBuffer(): AttoByteBuffer {
+    override fun toByteBuffer(): AttoByteBuffer {
         val byteBuffer = AttoByteBuffer(size)
         return byteBuffer
             .add(type)
