@@ -56,8 +56,15 @@ data class AttoTransaction(
         return true
     }
 
+    /**
+     * Return the transaction and block size
+     */
+    fun getTotalSize(): Int {
+        return size + block.type.size
+    }
+
     fun toByteBuffer(): AttoByteBuffer {
-        return AttoByteBuffer(size + block.type.size)
+        return AttoByteBuffer(getTotalSize())
             .add(block.toByteBuffer())
             .add(signature)
             .add(work)

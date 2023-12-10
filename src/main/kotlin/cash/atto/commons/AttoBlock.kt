@@ -167,7 +167,6 @@ data class AttoReceiveBlock(
     override val hash = toByteBuffer().toHash()
 
     companion object {
-        val size = 123
 
         internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoReceiveBlock? {
             if (AttoBlockType.RECEIVE.size > serializedBlock.size) {
@@ -192,7 +191,7 @@ data class AttoReceiveBlock(
     }
 
     override fun toByteBuffer(): AttoByteBuffer {
-        val byteBuffer = AttoByteBuffer(size)
+        val byteBuffer = AttoByteBuffer(type.size)
         return byteBuffer
             .add(type)
             .add(version)
@@ -228,8 +227,6 @@ data class AttoOpenBlock(
     override val height = 1UL
 
     companion object {
-        val size = 115
-
         internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoOpenBlock? {
             if (AttoBlockType.OPEN.size > serializedBlock.size) {
                 return null
@@ -252,7 +249,7 @@ data class AttoOpenBlock(
     }
 
     override fun toByteBuffer(): AttoByteBuffer {
-        val byteBuffer = AttoByteBuffer(size)
+        val byteBuffer = AttoByteBuffer(type.size)
         return byteBuffer
             .add(type)
             .add(version)
@@ -282,8 +279,6 @@ data class AttoChangeBlock(
     override val hash = toByteBuffer().toHash()
 
     companion object {
-        val size = 123
-
         internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoChangeBlock? {
             if (AttoBlockType.CHANGE.size > serializedBlock.size) {
                 return null
@@ -307,7 +302,7 @@ data class AttoChangeBlock(
     }
 
     override fun toByteBuffer(): AttoByteBuffer {
-        val byteBuffer = AttoByteBuffer(size)
+        val byteBuffer = AttoByteBuffer(type.size)
         return byteBuffer
             .add(type)
             .add(version)
