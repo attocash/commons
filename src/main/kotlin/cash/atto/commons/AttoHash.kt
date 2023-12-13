@@ -2,28 +2,28 @@ package cash.atto.commons
 
 import org.bouncycastle.crypto.digests.Blake2bDigest
 
-//TODO: There a multiple type of hashes. Split this class in multiple implementation (i.e.: AttoWorkHash, AttoBlockHash, AttoPublicKeyHash etc)
-data class AttoHash(val value: ByteArray, val size: Int = defaultSize) {
 
-    init {
-        value.checkLength(size)
+internal fun hashRaw(size: Int, vararg byteArrays: ByteArray): ByteArray {
+    val blake2b = Blake2bDigest(null, size, null, null)
+    for (byteArray in byteArrays) {
+        blake2b.update(byteArray, 0, byteArray.size)
     }
+    val output = ByteArray(size)
+    blake2b.doFinal(output, 0)
+    return output
+}
+
+data class AttoHash(val value: ByteArray) {
+
+    val size = value.size
 
     companion object {
-        val defaultSize = 32
-
         fun parse(value: String): AttoHash {
             return AttoHash(value.fromHexToByteArray())
         }
 
         fun hash(size: Int, vararg byteArrays: ByteArray): AttoHash {
-            val blake2b = Blake2bDigest(null, size, null, null)
-            for (byteArray in byteArrays) {
-                blake2b.update(byteArray, 0, byteArray.size)
-            }
-            val output = ByteArray(size)
-            blake2b.doFinal(output, 0)
-            return AttoHash(output, size)
+            return AttoHash(hashRaw(size, * byteArrays))
         }
     }
 

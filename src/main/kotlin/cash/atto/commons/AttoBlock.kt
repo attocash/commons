@@ -124,7 +124,7 @@ data class AttoSendBlock(
                 height = serializedBlock.getULong(),
                 balance = serializedBlock.getAmount(),
                 timestamp = serializedBlock.getInstant(),
-                previous = serializedBlock.getHash(),
+                previous = serializedBlock.getBlockHash(),
                 receiverPublicKey = serializedBlock.getPublicKey(),
                 amount = serializedBlock.getAmount(),
             )
@@ -184,8 +184,8 @@ data class AttoReceiveBlock(
                 height = serializedBlock.getULong(),
                 balance = serializedBlock.getAmount(),
                 timestamp = serializedBlock.getInstant(),
-                previous = serializedBlock.getHash(),
-                sendHash = serializedBlock.getHash()
+                previous = serializedBlock.getBlockHash(),
+                sendHash = serializedBlock.getBlockHash()
             )
         }
     }
@@ -242,7 +242,7 @@ data class AttoOpenBlock(
                 publicKey = serializedBlock.getPublicKey(),
                 balance = serializedBlock.getAmount(),
                 timestamp = serializedBlock.getInstant(),
-                sendHash = serializedBlock.getHash(),
+                sendHash = serializedBlock.getBlockHash(),
                 representative = serializedBlock.getPublicKey(),
             )
         }
@@ -295,7 +295,7 @@ data class AttoChangeBlock(
                 height = serializedBlock.getULong(), // 8 42
                 balance = serializedBlock.getAmount(), // 8 50
                 timestamp = serializedBlock.getInstant(), // 8 58
-                previous = serializedBlock.getHash(), // 32 90
+                previous = serializedBlock.getBlockHash(), // 32 90
                 representative = serializedBlock.getPublicKey(), // 32 122
             )
         }

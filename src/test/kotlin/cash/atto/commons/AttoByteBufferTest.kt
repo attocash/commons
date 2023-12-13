@@ -49,7 +49,7 @@ internal class AttoByteBufferTest {
         buffer.add(expectedNetwork)
 
         // when
-        val hash = buffer.getHash()
+        val hash = buffer.getBlockHash()
         val publicKey = buffer.getPublicKey()
         val uShort = buffer.getUShort()
         val uLong = buffer.getULong()

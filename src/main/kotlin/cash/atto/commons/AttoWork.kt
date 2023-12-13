@@ -36,7 +36,7 @@ internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {
 }
 
 private fun isValid(threshold: ULong, hash: ByteArray, work: ByteArray): Boolean {
-    val difficult = AttoHash.hash(8, work, hash).value.toULong()
+    val difficult = hashRaw(8, work, hash).toULong()
     return difficult <= threshold
 }
 
@@ -92,7 +92,7 @@ private class Worker(
 
 data class AttoWork(val value: ByteArray) {
     companion object {
-        const val size = 8
+        const val SIZE = 8
 
         fun threshold(network: AttoNetwork, timestamp: Instant): ULong {
             return getThreshold(network, timestamp)
@@ -137,7 +137,7 @@ data class AttoWork(val value: ByteArray) {
     }
 
     init {
-        value.checkLength(size)
+        value.checkLength(SIZE)
     }
 
     fun isValid(network: AttoNetwork, timestamp: Instant, publicKey: AttoPublicKey): Boolean {

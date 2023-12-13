@@ -82,15 +82,23 @@ class AttoByteBuffer {
         return this;
     }
 
-    fun getHash(): AttoHash {
-        return getHash(lastIndex)
+    fun getHash(size: Int): AttoHash {
+        return getHash(lastIndex, size)
     }
 
-    fun getHash(index: Int): AttoHash {
-        val byteArray = ByteArray(AttoHash.defaultSize)
+    fun getHash(index: Int, size: Int): AttoHash {
+        val byteArray = ByteArray(size)
         byteBuffer.get(index, byteArray)
         this.lastIndex = index + byteArray.size
         return AttoHash(byteArray)
+    }
+
+    fun getBlockHash(): AttoHash {
+        return getHash(lastIndex, 32)
+    }
+
+    fun getBlockHash(index: Int): AttoHash {
+        return getHash(index, 32)
     }
 
     fun add(attoPublicKey: AttoPublicKey): AttoByteBuffer {
@@ -284,7 +292,7 @@ class AttoByteBuffer {
     }
 
     fun getWork(index: Int): AttoWork {
-        val byteArray = ByteArray(AttoWork.size)
+        val byteArray = ByteArray(AttoWork.SIZE)
         byteBuffer.get(index, byteArray)
         this.lastIndex = index + byteArray.size
         return AttoWork(byteArray)

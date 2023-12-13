@@ -34,7 +34,7 @@ internal class AttoSignatureTest {
     @Test
     fun `should sign 16 bytes`() {
         // given
-        val hash16 = AttoHash(Random.nextBytes(ByteArray(16)), 16)
+        val hash16 = AttoHash(Random.nextBytes(ByteArray(16)))
 
         // when
         val signature = privateKey.sign(hash16)
