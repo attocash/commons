@@ -1,10 +1,10 @@
 package cash.atto.commons
 
+import kotlinx.datetime.Instant
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.time.Instant
 
 class AttoByteBuffer {
     private val byteBuffer: ByteBuffer
@@ -214,7 +214,7 @@ class AttoByteBuffer {
     }
 
     fun add(instant: Instant): AttoByteBuffer {
-        byteBuffer.putLong(instant.toEpochMilli())
+        byteBuffer.putLong(instant.toEpochMilliseconds())
         return this;
     }
 
@@ -224,7 +224,7 @@ class AttoByteBuffer {
 
     fun getInstant(index: Int): Instant {
         this.lastIndex = index + 8
-        return Instant.ofEpochMilli(byteBuffer.getLong(index))
+        return Instant.fromEpochMilliseconds(byteBuffer.getLong(index))
     }
 
     fun add(attoBlockType: AttoBlockType): AttoByteBuffer {
@@ -276,7 +276,7 @@ class AttoByteBuffer {
     }
 
     fun getSignature(index: Int): AttoSignature {
-        val byteArray = ByteArray(AttoSignature.size)
+        val byteArray = ByteArray(AttoSignature.SIZE)
         byteBuffer.get(index, byteArray)
         this.lastIndex = index + byteArray.size
         return AttoSignature(byteArray)

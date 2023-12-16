@@ -1,9 +1,10 @@
 package cash.atto.commons
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import java.time.Instant
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 val maxVersion: UShort = 0U
 
@@ -23,26 +24,17 @@ enum class AttoBlockType(val code: UByte, val size: Int) {
     }
 }
 
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    property = "type"
-)
-@JsonSubTypes(
-    JsonSubTypes.Type(value = AttoSendBlock::class, name = "SEND"),
-    JsonSubTypes.Type(value = AttoReceiveBlock::class, name = "RECEIVE"),
-    JsonSubTypes.Type(value = AttoOpenBlock::class, name = "OPEN"),
-    JsonSubTypes.Type(value = AttoChangeBlock::class, name = "CHANGE"),
-)
-interface AttoBlock {
-    val hash: AttoHash
+@Serializable
+sealed interface AttoBlock {
     val type: AttoBlockType
+
+    val hash: AttoHash
 
     val version: UShort
     val publicKey: AttoPublicKey
     val height: ULong
     val balance: AttoAmount
     val timestamp: Instant
-
 
     fun toByteBuffer(): AttoByteBuffer
 
@@ -74,7 +66,7 @@ interface AttoBlock {
     }
 
     fun isValid(): Boolean {
-        return version <= maxVersion && timestamp <= Instant.now()
+        return version <= maxVersion && timestamp <= Clock.System.now()
     }
 }
 
@@ -83,14 +75,16 @@ interface PreviousSupport {
     val previous: AttoHash
 }
 
-interface ReceiveSupportBlock {
+interface ReceiveSupport {
     val sendHash: AttoHash
 }
 
-interface RepresentativeSupportBlock {
+interface RepresentativeSupport {
     val representative: AttoPublicKey
 }
 
+@Serializable
+@SerialName("SEND")
 data class AttoSendBlock(
     override val version: UShort,
     override val publicKey: AttoPublicKey,
@@ -101,10 +95,10 @@ data class AttoSendBlock(
     val receiverPublicKey: AttoPublicKey,
     val amount: AttoAmount,
 ) : AttoBlock, PreviousSupport {
-    @JsonIgnore
+    @Transient
     override val type = AttoBlockType.SEND
 
-    @JsonIgnore
+    @Transient
     override val hash = toByteBuffer().toHash()
 
     companion object {
@@ -145,12 +139,13 @@ data class AttoSendBlock(
             .add(amount)
     }
 
-    @JsonIgnore
     override fun isValid(): Boolean {
         return super.isValid() && height > 1u && amount.raw > 0u && receiverPublicKey != publicKey
     }
 }
 
+@Serializable
+@SerialName("RECEIVE")
 data class AttoReceiveBlock(
     override val version: UShort,
     override val publicKey: AttoPublicKey,
@@ -159,11 +154,11 @@ data class AttoReceiveBlock(
     override val timestamp: Instant,
     override val previous: AttoHash,
     override val sendHash: AttoHash,
-) : AttoBlock, PreviousSupport, ReceiveSupportBlock {
-    @JsonIgnore
+) : AttoBlock, PreviousSupport, ReceiveSupport {
+    @Transient
     override val type = AttoBlockType.RECEIVE
 
-    @JsonIgnore
+    @Transient
     override val hash = toByteBuffer().toHash()
 
     companion object {
@@ -203,12 +198,13 @@ data class AttoReceiveBlock(
             .add(sendHash)
     }
 
-    @JsonIgnore
     override fun isValid(): Boolean {
         return super.isValid() && height > 1u && balance > AttoAmount.MIN
     }
 }
 
+@Serializable
+@SerialName("OPEN")
 data class AttoOpenBlock(
     override val version: UShort,
     override val publicKey: AttoPublicKey,
@@ -216,14 +212,14 @@ data class AttoOpenBlock(
     override val timestamp: Instant,
     override val sendHash: AttoHash,
     override val representative: AttoPublicKey,
-) : AttoBlock, ReceiveSupportBlock, RepresentativeSupportBlock {
-    @JsonIgnore
+) : AttoBlock, ReceiveSupport, RepresentativeSupport {
+    @Transient
     override val type = AttoBlockType.OPEN
 
-    @JsonIgnore
+    @Transient
     override val hash = toByteBuffer().toHash()
 
-    @JsonIgnore
+    @Transient
     override val height = 1UL
 
     companion object {
@@ -263,6 +259,8 @@ data class AttoOpenBlock(
 }
 
 
+@Serializable
+@SerialName("CHANGE")
 data class AttoChangeBlock(
     override val version: UShort,
     override val publicKey: AttoPublicKey,
@@ -271,11 +269,11 @@ data class AttoChangeBlock(
     override val timestamp: Instant,
     override val previous: AttoHash,
     override val representative: AttoPublicKey,
-) : AttoBlock, PreviousSupport, RepresentativeSupportBlock {
-    @JsonIgnore
+) : AttoBlock, PreviousSupport, RepresentativeSupport {
+    @Transient
     override val type = AttoBlockType.CHANGE
 
-    @JsonIgnore
+    @Transient
     override val hash = toByteBuffer().toHash()
 
     companion object {
@@ -314,7 +312,6 @@ data class AttoChangeBlock(
             .add(representative)
     }
 
-    @JsonIgnore
     override fun isValid(): Boolean {
         return super.isValid() && height > 1u
     }

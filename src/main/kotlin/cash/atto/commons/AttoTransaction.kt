@@ -1,5 +1,8 @@
 package cash.atto.commons
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class AttoTransaction(
     val block: AttoBlock,
     val signature: AttoSignature,

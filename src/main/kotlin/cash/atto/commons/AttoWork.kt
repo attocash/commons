@@ -4,9 +4,12 @@ import cash.atto.commons.AttoNetwork.Companion.DOUBLING_PERIOD
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_DATE
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import cash.atto.commons.serialiazers.AttoWorkSerializer
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.Serializable
 import java.util.stream.Stream
 import kotlin.math.pow
 import kotlin.random.Random
@@ -15,7 +18,7 @@ private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
     val cache = mutableMapOf<AttoNetwork, Map<Int, ULong>>()
     for (network in AttoNetwork.entries) {
         val yearMap = mutableMapOf<Int, ULong>()
-        for (year in INITIAL_DATE.year..(LocalDateTime.now().year + 10)) {
+        for (year in INITIAL_DATE.year..(Clock.System.now().toLocalDateTime(TimeZone.UTC).year + 10)) {
             val decreaseFactor = (2.0).pow((year - INITIAL_DATE.year) / DOUBLING_PERIOD).toULong()
             val initialThreshold = INITIAL_LIVE_THRESHOLD * network.thresholdIncreaseFactor
 
@@ -32,7 +35,7 @@ internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {
         throw IllegalArgumentException("Timestamp($timestamp) lower than initialInstant(${AttoNetwork.INITIAL_INSTANT})")
     }
 
-    return thresholdCache[network]!![timestamp.atZone(ZoneOffset.UTC).year]!!
+    return thresholdCache[network]!![timestamp.toLocalDateTime(TimeZone.UTC).year]!!
 }
 
 private fun isValid(threshold: ULong, hash: ByteArray, work: ByteArray): Boolean {
@@ -90,6 +93,7 @@ private class Worker(
     }
 }
 
+@Serializable(with = AttoWorkSerializer::class)
 data class AttoWork(val value: ByteArray) {
     companion object {
         const val SIZE = 8
@@ -150,13 +154,9 @@ data class AttoWork(val value: ByteArray) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (other !is AttoWork) return false
 
-        other as AttoWork
-
-        if (!value.contentEquals(other.value)) return false
-
-        return true
+        return value.contentEquals(other.value)
     }
 
     override fun hashCode(): Int {

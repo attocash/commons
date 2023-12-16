@@ -118,7 +118,7 @@ value class AttoAddress(val value: String) {
                         value
                     )
                 )
-            val encodedChecksum = encode(checksum.value, checksum.size * 8)
+            val encodedChecksum = encode(checksum.value, checksum.getSize() * 8)
             return expectedEncodedChecksum == encodedChecksum
         }
 
@@ -126,7 +126,7 @@ value class AttoAddress(val value: String) {
             val checksum = checksum(publicKey)
 
             val encodedPublicKey = encode(publicKey.value, 260)
-            val encodedChecksum = encode(checksum.value, checksum.size * 8)
+            val encodedChecksum = encode(checksum.value, checksum.getSize() * 8)
             return prefix + encodedPublicKey + encodedChecksum
         }
 

@@ -1,8 +1,11 @@
 package cash.atto.commons
 
-import java.time.Instant
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
 
+@Serializable
 data class AttoAccount(
     val publicKey: AttoPublicKey,
     var version: UShort,
@@ -22,7 +25,7 @@ data class AttoAccount(
                 version = sendBlock.version,
                 publicKey = sendBlock.receiverPublicKey,
                 balance = sendBlock.amount,
-                timestamp = Instant.now(),
+                timestamp = Clock.System.now(),
                 sendHash = sendBlock.hash,
                 representative = representative,
             )
@@ -41,7 +44,7 @@ data class AttoAccount(
             publicKey = this.publicKey,
             height = height + 1U,
             balance = balance.minus(amount),
-            timestamp = Instant.now(),
+            timestamp = Clock.System.now(),
             previous = lastTransactionHash,
             receiverPublicKey = publicKey,
             amount = amount,
@@ -54,7 +57,7 @@ data class AttoAccount(
             publicKey = publicKey,
             height = height + 1U,
             balance = balance.plus(sendBlock.amount),
-            timestamp = Instant.now(),
+            timestamp = Clock.System.now(),
             previous = lastTransactionHash,
             sendHash = sendBlock.hash,
         )
@@ -66,7 +69,7 @@ data class AttoAccount(
             publicKey = publicKey,
             height = height + 1U,
             balance = balance,
-            timestamp = Instant.now(),
+            timestamp = Clock.System.now(),
             previous = lastTransactionHash,
             representative = representative,
         )

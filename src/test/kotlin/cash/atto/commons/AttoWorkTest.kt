@@ -2,15 +2,12 @@ package cash.atto.commons
 
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
+import kotlinx.datetime.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.time.Instant
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.stream.Stream
 
 internal class AttoWorkTest {
@@ -33,23 +30,25 @@ internal class AttoWorkTest {
     @Test
     fun `should validate work using decreased threshold`() {
         val work = AttoWork("888f6824075cabc3".fromHexToByteArray())
-        val timestamp =
-            OffsetDateTime.of(AttoNetwork.INITIAL_DATE.plusYears(4), LocalTime.MIN, ZoneOffset.UTC).toInstant()
+        val timestamp = AttoNetwork.INITIAL_DATE.plus(4, DateTimeUnit.YEAR)
+            .atTime(LocalTime.fromSecondOfDay(0))
+            .toInstant(TimeZone.UTC)
         assertTrue(work.isValid(AttoNetwork.LIVE, timestamp, hash))
     }
 
     @Test
     fun `should not validate when work is below threshold`() {
         val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
-        val timestamp =
-            OffsetDateTime.of(AttoNetwork.INITIAL_DATE.plusYears(4), LocalTime.MIN, ZoneOffset.UTC).toInstant()
+        val timestamp = AttoNetwork.INITIAL_DATE.plus(4, DateTimeUnit.YEAR)
+            .atTime(LocalTime.fromSecondOfDay(0))
+            .toInstant(TimeZone.UTC)
         assertFalse(work.isValid(AttoNetwork.LIVE, timestamp, hash))
     }
 
     @Test
     fun `should not validate when timestamp is before initial date`() {
         val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
-        val timestamp = AttoNetwork.INITIAL_INSTANT.minusSeconds(1)
+        val timestamp = AttoNetwork.INITIAL_INSTANT.minus(1, DateTimeUnit.SECOND)
         assertFalse(work.isValid(AttoNetwork.LIVE, timestamp, hash))
     }
 
@@ -64,7 +63,7 @@ internal class AttoWorkTest {
         @JvmStatic
         fun provider(): Stream<Arguments> {
             val calculateTimestamp = fun(years: Long): Instant {
-                return INITIAL_INSTANT.atZone(ZoneOffset.UTC).plusYears(years).toInstant()
+                return INITIAL_INSTANT.plus(years, DateTimeUnit.YEAR, TimeZone.UTC)
             }
             val calculateThreshold = fun(decreaseFactor: UInt): Long {
                 return (INITIAL_LIVE_THRESHOLD / decreaseFactor).toLong()

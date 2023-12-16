@@ -1,6 +1,8 @@
 package cash.atto.commons
 
 
+import cash.atto.commons.serialiazers.AttoPublicKeySerializer
+import kotlinx.serialization.Serializable
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -85,7 +87,7 @@ class AttoPrivateKey(val value: ByteArray) {
     }
 }
 
-
+@Serializable(with = AttoPublicKeySerializer::class)
 data class AttoPublicKey(val value: ByteArray) {
     init {
         value.checkLength(32)
@@ -106,13 +108,9 @@ data class AttoPublicKey(val value: ByteArray) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (other !is AttoPublicKey) return false
 
-        other as AttoPublicKey
-
-        if (!value.contentEquals(other.value)) return false
-
-        return true
+        return value.contentEquals(other.value)
     }
 
     override fun hashCode(): Int {

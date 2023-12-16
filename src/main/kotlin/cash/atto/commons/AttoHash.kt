@@ -1,5 +1,7 @@
 package cash.atto.commons
 
+import cash.atto.commons.serialiazers.AttoHashSerializer
+import kotlinx.serialization.Serializable
 import org.bouncycastle.crypto.digests.Blake2bDigest
 
 
@@ -13,9 +15,9 @@ internal fun hashRaw(size: Int, vararg byteArrays: ByteArray): ByteArray {
     return output
 }
 
+@Serializable(with = AttoHashSerializer::class)
 data class AttoHash(val value: ByteArray) {
-
-    val size = value.size
+    fun getSize() = value.size
 
     companion object {
         fun parse(value: String): AttoHash {
@@ -27,17 +29,15 @@ data class AttoHash(val value: ByteArray) {
         }
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as AttoHash
-
-        return value.contentEquals(other.value)
-    }
-
     override fun hashCode(): Int {
         return value.contentHashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is AttoHash) return false
+
+        return value.contentEquals(other.value)
     }
 
     override fun toString(): String {

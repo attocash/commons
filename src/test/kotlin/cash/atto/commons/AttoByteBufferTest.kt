@@ -1,10 +1,11 @@
 package cash.atto.commons
 
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.time.Instant
 import kotlin.random.Random
 
 internal class AttoByteBufferTest {
@@ -27,7 +28,7 @@ internal class AttoByteBufferTest {
         val expectedULong = ULong.MAX_VALUE
         buffer.add(expectedULong)
 
-        val expectedInstant = Instant.ofEpochMilli(Instant.now().toEpochMilli())
+        val expectedInstant = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
         buffer.add(expectedInstant)
 
         val expectedBlockType = AttoBlockType.SEND
