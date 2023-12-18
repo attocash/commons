@@ -51,9 +51,10 @@ repositories {
 }
 
 dependencies {
+    api("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+    
     implementation("org.bouncycastle:bcprov-jdk18on:1.77")
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
