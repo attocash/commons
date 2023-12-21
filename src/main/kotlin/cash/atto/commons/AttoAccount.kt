@@ -9,12 +9,12 @@ import kotlinx.serialization.Serializable
 data class AttoAccount(
     val publicKey: AttoPublicKey,
     var version: UShort,
-    var height: ULong,
+    override var height: ULong,
     var balance: AttoAmount,
     var lastTransactionHash: AttoHash,
     var lastTransactionTimestamp: Instant,
     var representative: AttoPublicKey,
-) {
+) : HeightSupport {
 
     companion object {
         fun open(
