@@ -24,15 +24,19 @@ enum class AttoBlockType(val code: UByte, val size: Int) {
     }
 }
 
+interface HeightSupport {
+    val height: ULong
+}
+
 @Serializable
-sealed interface AttoBlock {
+sealed interface AttoBlock : HeightSupport {
     val type: AttoBlockType
 
     val hash: AttoHash
 
     val version: UShort
     val publicKey: AttoPublicKey
-    val height: ULong
+    override val height: ULong
     val balance: AttoAmount
     val timestamp: Instant
 

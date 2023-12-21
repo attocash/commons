@@ -7,8 +7,9 @@ data class AttoTransaction(
     val block: AttoBlock,
     val signature: AttoSignature,
     val work: AttoWork
-) {
+) : HeightSupport {
     val hash = block.hash
+    override val height = block.height
 
     companion object {
         const val size = 72
