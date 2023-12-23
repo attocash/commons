@@ -10,8 +10,7 @@ enum class AttoUnit(val prefix: String, internal val multiplier: BigDecimal) {
 }
 
 @Serializable
-@JvmInline
-value class AttoAmount(val raw: ULong) : Comparable<AttoAmount> {
+data class AttoAmount(val raw: ULong) : Comparable<AttoAmount> {
     init {
         if (raw > MAX_RAW) {
             throw IllegalStateException("$raw exceeds the max amount of $MAX_RAW")
