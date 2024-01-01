@@ -6,41 +6,28 @@ import org.junit.jupiter.api.Test
 
 internal class AttoAddressTest {
     private val expectedAccount =
-        cash.atto.commons.AttoAddress("atto_3iwi45me3cgo9aza9wx5f7rder37hw11xtc1ek8psqxw5oxb8cujzue6p7nc")
+        AttoAddress.parse("atto_aarfzz26z5pfwrkdcwt4jdhhe2vvixscqwehgmfjqxku43rgtjso4x6re3pc3")
 
     @Test
     fun `should create account`() {
         // given
         val publicKey =
-            AttoPublicKey("C39010E6C0A9D53A3E83F3A36970B660257F000EE940648D6CDFBC1D7A932B71".fromHexToByteArray())
+            AttoPublicKey("225CE75ECF5E5B454315A7C48CE726AB545E4285887330A985D54E6E269A64EE".fromHexToByteArray())
 
         // when
-        val account = publicKey.toAddress()
+        val account = publicKey.toAddress(AttoAlgorithm.V1)
 
         // then
         assertEquals(expectedAccount, account)
     }
 
     @Test
-    fun `should create public key from account when hex starts with zero`() {
-        // given
-        val expectedPublicKey =
-            AttoPublicKey("094870F534550D3E468AE385BF653BAFCEA889E4AFCABF6D69E155CF99BE6764".fromHexToByteArray())
-
-        // when
-        val publicKey = expectedPublicKey.toAddress().toPublicKey()
-
-        // then
-        assertEquals(expectedPublicKey, publicKey)
-    }
-
-    @Test
     fun `should extract address to public key`() {
         // when
-        val publicKey = expectedAccount.toPublicKey()
+        val publicKey = expectedAccount.publicKey
 
         // then
-        assertEquals(expectedAccount, publicKey.toAddress())
+        assertEquals(expectedAccount, publicKey.toAddress(AttoAlgorithm.V1))
     }
 
     @Test
@@ -50,17 +37,17 @@ internal class AttoAddressTest {
 
         // when
         Assertions.assertThrows(IllegalArgumentException::class.java) {
-            cash.atto.commons.AttoAddress(wrongAccount)
+            AttoAddress.parse(wrongAccount)
         }
     }
 
     @Test
     fun `should throw illegal argument exception when checksum doesn't match`() {
         // given
-        val wrongAccount = expectedAccount.value.substring(0, expectedAccount.value.length - 1) + "9"
+        val wrongAccount = expectedAccount.value.substring(0, expectedAccount.value.length - 1) + "a"
 
         Assertions.assertThrows(IllegalArgumentException::class.java) {
-            cash.atto.commons.AttoAddress(wrongAccount)
+            AttoAddress.parse(wrongAccount)
         }
     }
 }

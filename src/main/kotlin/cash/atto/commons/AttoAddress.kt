@@ -1,110 +1,40 @@
 package cash.atto.commons
 
-import java.math.BigInteger
-import java.util.*
+import org.bouncycastle.util.encoders.Base32
 
-private fun leftPad(binary: String, size: Int): String {
-    if (binary.length >= size) {
-        return binary
-    }
-    val builder = StringBuilder()
-    while (binary.length + builder.length < size) {
-        builder.append("0")
-    }
-    return builder.append(binary).toString()
+private fun ByteArray.toBase32(): String {
+    return String(Base32.encode(this)).replace("=", "").lowercase()
 }
 
-private object Dictionary {
-    private var characterMap: Map<String, String>
-    private var binaryMap: Map<Char, String>
-
-    init {
-        val characterMap = HashMap<String, String>()
-        val binaryMap = HashMap<Char, String>()
-        val alphabet = "13456789abcdefghijkmnopqrstuwxyz".toCharArray()
-        for (i in alphabet.indices) {
-            val binary: String = leftPad(Integer.toBinaryString(i), 5)
-            characterMap[binary] = alphabet[i].toString()
-            binaryMap[alphabet[i]] = binary
-        }
-        this.characterMap = characterMap.toMap()
-        this.binaryMap = binaryMap.toMap()
-    }
-
-    fun getCharacter(binary: String): String? {
-        return characterMap[binary]
-    }
-
-    fun getBinary(character: Char): String? {
-        return binaryMap[character]
-    }
+private fun String.fromBase32(): ByteArray {
+    return Base32.decode(this.uppercase() + "===")
 }
 
-private fun decode(encoded: String, size: Int): ByteArray {
-    val binaryPublicKey = decodeToBinary(encoded)
-    val hexPublicKey = leftPad(toHex(binaryPublicKey), size)
-    return hexPublicKey.fromHexToByteArray()
-}
+data class AttoAddress(val algorithmPublicKey: AttoAlgorithmPublicKey) {
+    val algorithm = algorithmPublicKey.algorithm
+    val publicKey = algorithmPublicKey.publicKey
+    val value = toAddress(algorithmPublicKey)
 
-private fun decodeToBinary(encoded: String): String {
-    val sb = StringBuilder()
-    for (element in encoded) {
-        sb.append(Dictionary.getBinary(element))
-    }
-    return sb.toString()
-}
-
-private fun encode(decoded: ByteArray, size: Int): String {
-    val binary = leftPad(toBinary(decoded.toHex()), size)
-    return encode(binary)
-}
-
-private fun encode(decoded: String): String {
-    val codeSize = 5
-    val builder = StringBuilder()
-    var i = 0
-    while (i < decoded.length) {
-        builder.append(Dictionary.getCharacter(decoded.substring(i, i + codeSize)))
-        i += codeSize
-    }
-    return builder.toString()
-}
-
-private fun toBinary(hex: String): String {
-    return BigInteger(hex, 16).toString(2)
-}
-
-private fun toHex(binary: String): String {
-    val b = BigInteger(binary, 2)
-    return b.toString(16).uppercase(Locale.ENGLISH)
-}
-
-@JvmInline
-value class AttoAddress(val value: String) {
-    init {
-        if (!isValid(value)) {
-            throw IllegalArgumentException("$value is invalid")
-        }
-    }
-
-    constructor(publicKey: AttoPublicKey) : this(
-        toAddress(
-            publicKey
-        )
-    )
+    constructor(algorithm: AttoAlgorithm, publicKey: AttoPublicKey) : this(AttoAlgorithmPublicKey(algorithm, publicKey))
 
     companion object {
         private val prefix = "atto_"
-        private val regex =
-            "^$prefix[13][13456789abcdefghijkmnopqrstuwxyz]{59}$".toRegex()
+        private val regex = "^$prefix[a-z2-7]{61}$".toRegex()
 
-        private fun checksum(publicKey: AttoPublicKey): AttoHash {
-            return AttoHash.hash(5, publicKey.value)
+        private fun checksum(algorithmPublicKey: AttoAlgorithmPublicKey): ByteArray {
+            return hashRaw(
+                5,
+                byteArrayOf(algorithmPublicKey.algorithm.code.toByte()),
+                algorithmPublicKey.publicKey.value
+            )
         }
 
-        private fun toPublicKey(value: String): AttoPublicKey {
-            val encodedPublicKey: String = value.substring(5, 57)
-            return AttoPublicKey(decode(encodedPublicKey, 64))
+        private fun toAlgorithmPublicKey(value: String): AttoAlgorithmPublicKey {
+            val decoded = value.substring(prefix.length, value.length - 8).fromBase32()
+            val algorithm = AttoAlgorithm.from(decoded[0].toUByte())
+            val publicKey = AttoPublicKey(decoded.sliceArray(1 until decoded.size))
+
+            return AttoAlgorithmPublicKey(algorithm, publicKey)
         }
 
         fun isValid(value: String): Boolean {
@@ -112,31 +42,29 @@ value class AttoAddress(val value: String) {
                 return false
             }
             val expectedEncodedChecksum = value.substring(value.length - 8)
-            val checksum =
-                checksum(
-                    toPublicKey(
-                        value
-                    )
-                )
-            val encodedChecksum = encode(checksum.value, checksum.getSize() * 8)
+
+            val algorithmPublicKey = toAlgorithmPublicKey(value)
+
+            val checksum = checksum(algorithmPublicKey)
+            val encodedChecksum = checksum.toBase32()
             return expectedEncodedChecksum == encodedChecksum
         }
 
-        fun toAddress(publicKey: AttoPublicKey): String {
-            val checksum = checksum(publicKey)
+        fun toAddress(algorithmPublicKey: AttoAlgorithmPublicKey): String {
+            val checksum = checksum(algorithmPublicKey)
 
-            val encodedPublicKey = encode(publicKey.value, 260)
-            val encodedChecksum = encode(checksum.value, checksum.getSize() * 8)
+            val encodedPublicKey = algorithmPublicKey.publicKey.value.toBase32()
+            val encodedChecksum = checksum.toBase32()
             return prefix + encodedPublicKey + encodedChecksum
         }
 
         fun parse(value: String): AttoAddress {
-            return AttoAddress(value)
-        }
-    }
+            require(isValid(value)) { "$value is invalid" }
 
-    fun toPublicKey(): AttoPublicKey {
-        return toPublicKey(this.value)
+            val algorithmPublicKey = toAlgorithmPublicKey(value)
+
+            return AttoAddress(algorithmPublicKey)
+        }
     }
 
     override fun toString(): String {
@@ -144,6 +72,6 @@ value class AttoAddress(val value: String) {
     }
 }
 
-fun AttoPublicKey.toAddress(): AttoAddress {
-    return AttoAddress(this)
+fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress {
+    return AttoAddress(algorithm, this)
 }

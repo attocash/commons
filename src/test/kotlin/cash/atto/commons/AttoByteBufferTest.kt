@@ -13,7 +13,7 @@ internal class AttoByteBufferTest {
     @Test
     fun test() {
         // given
-        val size = 184
+        val size = 185
         val buffer = AttoByteBuffer(size)
 
         val expectedHash = AttoHash(Random.Default.nextBytes(ByteArray(32)))
@@ -49,6 +49,9 @@ internal class AttoByteBufferTest {
         val expectedNetwork = AttoNetwork.LOCAL
         buffer.add(expectedNetwork)
 
+        val expectedAlgorithm = AttoAlgorithm.V1
+        buffer.add(expectedAlgorithm)
+
         // when
         val hash = buffer.getBlockHash()
         val publicKey = buffer.getPublicKey()
@@ -61,6 +64,7 @@ internal class AttoByteBufferTest {
         val work = buffer.getWork()
         val inetSocketAddress = buffer.getInetSocketAddress()
         val network = buffer.getNetwork()
+        val algorithm = buffer.getAlgorithm()
 
         // then
         assertEquals(expectedHash, hash)
@@ -74,6 +78,7 @@ internal class AttoByteBufferTest {
         assertEquals(expectedWork, work)
         assertEquals(expectedInetSocketAddress, inetSocketAddress)
         assertEquals(expectedNetwork, network)
+        assertEquals(expectedAlgorithm, algorithm)
         assertEquals(size, buffer.toByteArray().size)
     }
 

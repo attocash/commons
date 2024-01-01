@@ -70,6 +70,11 @@ class AttoPrivateKey(val value: ByteArray) {
 
     companion object {
         private val coinType = 1869902945 // "atto".toByteArray().toUInt()
+
+        fun parse(value: String): AttoPrivateKey {
+            return AttoPrivateKey(value.fromHexToByteArray())
+        }
+
         fun generate(): AttoPrivateKey {
             val random = SecureRandom.getInstanceStrong()
             val value = ByteArray(32)
@@ -124,4 +129,49 @@ data class AttoPublicKey(val value: ByteArray) {
 
 fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey {
     return AttoPrivateKey(this, index)
+}
+
+
+class AttoAlgorithmPrivateKey(val algorithm: AttoAlgorithm, val privateKey: AttoPrivateKey) {
+    val value = byteArrayOf(algorithm.code.toByte()) + privateKey.value
+
+    init {
+        require(algorithm != AttoAlgorithm.UNKNOWN) { "Algorithm can't be $algorithm" }
+        privateKey.value.checkLength(algorithm.privateKeySize)
+    }
+
+    companion object {
+        fun parse(value: String): AttoAlgorithmPrivateKey {
+            val byteArray = value.fromHexToByteArray()
+            val algorithm = AttoAlgorithm.from(byteArray[0].toUByte())
+            val privateKey = AttoPrivateKey(byteArray.sliceArray(1 until byteArray.size))
+            return AttoAlgorithmPrivateKey(algorithm, privateKey)
+        }
+    }
+
+    override fun toString(): String {
+        return "${value.size} bytes"
+    }
+}
+
+data class AttoAlgorithmPublicKey(val algorithm: AttoAlgorithm, val publicKey: AttoPublicKey) {
+    val value = byteArrayOf(algorithm.code.toByte()) + publicKey.value
+
+    init {
+        require(algorithm != AttoAlgorithm.UNKNOWN) { "Algorithm can't be $algorithm" }
+        publicKey.value.checkLength(algorithm.publicKeySize)
+    }
+
+    companion object {
+        fun parse(value: String): AttoAlgorithmPublicKey {
+            val byteArray = value.fromHexToByteArray()
+            val algorithm = AttoAlgorithm.from(byteArray[0].toUByte())
+            val publicKey = AttoPublicKey(byteArray.sliceArray(1 until byteArray.size))
+            return AttoAlgorithmPublicKey(algorithm, publicKey)
+        }
+    }
+
+    override fun toString(): String {
+        return value.toHex()
+    }
 }

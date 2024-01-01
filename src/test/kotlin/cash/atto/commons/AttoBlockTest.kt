@@ -1,12 +1,14 @@
 package cash.atto.commons
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
 
 class AttoBlockTest {
@@ -66,7 +68,62 @@ class AttoBlockTest {
                 Arguments.of(sendBlock.copy(amount = AttoAmount.MIN)), // zero amount
                 Arguments.of(sendBlock.copy(receiverPublicKey = sendBlock.publicKey)), // self send
                 Arguments.of(receiveBlock.copy(balance = AttoAmount.MIN)), // zero balance
+                Arguments.of(openBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)), // unknown account algorithm
+                Arguments.of(sendBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)), // unknown account algorithm
+                Arguments.of(receiveBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)), // unknown account algorithm
+                Arguments.of(changeBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)), // unknown account algorithm
+                Arguments.of(openBlock.copy(sendHashAlgorithm = AttoAlgorithm.UNKNOWN)), // unknown send algorithm
+                Arguments.of(receiveBlock.copy(sendHashAlgorithm = AttoAlgorithm.UNKNOWN)), // unknown send algorithm
+                Arguments.of(sendBlock.copy(receiverPublicKeyAlgorithm = AttoAlgorithm.UNKNOWN)), // unknown receiver algorithm
             )
         }
     }
 }
+
+
+val openBlock = AttoOpenBlock(
+    version = 0U,
+    algorithm = AttoAlgorithm.V1,
+    publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+    balance = AttoAmount.MAX,
+    timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+    sendHashAlgorithm = AttoAlgorithm.V1,
+    sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
+    representative = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+)
+
+val sendBlock = AttoSendBlock(
+    version = 0U,
+    algorithm = AttoAlgorithm.V1,
+    publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+    height = 2U,
+    balance = AttoAmount(1U),
+    timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+    previous = AttoHash(Random.Default.nextBytes(ByteArray(32))),
+    receiverPublicKeyAlgorithm = AttoAlgorithm.V1,
+    receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+    amount = AttoAmount(1U),
+)
+
+val receiveBlock = AttoReceiveBlock(
+    version = 0U,
+    algorithm = AttoAlgorithm.V1,
+    publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+    height = 2U,
+    balance = AttoAmount.MAX,
+    timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+    previous = AttoHash(Random.nextBytes(ByteArray(32))),
+    sendHashAlgorithm = AttoAlgorithm.V1,
+    sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32)))
+)
+
+val changeBlock = AttoChangeBlock(
+    version = 0U,
+    algorithm = AttoAlgorithm.V1,
+    publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+    height = 2U,
+    balance = AttoAmount.MAX,
+    timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+    previous = AttoHash(Random.nextBytes(ByteArray(32))),
+    representative = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+)

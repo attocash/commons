@@ -241,6 +241,20 @@ class AttoByteBuffer {
         return AttoBlockType.from(byteBuffer.get(index).toUByte())
     }
 
+    fun add(algorithm: AttoAlgorithm): AttoByteBuffer {
+        byteBuffer.put(algorithm.code.toByte())
+        return this
+    }
+
+    fun getAlgorithm(): AttoAlgorithm {
+        return getAlgorithm(lastIndex)
+    }
+
+    fun getAlgorithm(index: Int): AttoAlgorithm {
+        this.lastIndex = index + 1
+        return AttoAlgorithm.from(byteBuffer.get(index).toUByte())
+    }
+
     fun add(network: AttoNetwork): AttoByteBuffer {
         byteBuffer.put(network.environment.toByteArray(Charsets.UTF_8))
         return this

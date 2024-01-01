@@ -1,6 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.datetime.Clock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,18 +11,8 @@ class AttoTransactionTest {
     @Test
     fun serializeDeserialize() {
         // given
-        val expectedBlock = AttoReceiveBlock(
-            version = 0U,
-            publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
-            height = 1U,
-            balance = AttoAmount.MAX,
-            timestamp = Clock.System.now(),
-            previous = AttoHash(Random.nextBytes(ByteArray(32))),
-            sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32)))
-        )
-
         val expectedTransaction = AttoTransaction(
-            block = expectedBlock,
+            block = receiveBlock,
             signature = AttoSignature(Random.nextBytes(ByteArray(64))),
             work = AttoWork(Random.nextBytes(ByteArray(8)))
         )
