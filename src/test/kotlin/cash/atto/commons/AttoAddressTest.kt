@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 internal class AttoAddressTest {
     private val expectedAccount =
-        AttoAddress.parse("atto_aarfzz26z5pfwrkdcwt4jdhhe2vvixscqwehgmfjqxku43rgtjso4x6re3pc3")
+        AttoAddress.parse("atto_aarfzz26z5pfwrkdcwt4jdhhe2vvixscqwehgmfjqxku43rgtjso5p5cjw6fw")
 
     @Test
     fun `should create account`() {
