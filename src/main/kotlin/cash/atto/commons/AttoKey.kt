@@ -1,7 +1,6 @@
 package cash.atto.commons
 
 
-import cash.atto.commons.serialiazers.AttoPublicKeySerializer
 import kotlinx.serialization.Serializable
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import java.nio.ByteBuffer
@@ -92,7 +91,7 @@ class AttoPrivateKey(val value: ByteArray) {
     }
 }
 
-@Serializable(with = AttoPublicKeySerializer::class)
+@Serializable
 data class AttoPublicKey(val value: ByteArray) {
     init {
         value.checkLength(32)

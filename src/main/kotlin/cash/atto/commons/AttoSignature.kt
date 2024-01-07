@@ -1,12 +1,11 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.AttoSignatureSerializer
 import kotlinx.serialization.Serializable
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
 
-@Serializable(with = AttoSignatureSerializer::class)
+@Serializable
 data class AttoSignature(val value: ByteArray) {
     companion object {
         const val SIZE = 64

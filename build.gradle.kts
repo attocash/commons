@@ -51,13 +51,16 @@ repositories {
 }
 
 dependencies {
+    val kotlinxSerializationVersion = "1.6.2"
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
-    
+
     implementation("org.bouncycastle:bcprov-jdk18on:1.77")
-    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlinxSerializationVersion")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlinxSerializationVersion")
     "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.10")
 }
 

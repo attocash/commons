@@ -1,19 +1,28 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package cash.atto.commons
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
+import kotlinx.serialization.*
+import kotlinx.serialization.protobuf.ProtoNumber
 
 val maxVersion: UShort = 0U
 
 enum class AttoBlockType(val code: UByte, val size: Int) {
+    @ProtoNumber(1)
     OPEN(0u, 117),
+
+    @ProtoNumber(2)
     RECEIVE(1u, 125),
+
+    @ProtoNumber(3)
     SEND(2u, 133),
+
+    @ProtoNumber(4)
     CHANGE(3u, 124),
 
+    @ProtoNumber(255)
     UNKNOWN(UByte.MAX_VALUE, 0);
 
     companion object {
@@ -94,15 +103,28 @@ interface RepresentativeSupport {
 @Serializable
 @SerialName("SEND")
 data class AttoSendBlock(
+    @ProtoNumber(1)
     override val version: UShort,
+    @ProtoNumber(2)
     override val algorithm: AttoAlgorithm,
+    @Contextual
+    @ProtoNumber(3)
     override val publicKey: AttoPublicKey,
+    @ProtoNumber(4)
     override val height: ULong,
+    @ProtoNumber(5)
     override val balance: AttoAmount,
+    @ProtoNumber(6)
     override val timestamp: Instant,
+    @Contextual
+    @ProtoNumber(7)
     override val previous: AttoHash,
+    @ProtoNumber(8)
     val receiverPublicKeyAlgorithm: AttoAlgorithm,
+    @Contextual
+    @ProtoNumber(9)
     val receiverPublicKey: AttoPublicKey,
+    @ProtoNumber(10)
     val amount: AttoAmount,
 ) : AttoBlock, PreviousSupport {
     @Transient
@@ -166,14 +188,26 @@ data class AttoSendBlock(
 @Serializable
 @SerialName("RECEIVE")
 data class AttoReceiveBlock(
+    @ProtoNumber(1)
     override val version: UShort,
+    @ProtoNumber(2)
     override val algorithm: AttoAlgorithm,
+    @Contextual
+    @ProtoNumber(3)
     override val publicKey: AttoPublicKey,
+    @ProtoNumber(4)
     override val height: ULong,
+    @ProtoNumber(5)
     override val balance: AttoAmount,
+    @ProtoNumber(6)
     override val timestamp: Instant,
+    @Contextual
+    @ProtoNumber(7)
     override val previous: AttoHash,
+    @ProtoNumber(8)
     override val sendHashAlgorithm: AttoAlgorithm,
+    @Contextual
+    @ProtoNumber(9)
     override val sendHash: AttoHash,
 ) : AttoBlock, PreviousSupport, ReceiveSupport {
     @Transient
@@ -235,13 +269,24 @@ data class AttoReceiveBlock(
 @Serializable
 @SerialName("OPEN")
 data class AttoOpenBlock(
+    @ProtoNumber(1)
     override val version: UShort,
+    @ProtoNumber(2)
     override val algorithm: AttoAlgorithm,
+    @Contextual
+    @ProtoNumber(3)
     override val publicKey: AttoPublicKey,
+    @ProtoNumber(4)
     override val balance: AttoAmount,
+    @ProtoNumber(5)
     override val timestamp: Instant,
+    @ProtoNumber(6)
     override val sendHashAlgorithm: AttoAlgorithm,
+    @Contextual
+    @ProtoNumber(7)
     override val sendHash: AttoHash,
+    @Contextual
+    @ProtoNumber(8)
     override val representative: AttoPublicKey,
 ) : AttoBlock, ReceiveSupport, RepresentativeSupport {
     @Transient
@@ -304,13 +349,24 @@ data class AttoOpenBlock(
 @Serializable
 @SerialName("CHANGE")
 data class AttoChangeBlock(
+    @ProtoNumber(1)
     override val version: UShort,
+    @ProtoNumber(2)
     override val algorithm: AttoAlgorithm,
+    @Contextual
+    @ProtoNumber(3)
     override val publicKey: AttoPublicKey,
+    @ProtoNumber(4)
     override val height: ULong,
+    @ProtoNumber(5)
     override val balance: AttoAmount,
+    @ProtoNumber(6)
     override val timestamp: Instant,
+    @Contextual
+    @ProtoNumber(7)
     override val previous: AttoHash,
+    @Contextual
+    @ProtoNumber(8)
     override val representative: AttoPublicKey,
 ) : AttoBlock, PreviousSupport, RepresentativeSupport {
     @Transient

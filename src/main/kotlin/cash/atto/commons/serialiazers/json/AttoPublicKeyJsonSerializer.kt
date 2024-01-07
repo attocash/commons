@@ -1,4 +1,4 @@
-package cash.atto.commons.serialiazers
+package cash.atto.commons.serialiazers.json
 
 import cash.atto.commons.AttoPublicKey
 import kotlinx.serialization.KSerializer
@@ -7,7 +7,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-object AttoPublicKeySerializer : KSerializer<AttoPublicKey> {
+object AttoPublicKeyJsonSerializer : KSerializer<AttoPublicKey> {
     override val descriptor = PrimitiveSerialDescriptor("AttoPublicKey", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: AttoPublicKey) {

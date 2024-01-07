@@ -1,7 +1,10 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package cash.atto.commons
 
+import cash.atto.commons.serialiazers.json.AttoJson
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
@@ -9,7 +12,7 @@ import kotlin.random.Random
 class AttoTransactionTest {
 
     @Test
-    fun serializeDeserialize() {
+    fun `should serialize json`() {
         // given
         val expectedTransaction = AttoTransaction(
             block = receiveBlock,
@@ -18,11 +21,10 @@ class AttoTransactionTest {
         )
 
         // when
-        val json = Json.encodeToString(expectedTransaction)
-        val transaction = Json.decodeFromString<AttoTransaction>(json)
+        val json = AttoJson.encodeToString(expectedTransaction)
+        val transaction = AttoJson.decodeFromString<AttoTransaction>(json)
 
         // then
         assertEquals(expectedTransaction, transaction)
     }
-
 }

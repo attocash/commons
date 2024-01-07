@@ -1,15 +1,13 @@
 package cash.atto.commons
 
-import java.util.*
-
-private val hexFormat = HexFormat.of().withUpperCase()
-
 fun ByteArray.toHex(): String {
-    return hexFormat.formatHex(this)
+    return joinToString("") { byte -> "%02X".format(byte) }
 }
 
 fun String.fromHexToByteArray(): ByteArray {
-    return hexFormat.parseHex(this)
+    return chunked(2)
+        .map { it.toInt(16).toByte() }
+        .toByteArray()
 }
 
 fun ByteArray.checkLength(size: Int) {

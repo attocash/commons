@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import cash.atto.commons.serialiazers.AttoAmountSerializer
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -9,7 +10,7 @@ enum class AttoUnit(val prefix: String, internal val multiplier: BigDecimal) {
     RAW("raw", BigDecimal(1))
 }
 
-@Serializable
+@Serializable(with = AttoAmountSerializer::class)
 data class AttoAmount(val raw: ULong) : Comparable<AttoAmount> {
     init {
         if (raw > MAX_RAW) {

@@ -4,7 +4,6 @@ import cash.atto.commons.AttoNetwork.Companion.DOUBLING_PERIOD
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_DATE
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
-import cash.atto.commons.serialiazers.AttoWorkSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -93,7 +92,7 @@ private class Worker(
     }
 }
 
-@Serializable(with = AttoWorkSerializer::class)
+@Serializable
 data class AttoWork(val value: ByteArray) {
     companion object {
         const val SIZE = 8
@@ -164,6 +163,6 @@ data class AttoWork(val value: ByteArray) {
     }
 
     override fun toString(): String {
-        return value.toHex().lowercase()
+        return value.toHex()
     }
 }

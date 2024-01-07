@@ -1,8 +1,14 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package cash.atto.commons
 
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
+import cash.atto.commons.serialiazers.json.AttoJson
+import cash.atto.commons.serialiazers.json.AttoWorkJsonSerializer
+import cash.atto.commons.serialiazers.protobuf.AttoProtobuf
 import kotlinx.datetime.*
+import kotlinx.serialization.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -79,4 +85,33 @@ internal class AttoWorkTest {
             )
         }
     }
+
+    @Test
+    fun `should serialize json`() {
+        // given
+        val expectedJson = "\"883175A7421F3696\""
+
+        // when
+        val work = AttoJson.decodeFromString(AttoWorkJsonSerializer, expectedJson)
+        val json = AttoJson.encodeToString(AttoWorkJsonSerializer, work)
+
+        // then
+        assertEquals(expectedJson, json)
+    }
+
+    @Test
+    fun `should serialize protobuf`() {
+        // given
+        val expectedProtobuf = "0A0876F1AAC9F2B56B14"
+
+        // when
+        val holder = AttoProtobuf.decodeFromHexString<Holder>(expectedProtobuf)
+        val protobuf = AttoProtobuf.encodeToHexString(holder).uppercase()
+
+        // then
+        assertEquals(expectedProtobuf, protobuf)
+    }
+
+    @Serializable
+    private data class Holder(@Contextual val work: AttoWork)
 }
