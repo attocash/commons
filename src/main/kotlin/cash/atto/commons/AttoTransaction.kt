@@ -4,19 +4,22 @@ package cash.atto.commons
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 data class AttoTransaction(
-    @ProtoNumber(1)
+    @ProtoNumber(0)
     val block: AttoBlock,
-    @ProtoNumber(2)
+    @ProtoNumber(1)
     val signature: AttoSignature,
-    @ProtoNumber(3)
+    @ProtoNumber(2)
     val work: AttoWork
 ) : HeightSupport {
+    @Transient
     val hash = block.hash
 
+    @Transient
     override val height = block.height
 
     companion object {

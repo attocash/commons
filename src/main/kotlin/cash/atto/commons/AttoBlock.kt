@@ -10,20 +10,20 @@ import kotlinx.serialization.protobuf.ProtoNumber
 val maxVersion: UShort = 0U
 
 enum class AttoBlockType(val code: UByte, val size: Int) {
-    @ProtoNumber(1)
+    @ProtoNumber(255)
+    UNKNOWN(UByte.MAX_VALUE, 0),
+
+    @ProtoNumber(0)
     OPEN(0u, 117),
 
-    @ProtoNumber(2)
+    @ProtoNumber(1)
     RECEIVE(1u, 125),
 
-    @ProtoNumber(3)
+    @ProtoNumber(2)
     SEND(2u, 133),
 
-    @ProtoNumber(4)
-    CHANGE(3u, 124),
-
-    @ProtoNumber(255)
-    UNKNOWN(UByte.MAX_VALUE, 0);
+    @ProtoNumber(3)
+    CHANGE(3u, 124);
 
     companion object {
         private val map = entries.associateBy(AttoBlockType::code)
@@ -103,28 +103,28 @@ interface RepresentativeSupport {
 @Serializable
 @SerialName("SEND")
 data class AttoSendBlock(
-    @ProtoNumber(1)
+    @ProtoNumber(0)
     override val version: UShort,
-    @ProtoNumber(2)
+    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
-    @ProtoNumber(3)
+    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(4)
+    @ProtoNumber(3)
     override val height: ULong,
-    @ProtoNumber(5)
+    @ProtoNumber(4)
     override val balance: AttoAmount,
-    @ProtoNumber(6)
+    @ProtoNumber(5)
     override val timestamp: Instant,
     @Contextual
-    @ProtoNumber(7)
+    @ProtoNumber(6)
     override val previous: AttoHash,
-    @ProtoNumber(8)
+    @ProtoNumber(7)
     val receiverPublicKeyAlgorithm: AttoAlgorithm,
     @Contextual
-    @ProtoNumber(9)
+    @ProtoNumber(8)
     val receiverPublicKey: AttoPublicKey,
-    @ProtoNumber(10)
+    @ProtoNumber(9)
     val amount: AttoAmount,
 ) : AttoBlock, PreviousSupport {
     @Transient
@@ -188,26 +188,26 @@ data class AttoSendBlock(
 @Serializable
 @SerialName("RECEIVE")
 data class AttoReceiveBlock(
-    @ProtoNumber(1)
+    @ProtoNumber(0)
     override val version: UShort,
-    @ProtoNumber(2)
+    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
-    @ProtoNumber(3)
+    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(4)
+    @ProtoNumber(3)
     override val height: ULong,
-    @ProtoNumber(5)
+    @ProtoNumber(4)
     override val balance: AttoAmount,
-    @ProtoNumber(6)
+    @ProtoNumber(5)
     override val timestamp: Instant,
     @Contextual
-    @ProtoNumber(7)
+    @ProtoNumber(6)
     override val previous: AttoHash,
-    @ProtoNumber(8)
+    @ProtoNumber(7)
     override val sendHashAlgorithm: AttoAlgorithm,
     @Contextual
-    @ProtoNumber(9)
+    @ProtoNumber(8)
     override val sendHash: AttoHash,
 ) : AttoBlock, PreviousSupport, ReceiveSupport {
     @Transient
@@ -269,24 +269,24 @@ data class AttoReceiveBlock(
 @Serializable
 @SerialName("OPEN")
 data class AttoOpenBlock(
-    @ProtoNumber(1)
+    @ProtoNumber(0)
     override val version: UShort,
-    @ProtoNumber(2)
+    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
-    @ProtoNumber(3)
+    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(4)
+    @ProtoNumber(3)
     override val balance: AttoAmount,
-    @ProtoNumber(5)
+    @ProtoNumber(4)
     override val timestamp: Instant,
-    @ProtoNumber(6)
+    @ProtoNumber(5)
     override val sendHashAlgorithm: AttoAlgorithm,
     @Contextual
-    @ProtoNumber(7)
+    @ProtoNumber(6)
     override val sendHash: AttoHash,
     @Contextual
-    @ProtoNumber(8)
+    @ProtoNumber(7)
     override val representative: AttoPublicKey,
 ) : AttoBlock, ReceiveSupport, RepresentativeSupport {
     @Transient
@@ -349,24 +349,24 @@ data class AttoOpenBlock(
 @Serializable
 @SerialName("CHANGE")
 data class AttoChangeBlock(
-    @ProtoNumber(1)
+    @ProtoNumber(0)
     override val version: UShort,
-    @ProtoNumber(2)
+    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
-    @ProtoNumber(3)
+    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(4)
+    @ProtoNumber(3)
     override val height: ULong,
-    @ProtoNumber(5)
+    @ProtoNumber(4)
     override val balance: AttoAmount,
-    @ProtoNumber(6)
+    @ProtoNumber(5)
     override val timestamp: Instant,
     @Contextual
-    @ProtoNumber(7)
+    @ProtoNumber(6)
     override val previous: AttoHash,
     @Contextual
-    @ProtoNumber(8)
+    @ProtoNumber(7)
     override val representative: AttoPublicKey,
 ) : AttoBlock, PreviousSupport, RepresentativeSupport {
     @Transient

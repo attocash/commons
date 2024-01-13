@@ -13,11 +13,11 @@ enum class AttoAlgorithm(
     val publicKeySize: Int,
     val hashSize: Int,
 ) {
-    @ProtoNumber(1)
-    V1(0u, 32, 32, 32), // BLAKE2B + ED25519
-
     @ProtoNumber(255)
-    UNKNOWN(UByte.MAX_VALUE, 0, 0, 0);
+    UNKNOWN(UByte.MAX_VALUE, 0, 0, 0),
+
+    @ProtoNumber(0)
+    V1(0u, 32, 32, 32); // BLAKE2B + ED25519
 
     companion object {
         private val map = AttoAlgorithm.entries.associateBy(AttoAlgorithm::code)

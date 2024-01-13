@@ -29,7 +29,7 @@ class AttoAlgorithmTest {
     @Test
     fun `should serialize protobuf`() {
         // given
-        val expectedProtobuf = "01"
+        val expectedProtobuf = "00"
 
         // when
         val algorithm = AttoProtobuf.decodeFromHexString<AttoAlgorithm>(expectedProtobuf)
