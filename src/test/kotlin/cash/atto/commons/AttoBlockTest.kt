@@ -150,7 +150,6 @@ class AttoBlockTest {
     }
 }
 
-
 val openBlock = AttoOpenBlock(
     version = 0U,
     algorithm = AttoAlgorithm.V1,

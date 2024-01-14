@@ -173,6 +173,7 @@ data class AttoSendBlock(
             .add(receiverPublicKeyAlgorithm)
             .add(receiverPublicKey)
             .add(amount)
+            .resetIndex()
     }
 
     override fun isValid(): Boolean {
@@ -255,6 +256,7 @@ data class AttoReceiveBlock(
             .add(previous)
             .add(sendHashAlgorithm)
             .add(sendHash)
+            .resetIndex()
     }
 
     override fun isValid(): Boolean {
@@ -334,6 +336,7 @@ data class AttoOpenBlock(
             .add(sendHashAlgorithm)
             .add(sendHash)
             .add(representative)
+            .resetIndex()
     }
 
     override fun isValid(): Boolean {
@@ -411,6 +414,7 @@ data class AttoChangeBlock(
             .add(timestamp)
             .add(previous)
             .add(representative)
+            .resetIndex()
     }
 
     override fun isValid(): Boolean {

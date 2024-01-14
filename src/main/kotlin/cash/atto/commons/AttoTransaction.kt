@@ -2,6 +2,7 @@
 
 package cash.atto.commons
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -12,8 +13,10 @@ data class AttoTransaction(
     @ProtoNumber(0)
     val block: AttoBlock,
     @ProtoNumber(1)
+    @Contextual
     val signature: AttoSignature,
     @ProtoNumber(2)
+    @Contextual
     val work: AttoWork
 ) : HeightSupport {
     @Transient
@@ -63,7 +66,6 @@ data class AttoTransaction(
             return false
         }
 
-
         if (!signature.isValid(block.publicKey, block.hash)) {
             return false
         }
@@ -83,6 +85,7 @@ data class AttoTransaction(
             .add(block.toByteBuffer())
             .add(signature)
             .add(work)
+            .resetIndex()
     }
 
     override fun toString(): String {

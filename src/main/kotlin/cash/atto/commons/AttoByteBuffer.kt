@@ -10,7 +10,8 @@ class AttoByteBuffer {
     private val byteBuffer: ByteBuffer
     val size: Int
 
-    private var lastIndex = 0
+    var lastIndex = 0
+        private set
 
     private constructor(byteBuffer: ByteBuffer) {
         this.byteBuffer = byteBuffer
@@ -45,7 +46,7 @@ class AttoByteBuffer {
     }
 
     fun add(byteBuffer: AttoByteBuffer): AttoByteBuffer {
-        this.byteBuffer.put(byteBuffer.byteBuffer.flip())
+        this.byteBuffer.put(byteBuffer.byteBuffer)
         return this
     }
 
@@ -54,23 +55,21 @@ class AttoByteBuffer {
         return this
     }
 
-    fun toByteArray(): ByteArray {
-        val byteArray = ByteArray(size)
-
-        byteBuffer.get(0, byteArray)
-
-        return byteArray
-    }
-
-    fun toHex(): String {
-        return toByteArray().toHex()
-    }
-
     fun getByteArray(index: Int, length: Int): ByteArray {
         val byteArray = ByteArray(length)
         this.lastIndex = index + byteArray.size
         byteBuffer.get(index, byteArray)
         return byteArray
+    }
+
+    fun toByteArray(): ByteArray {
+        val byteArray = ByteArray(size)
+        byteBuffer.get(0, byteArray)
+        return byteArray
+    }
+
+    fun toHex(): String {
+        return toByteArray().toHex()
     }
 
     fun toHash(): AttoHash {
@@ -340,6 +339,12 @@ class AttoByteBuffer {
         val port = getUShort().toInt()
 
         return InetSocketAddress(address, port)
+    }
+
+    fun resetIndex(): AttoByteBuffer {
+        lastIndex = 0
+        byteBuffer.flip()
+        return this
     }
 
     override fun toString(): String {

@@ -51,7 +51,6 @@ internal class AttoSignatureTest {
 
     @Test
     fun `should serialize json`() {
-        println(AttoJson.encodeToString(AttoSignatureJsonSerializer, AttoSignature(Random.nextBytes(64))))
         // given
         val expectedJson =
             "\"B2DE82D68C24A618B4B3C5077F90779757B071737108FB7B131AB658320B8347DC9530DB0277D7802FE05C9EE5E845ED5D7D9E8B6812D55051F89B2C7084B584\""
