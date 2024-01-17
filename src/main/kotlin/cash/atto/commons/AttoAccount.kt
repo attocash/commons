@@ -2,19 +2,20 @@ package cash.atto.commons
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 
 @Serializable
 data class AttoAccount(
-    val publicKey: AttoPublicKey,
-    var version: UShort,
-    var algorithm: AttoAlgorithm,
-    override var height: ULong,
-    var balance: AttoAmount,
-    var lastTransactionHash: AttoHash,
-    var lastTransactionTimestamp: Instant,
-    var representative: AttoPublicKey,
+    @Contextual val publicKey: AttoPublicKey,
+    val version: UShort,
+    val algorithm: AttoAlgorithm,
+    override val height: ULong,
+    val balance: AttoAmount,
+    @Contextual val lastTransactionHash: AttoHash,
+    val lastTransactionTimestamp: Instant,
+    @Contextual val representative: AttoPublicKey,
 ) : HeightSupport {
 
     companion object {
