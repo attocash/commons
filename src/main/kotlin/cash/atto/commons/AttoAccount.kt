@@ -58,17 +58,17 @@ data class AttoAccount(
         )
     }
 
-    fun receive(sendBlock: AttoSendBlock): AttoReceiveBlock {
+    fun receive(receivable: AttoReceivable): AttoReceiveBlock {
         return AttoReceiveBlock(
-            version = max(version, sendBlock.version),
+            version = max(version, receivable.version),
             algorithm = algorithm,
             publicKey = publicKey,
             height = height + 1U,
-            balance = balance.plus(sendBlock.amount),
+            balance = balance.plus(receivable.amount),
             timestamp = Clock.System.now(),
             previous = lastTransactionHash,
-            sendHashAlgorithm = sendBlock.algorithm,
-            sendHash = sendBlock.hash,
+            sendHashAlgorithm = receivable.algorithm,
+            sendHash = receivable.hash,
         )
     }
 
