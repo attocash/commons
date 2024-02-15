@@ -14,7 +14,7 @@ class AttoReceivableTest {
             hash = AttoHash(Random.Default.nextBytes(32)),
             version = 0U,
             algorithm = AttoAlgorithm.V1,
-            receiverPublicKeyAlgorithm = AttoAlgorithm.V1,
+            receiverAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
             amount = AttoAmount.MAX,
         )
@@ -31,7 +31,7 @@ class AttoReceivableTest {
     fun `should deserialize json`() {
         // given
         val expectedJson =
-            """{"hash":"0AF0F63BFE4DBC588F95FC3B154DE848AA9A5DD5604BAC99AE9E21C5EA8B4F64","version":0,"algorithm":"V1","receiverPublicKey":"0C400961629D759176F009249A33899440900ABCE275F6C5C01C6F7F37A2C59A","amount":18000000000000000000}"""
+            """{"hash":"0AF0F63BFE4DBC588F95FC3B154DE848AA9A5DD5604BAC99AE9E21C5EA8B4F64","version":0,"algorithm":"V1","receiverAlgorithm":"V1","receiverPublicKey":"0C400961629D759176F009249A33899440900ABCE275F6C5C01C6F7F37A2C59A","amount":18000000000000000000}"""
 
         // when
         val receivable = AttoJson.decodeFromString<AttoReceivable>(expectedJson)

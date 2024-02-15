@@ -9,7 +9,7 @@ data class AttoReceivable(
     val hash: AttoHash,
     val version: UShort,
     val algorithm: AttoAlgorithm,
-    val receiverPublicKeyAlgorithm: AttoAlgorithm,
+    val receiverAlgorithm: AttoAlgorithm,
     @Contextual
     val receiverPublicKey: AttoPublicKey,
     val amount: AttoAmount
@@ -20,7 +20,7 @@ fun AttoSendBlock.toReceivable(): AttoReceivable {
         hash = this.hash,
         version = this.version,
         algorithm = this.algorithm,
-        receiverPublicKeyAlgorithm = this.receiverPublicKeyAlgorithm,
+        receiverAlgorithm = this.receiverAlgorithm,
         receiverPublicKey = this.receiverPublicKey,
         amount = this.amount
     )

@@ -112,7 +112,7 @@ class AttoBlockTest {
         fun jsonBlockProvider(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of(
-                    """{"type":"SEND","version":0,"algorithm":"V1","publicKey":"A5E7E4B3B93150314E1177D5B9DE0057626B16A4B3C3F1DB37DF67628A5EF457","height":2,"balance":1,"timestamp":"2024-01-07T08:26:49.211Z","previous":"6CC2D3A7513723B1BA59DE784BA546BAF6447464D0BA3D80004752D6F9F4BA23","receiverPublicKeyAlgorithm":"V1","receiverPublicKey":"552254E101B51B22080D084C12C94BF7DFC5BE0D973025D62C0BC1FF4D9B145F","amount":1}"""
+                    """{"type":"SEND","version":0,"algorithm":"V1","publicKey":"A5E7E4B3B93150314E1177D5B9DE0057626B16A4B3C3F1DB37DF67628A5EF457","height":2,"balance":1,"timestamp":"2024-01-07T08:26:49.211Z","previous":"6CC2D3A7513723B1BA59DE784BA546BAF6447464D0BA3D80004752D6F9F4BA23","receiverAlgorithm":"V1","receiverPublicKey":"552254E101B51B22080D084C12C94BF7DFC5BE0D973025D62C0BC1FF4D9B145F","amount":1}"""
                 ),
                 Arguments.of(
                     """{"type":"RECEIVE","version":0,"algorithm":"V1","publicKey":"39B56483A0DE38D9578CAF7EA791C2FEC96B318C7BD9989207B575334C5D9F1B","height":2,"balance":18000000000000000000,"timestamp":"2024-01-07T08:26:49.216Z","previous":"03783A08F51486A66A602439D9164894F07F150B548911086DAE4E4F57A9C4DD","sendHashAlgorithm":"V1","sendHash":"EE5FDA9A1ACEC7A09231792C345CDF5CD29F1059E5C413535D9FCA66A1FB2F49"}"""
@@ -144,7 +144,7 @@ class AttoBlockTest {
                 Arguments.of(changeBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)), // unknown account algorithm
                 Arguments.of(openBlock.copy(sendHashAlgorithm = AttoAlgorithm.UNKNOWN)), // unknown send algorithm
                 Arguments.of(receiveBlock.copy(sendHashAlgorithm = AttoAlgorithm.UNKNOWN)), // unknown send algorithm
-                Arguments.of(sendBlock.copy(receiverPublicKeyAlgorithm = AttoAlgorithm.UNKNOWN)), // unknown receiver algorithm
+                Arguments.of(sendBlock.copy(receiverAlgorithm = AttoAlgorithm.UNKNOWN)), // unknown receiver algorithm
             )
         }
     }
@@ -169,7 +169,7 @@ val sendBlock = AttoSendBlock(
     balance = AttoAmount(1U),
     timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
     previous = AttoHash(Random.Default.nextBytes(ByteArray(32))),
-    receiverPublicKeyAlgorithm = AttoAlgorithm.V1,
+    receiverAlgorithm = AttoAlgorithm.V1,
     receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
     amount = AttoAmount(1U),
 )

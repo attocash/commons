@@ -25,7 +25,7 @@ data class AttoAccount(
         ): AttoOpenBlock {
             return AttoOpenBlock(
                 version = receivable.version,
-                algorithm = receivable.receiverPublicKeyAlgorithm,
+                algorithm = receivable.receiverAlgorithm,
                 publicKey = receivable.receiverPublicKey,
                 balance = receivable.amount,
                 timestamp = Clock.System.now(),
@@ -37,7 +37,7 @@ data class AttoAccount(
     }
 
     fun send(
-        receiverPublicKeyAlgorithm: AttoAlgorithm,
+        receiverAlgorithm: AttoAlgorithm,
         receiverPublicKey: AttoPublicKey,
         amount: AttoAmount
     ): AttoSendBlock {
@@ -52,7 +52,7 @@ data class AttoAccount(
             balance = balance.minus(amount),
             timestamp = Clock.System.now(),
             previous = lastTransactionHash,
-            receiverPublicKeyAlgorithm = receiverPublicKeyAlgorithm,
+            receiverAlgorithm = receiverAlgorithm,
             receiverPublicKey = receiverPublicKey,
             amount = amount,
         )

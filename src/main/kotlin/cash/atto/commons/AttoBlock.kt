@@ -120,7 +120,7 @@ data class AttoSendBlock(
     @ProtoNumber(6)
     override val previous: AttoHash,
     @ProtoNumber(7)
-    val receiverPublicKeyAlgorithm: AttoAlgorithm,
+    val receiverAlgorithm: AttoAlgorithm,
     @Contextual
     @ProtoNumber(8)
     val receiverPublicKey: AttoPublicKey,
@@ -152,7 +152,7 @@ data class AttoSendBlock(
                 balance = serializedBlock.getAmount(),
                 timestamp = serializedBlock.getInstant(),
                 previous = serializedBlock.getBlockHash(),
-                receiverPublicKeyAlgorithm = serializedBlock.getAlgorithm(),
+                receiverAlgorithm = serializedBlock.getAlgorithm(),
                 receiverPublicKey = serializedBlock.getPublicKey(),
                 amount = serializedBlock.getAmount(),
             )
@@ -170,7 +170,7 @@ data class AttoSendBlock(
             .add(balance)
             .add(timestamp)
             .add(previous)
-            .add(receiverPublicKeyAlgorithm)
+            .add(receiverAlgorithm)
             .add(receiverPublicKey)
             .add(amount)
             .resetIndex()
@@ -181,8 +181,8 @@ data class AttoSendBlock(
                 height > 1u &&
                 amount.raw > 0u &&
                 receiverPublicKey != publicKey &&
-                receiverPublicKeyAlgorithm != AttoAlgorithm.UNKNOWN &&
-                receiverPublicKeyAlgorithm.publicKeySize == receiverPublicKey.value.size
+                receiverAlgorithm != AttoAlgorithm.UNKNOWN &&
+                receiverAlgorithm.publicKeySize == receiverPublicKey.value.size
     }
 }
 
