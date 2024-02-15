@@ -21,16 +21,16 @@ data class AttoAccount(
     companion object {
         fun open(
             representative: AttoPublicKey,
-            sendBlock: AttoSendBlock
+            receivable: AttoReceivable,
         ): AttoOpenBlock {
             return AttoOpenBlock(
-                version = sendBlock.version,
-                algorithm = sendBlock.receiverPublicKeyAlgorithm,
-                publicKey = sendBlock.receiverPublicKey,
-                balance = sendBlock.amount,
+                version = receivable.version,
+                algorithm = receivable.receiverPublicKeyAlgorithm,
+                publicKey = receivable.receiverPublicKey,
+                balance = receivable.amount,
                 timestamp = Clock.System.now(),
-                sendHashAlgorithm = sendBlock.algorithm,
-                sendHash = sendBlock.hash,
+                sendHashAlgorithm = receivable.algorithm,
+                sendHash = receivable.hash,
                 representative = representative,
             )
         }

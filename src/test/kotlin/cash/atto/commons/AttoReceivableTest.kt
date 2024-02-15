@@ -14,6 +14,7 @@ class AttoReceivableTest {
             hash = AttoHash(Random.Default.nextBytes(32)),
             version = 0U,
             algorithm = AttoAlgorithm.V1,
+            receiverPublicKeyAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
             amount = AttoAmount.MAX,
         )
