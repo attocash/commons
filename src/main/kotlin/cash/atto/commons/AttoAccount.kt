@@ -1,20 +1,36 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package cash.atto.commons
 
+import cash.atto.commons.serialiazers.InstantMillisSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
 
 
 @Serializable
 data class AttoAccount(
-    @Contextual val publicKey: AttoPublicKey,
+    @ProtoNumber(0)
+    @Contextual
+    val publicKey: AttoPublicKey,
+    @ProtoNumber(1)
     val version: UShort,
+    @ProtoNumber(2)
     val algorithm: AttoAlgorithm,
+    @ProtoNumber(3)
     override val height: ULong,
+    @ProtoNumber(4)
     val balance: AttoAmount,
-    @Contextual val lastTransactionHash: AttoHash,
+    @ProtoNumber(5)
+    @Contextual
+    val lastTransactionHash: AttoHash,
+    @ProtoNumber(6)
+    @Serializable(with = InstantMillisSerializer::class)
     val lastTransactionTimestamp: Instant,
+    @ProtoNumber(7)
     @Contextual val representative: AttoPublicKey,
 ) : HeightSupport {
 

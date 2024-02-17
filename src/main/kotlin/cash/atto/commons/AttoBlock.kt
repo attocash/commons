@@ -2,6 +2,7 @@
 
 package cash.atto.commons
 
+import cash.atto.commons.serialiazers.InstantMillisSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.*
@@ -115,6 +116,7 @@ data class AttoSendBlock(
     @ProtoNumber(4)
     override val balance: AttoAmount,
     @ProtoNumber(5)
+    @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
     @Contextual
     @ProtoNumber(6)
@@ -201,6 +203,7 @@ data class AttoReceiveBlock(
     @ProtoNumber(4)
     override val balance: AttoAmount,
     @ProtoNumber(5)
+    @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
     @Contextual
     @ProtoNumber(6)
@@ -281,6 +284,7 @@ data class AttoOpenBlock(
     @ProtoNumber(3)
     override val balance: AttoAmount,
     @ProtoNumber(4)
+    @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
     @ProtoNumber(5)
     override val sendHashAlgorithm: AttoAlgorithm,
@@ -364,6 +368,7 @@ data class AttoChangeBlock(
     @ProtoNumber(4)
     override val balance: AttoAmount,
     @ProtoNumber(5)
+    @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
     @Contextual
     @ProtoNumber(6)
