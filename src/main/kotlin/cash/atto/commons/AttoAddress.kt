@@ -3,7 +3,7 @@ package cash.atto.commons
 import org.bouncycastle.util.encoders.Base32
 
 
-private const val PREFIX = "atto_"
+private const val PREFIX = "atto:"
 
 private fun ByteArray.toAddress(): String {
     require(this.size == 38) { "ByteArray should have 38 bytes" }

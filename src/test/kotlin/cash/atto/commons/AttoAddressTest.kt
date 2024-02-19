@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 internal class AttoAddressTest {
     private val expectedAccount =
-        AttoAddress.parse("atto_aarfzz26z5pfwrkdcwt4jdhhe2vvixscqwehgmfjqxku43rgtjso5p5cjw6fw")
+        AttoAddress.parse("atto:aarfzz26z5pfwrkdcwt4jdhhe2vvixscqwehgmfjqxku43rgtjso5p5cjw6fw")
 
     @Test
     fun `should create account`() {
@@ -33,7 +33,7 @@ internal class AttoAddressTest {
     @Test
     fun `should throw illegal argument exception when regex doesn't match`() {
         // given
-        val wrongAccount = expectedAccount.value.replace("atto_", "nano_")
+        val wrongAccount = expectedAccount.value.replace("atto:", "nano_")
 
         // when
         Assertions.assertThrows(IllegalArgumentException::class.java) {
