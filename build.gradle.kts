@@ -54,7 +54,7 @@ repositories {
 
 dependencies {
     val kotlinxSerializationVersion = "1.6.3"
-    api("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+    api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
     implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
