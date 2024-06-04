@@ -61,7 +61,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlinxSerializationVersion")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
-    "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.10")
+    "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.11")
 }
 
 tasks.withType<KotlinCompile> {
