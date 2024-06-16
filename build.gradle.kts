@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     val kotlinVersion = "2.0.0"
@@ -53,7 +54,7 @@ repositories {
 }
 
 dependencies {
-    val kotlinxSerializationVersion = "1.6.3"
+    val kotlinxSerializationVersion = "1.7.0"
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
     implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
@@ -65,9 +66,9 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_9)
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "9"
     }
 }
 
