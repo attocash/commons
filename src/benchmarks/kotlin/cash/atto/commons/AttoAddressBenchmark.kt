@@ -8,11 +8,11 @@ import org.openjdk.jmh.annotations.State
 open class AttoAddressBenchmark {
     private val privateKey = AttoPrivateKey.generate()
     private val publicKey = privateKey.toPublicKey()
-    private val address = publicKey.toAddress()
+    private val address = publicKey.toAddress(AttoAlgorithm.V1)
 
     @Benchmark
     fun toAddress() {
-        publicKey.toAddress()
+        publicKey.toAddress(AttoAlgorithm.V1)
     }
 
     @Benchmark
