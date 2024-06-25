@@ -5,13 +5,18 @@ import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.math.BigInteger
 
-enum class AttoUnit(val prefix: String, internal val multiplier: BigDecimal) {
+enum class AttoUnit(
+    val prefix: String,
+    internal val multiplier: BigDecimal,
+) {
     ATTO("atto", BigDecimal(1_000_000_000)),
-    RAW("raw", BigDecimal(1))
+    RAW("raw", BigDecimal(1)),
 }
 
 @Serializable(with = AttoAmountSerializer::class)
-data class AttoAmount(val raw: ULong) : Comparable<AttoAmount> {
+data class AttoAmount(
+    val raw: ULong,
+) : Comparable<AttoAmount> {
     init {
         if (raw > MAX_RAW) {
             throw IllegalStateException("$raw exceeds the max amount of $MAX_RAW")
@@ -24,7 +29,10 @@ data class AttoAmount(val raw: ULong) : Comparable<AttoAmount> {
         private val MIN_RAW = 0UL
         val MIN = AttoAmount(MIN_RAW)
 
-        fun from(unit: AttoUnit, bigDecimal: BigDecimal): AttoAmount {
+        fun from(
+            unit: AttoUnit,
+            bigDecimal: BigDecimal,
+        ): AttoAmount {
             return bigDecimal.multiply(unit.multiplier).toAttoAmount()
         }
     }
@@ -49,29 +57,15 @@ data class AttoAmount(val raw: ULong) : Comparable<AttoAmount> {
         return AttoAmount(total)
     }
 
-    override operator fun compareTo(other: AttoAmount): Int {
-        return this.raw.compareTo(other.raw)
-    }
+    override operator fun compareTo(other: AttoAmount): Int = this.raw.compareTo(other.raw)
 
-    override fun toString(): String {
-        return "$raw"
-    }
-
-
+    override fun toString(): String = "$raw"
 }
 
-fun ULong.toAttoAmount(): AttoAmount {
-    return AttoAmount(this)
-}
+fun ULong.toAttoAmount(): AttoAmount = AttoAmount(this)
 
-fun String.toAttoAmount(): AttoAmount {
-    return AttoAmount(this.toULong())
-}
+fun String.toAttoAmount(): AttoAmount = AttoAmount(this.toULong())
 
-fun BigInteger.toAttoAmount(): AttoAmount {
-    return AttoAmount(toString().toULong())
-}
+fun BigInteger.toAttoAmount(): AttoAmount = AttoAmount(toString().toULong())
 
-fun BigDecimal.toAttoAmount(): AttoAmount {
-    return AttoAmount(toString().toULong())
-}
+fun BigDecimal.toAttoAmount(): AttoAmount = AttoAmount(toString().toULong())

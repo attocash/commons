@@ -6,11 +6,9 @@ import java.nio.file.Paths
 import java.security.MessageDigest
 import java.security.SecureRandom
 
-
 private val fileLocation = AttoMnemonic::class.java.classLoader.getResource("mnemonics/english.txt")!!
 private val dictionary = Files.readAllLines(Paths.get(fileLocation.toURI()))
 private val dictionaryMap = dictionary.indices.associateBy({ dictionary[it] }) { it }
-
 
 private fun toEntropyWithChecksum(words: List<String>): ByteArray {
     val buffer = ByteBuffer.allocate(33)
@@ -42,7 +40,6 @@ private fun checksum(entropy: ByteArray): Byte {
     val checksum = digest.digest()
     return checksum[0]
 }
-
 
 class AttoMnemonic {
     val words: List<String>
@@ -112,17 +109,11 @@ class AttoMnemonic {
         return true
     }
 
-    override fun hashCode(): Int {
-        return words.hashCode()
-    }
+    override fun hashCode(): Int = words.hashCode()
 
-    override fun toString(): String {
-        return "AttoMnemonic(words=${words.size})"
-    }
-
-
+    override fun toString(): String = "AttoMnemonic(words=${words.size})"
 }
 
-class AttoMnemonicException(message: String) : RuntimeException(message)
-
-
+class AttoMnemonicException(
+    message: String,
+) : RuntimeException(message)

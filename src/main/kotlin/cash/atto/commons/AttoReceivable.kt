@@ -22,16 +22,15 @@ data class AttoReceivable(
     @Contextual
     val receiverPublicKey: AttoPublicKey,
     @ProtoNumber(5)
-    val amount: AttoAmount
+    val amount: AttoAmount,
 )
 
-fun AttoSendBlock.toReceivable(): AttoReceivable {
-    return AttoReceivable(
+fun AttoSendBlock.toReceivable(): AttoReceivable =
+    AttoReceivable(
         hash = this.hash,
         version = this.version,
         algorithm = this.algorithm,
         receiverAlgorithm = this.receiverAlgorithm,
         receiverPublicKey = this.receiverPublicKey,
-        amount = this.amount
+        amount = this.amount,
     )
-}

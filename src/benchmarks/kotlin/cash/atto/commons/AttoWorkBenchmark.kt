@@ -22,5 +22,4 @@ open class AttoWorkBenchmark {
     fun isValid() {
         AttoWork.isValid(network, timestamp, hash, work)
     }
-
 }

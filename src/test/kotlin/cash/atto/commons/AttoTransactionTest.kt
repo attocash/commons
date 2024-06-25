@@ -18,23 +18,25 @@ class AttoTransactionTest {
     val privateKey = AttoPrivateKey.generate()
     val publicKey = privateKey.toPublicKey()
 
-    val receiveBlock = AttoReceiveBlock(
-        version = 0U,
-        algorithm = AttoAlgorithm.V1,
-        publicKey = publicKey,
-        height = 2U,
-        balance = AttoAmount.MAX,
-        timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
-        previous = AttoHash(Random.nextBytes(ByteArray(32))),
-        sendHashAlgorithm = AttoAlgorithm.V1,
-        sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32)))
-    )
+    val receiveBlock =
+        AttoReceiveBlock(
+            version = 0U,
+            algorithm = AttoAlgorithm.V1,
+            publicKey = publicKey,
+            height = 2U,
+            balance = AttoAmount.MAX,
+            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            previous = AttoHash(Random.nextBytes(ByteArray(32))),
+            sendHashAlgorithm = AttoAlgorithm.V1,
+            sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
+        )
 
-    val expectedTransaction = AttoTransaction(
-        block = receiveBlock,
-        signature = privateKey.sign(receiveBlock.hash),
-        work = AttoWork.work(AttoNetwork.LOCAL, receiveBlock.timestamp, receiveBlock.previous)
-    )
+    val expectedTransaction =
+        AttoTransaction(
+            block = receiveBlock,
+            signature = privateKey.sign(receiveBlock.hash),
+            work = AttoWork.work(AttoNetwork.LOCAL, receiveBlock.timestamp, receiveBlock.previous),
+        )
 
     @Test
     fun `should serialize byteBuffer`() {
@@ -65,5 +67,4 @@ class AttoTransactionTest {
         // then
         assertEquals(expectedTransaction, transaction)
     }
-
 }

@@ -12,5 +12,4 @@ open class AttoSeedBenchmark {
     fun toSeed() {
         mnemonic.toSeed()
     }
-
 }

@@ -11,11 +11,12 @@ import kotlinx.serialization.encoding.Encoder
 object AttoSignatureProtobufSerializer : KSerializer<AttoSignature> {
     override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.BYTE)
 
-    override fun serialize(encoder: Encoder, value: AttoSignature) {
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoSignature,
+    ) {
         encoder.encodeSerializableValue(ByteArraySerializer(), value.value)
     }
 
-    override fun deserialize(decoder: Decoder): AttoSignature {
-        return AttoSignature(decoder.decodeSerializableValue(ByteArraySerializer()))
-    }
+    override fun deserialize(decoder: Decoder): AttoSignature = AttoSignature(decoder.decodeSerializableValue(ByteArraySerializer()))
 }

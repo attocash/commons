@@ -2,7 +2,6 @@ package cash.atto.commons
 
 import org.bouncycastle.util.encoders.Base32
 
-
 private const val PREFIX = "atto:"
 
 private fun ByteArray.toAddress(): String {
@@ -14,7 +13,9 @@ private fun String.fromAddress(): ByteArray {
     return Base32.decode(this.substring(PREFIX.length).uppercase() + "===")
 }
 
-data class AttoAddress(val algorithmPublicKey: AttoAlgorithmPublicKey) {
+data class AttoAddress(
+    val algorithmPublicKey: AttoAlgorithmPublicKey,
+) {
     val algorithm = algorithmPublicKey.algorithm
     val publicKey = algorithmPublicKey.publicKey
     val value = toAddress(algorithmPublicKey)
@@ -23,13 +24,13 @@ data class AttoAddress(val algorithmPublicKey: AttoAlgorithmPublicKey) {
 
     companion object {
         private val regex = "^$PREFIX[a-z2-7]{61}$".toRegex()
-        private const val CHECKSUM_SIZE = 5;
+        private const val CHECKSUM_SIZE = 5
 
         private fun checksum(algorithmPublicKey: AttoAlgorithmPublicKey): ByteArray {
             return hashRaw(
                 CHECKSUM_SIZE,
                 byteArrayOf(algorithmPublicKey.algorithm.code.toByte()),
-                algorithmPublicKey.publicKey.value
+                algorithmPublicKey.publicKey.value,
             )
         }
 
@@ -73,11 +74,7 @@ data class AttoAddress(val algorithmPublicKey: AttoAlgorithmPublicKey) {
         }
     }
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString(): String = value
 }
 
-fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress {
-    return AttoAddress(algorithm, this)
-}
+fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)

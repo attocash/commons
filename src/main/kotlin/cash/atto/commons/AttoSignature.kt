@@ -6,14 +6,20 @@ import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
 
 @Serializable
-data class AttoSignature(val value: ByteArray) {
+data class AttoSignature(
+    val value: ByteArray,
+) {
     companion object {
         const val SIZE = 64
+
         fun parse(value: String): AttoSignature {
             return AttoSignature(value.fromHexToByteArray())
         }
 
-        fun sign(privateKey: AttoPrivateKey, hash: AttoHash): AttoSignature {
+        fun sign(
+            privateKey: AttoPrivateKey,
+            hash: AttoHash,
+        ): AttoSignature {
             val parameters = Ed25519PrivateKeyParameters(privateKey.value, 0)
             val signer = Ed25519Signer()
             signer.init(true, parameters)
@@ -26,7 +32,10 @@ data class AttoSignature(val value: ByteArray) {
         value.checkLength(SIZE)
     }
 
-    fun isValid(publicKey: AttoPublicKey, hash: AttoHash): Boolean {
+    fun isValid(
+        publicKey: AttoPublicKey,
+        hash: AttoHash,
+    ): Boolean {
         val parameters = Ed25519PublicKeyParameters(publicKey.value, 0)
         val signer = Ed25519Signer()
         signer.init(false, parameters)
@@ -41,15 +50,9 @@ data class AttoSignature(val value: ByteArray) {
         return value.contentEquals(other.value)
     }
 
-    override fun hashCode(): Int {
-        return value.contentHashCode()
-    }
+    override fun hashCode(): Int = value.contentHashCode()
 
-    override fun toString(): String {
-        return value.toHex()
-    }
+    override fun toString(): String = value.toHex()
 }
 
-fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature {
-    return AttoSignature.sign(this, hash)
-}
+fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature = AttoSignature.sign(this, hash)

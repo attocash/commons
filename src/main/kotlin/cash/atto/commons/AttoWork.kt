@@ -17,7 +17,13 @@ private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
     val cache = mutableMapOf<AttoNetwork, Map<Int, ULong>>()
     for (network in AttoNetwork.entries) {
         val yearMap = mutableMapOf<Int, ULong>()
-        for (year in INITIAL_DATE.year..(Clock.System.now().toLocalDateTime(TimeZone.UTC).year + 10)) {
+        for (year in INITIAL_DATE.year..(
+            Clock
+                .System
+                .now()
+                .toLocalDateTime(TimeZone.UTC)
+                .year + 10
+        )) {
             val decreaseFactor = (2.0).pow((year - INITIAL_DATE.year) / DOUBLING_PERIOD).toULong()
             val initialThreshold = INITIAL_LIVE_THRESHOLD * network.thresholdIncreaseFactor
 
@@ -29,7 +35,11 @@ private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
 }
 
 private val thresholdCache = initializeThresholdCache()
-internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {
+
+internal fun getThreshold(
+    network: AttoNetwork,
+    timestamp: Instant,
+): ULong {
     if (timestamp < INITIAL_INSTANT) {
         throw IllegalArgumentException("Timestamp($timestamp) lower than initialInstant(${AttoNetwork.INITIAL_INSTANT})")
     }
@@ -37,12 +47,21 @@ internal fun getThreshold(network: AttoNetwork, timestamp: Instant): ULong {
     return thresholdCache[network]!![timestamp.toLocalDateTime(TimeZone.UTC).year]!!
 }
 
-private fun isValid(threshold: ULong, hash: ByteArray, work: ByteArray): Boolean {
+private fun isValid(
+    threshold: ULong,
+    hash: ByteArray,
+    work: ByteArray,
+): Boolean {
     val difficult = hashRaw(8, work, hash).toULong()
     return difficult <= threshold
 }
 
-private fun isValid(network: AttoNetwork, timestamp: Instant, hash: ByteArray, work: ByteArray): Boolean {
+private fun isValid(
+    network: AttoNetwork,
+    timestamp: Instant,
+    hash: ByteArray,
+    work: ByteArray,
+): Boolean {
     if (timestamp < INITIAL_INSTANT) {
         return false
     }
@@ -68,7 +87,7 @@ private class WorkerController {
 private class Worker(
     val controller: WorkerController,
     val threshold: ULong,
-    val hash: ByteArray
+    val hash: ByteArray,
 ) {
     private val work = ByteArray(8)
 
@@ -93,33 +112,60 @@ private class Worker(
 }
 
 @Serializable
-data class AttoWork(val value: ByteArray) {
+data class AttoWork(
+    val value: ByteArray,
+) {
     companion object {
         const val SIZE = 8
 
-        fun threshold(network: AttoNetwork, timestamp: Instant): ULong {
+        fun threshold(
+            network: AttoNetwork,
+            timestamp: Instant,
+        ): ULong {
             return getThreshold(network, timestamp)
         }
 
-        fun isValid(network: AttoNetwork, timestamp: Instant, hash: AttoHash, work: AttoWork): Boolean {
+        fun isValid(
+            network: AttoNetwork,
+            timestamp: Instant,
+            hash: AttoHash,
+            work: AttoWork,
+        ): Boolean {
             return isValid(network, timestamp, hash.value, work.value)
         }
 
-        fun isValid(network: AttoNetwork, timestamp: Instant, publicKey: AttoPublicKey, work: AttoWork): Boolean {
+        fun isValid(
+            network: AttoNetwork,
+            timestamp: Instant,
+            publicKey: AttoPublicKey,
+            work: AttoWork,
+        ): Boolean {
             return isValid(network, timestamp, publicKey.value, work.value)
         }
 
-        fun work(network: AttoNetwork, timestamp: Instant, hash: AttoHash): AttoWork {
+        fun work(
+            network: AttoNetwork,
+            timestamp: Instant,
+            hash: AttoHash,
+        ): AttoWork {
             return work(network, timestamp, hash.value)
         }
 
-        fun work(network: AttoNetwork, timestamp: Instant, publicKey: AttoPublicKey): AttoWork {
+        fun work(
+            network: AttoNetwork,
+            timestamp: Instant,
+            publicKey: AttoPublicKey,
+        ): AttoWork {
             return work(network, timestamp, publicKey.value)
         }
 
-        fun work(threshold: ULong, hash: ByteArray): AttoWork {
+        fun work(
+            threshold: ULong,
+            hash: ByteArray,
+        ): AttoWork {
             val controller = WorkerController()
-            return Stream.generate { Worker(controller, threshold, hash) }
+            return Stream
+                .generate { Worker(controller, threshold, hash) }
                 .takeWhile { controller.isEmpty() }
                 .parallel()
                 .peek { it.work() }
@@ -129,7 +175,11 @@ data class AttoWork(val value: ByteArray) {
                 .get()
         }
 
-        private fun work(network: AttoNetwork, timestamp: Instant, hash: ByteArray): AttoWork {
+        private fun work(
+            network: AttoNetwork,
+            timestamp: Instant,
+            hash: ByteArray,
+        ): AttoWork {
             val threshold = getThreshold(network, timestamp)
             return work(threshold, hash)
         }
@@ -143,11 +193,19 @@ data class AttoWork(val value: ByteArray) {
         value.checkLength(SIZE)
     }
 
-    fun isValid(network: AttoNetwork, timestamp: Instant, publicKey: AttoPublicKey): Boolean {
+    fun isValid(
+        network: AttoNetwork,
+        timestamp: Instant,
+        publicKey: AttoPublicKey,
+    ): Boolean {
         return isValid(network, timestamp, publicKey, this)
     }
 
-    fun isValid(network: AttoNetwork, timestamp: Instant, hash: AttoHash): Boolean {
+    fun isValid(
+        network: AttoNetwork,
+        timestamp: Instant,
+        hash: AttoHash,
+    ): Boolean {
         return isValid(network, timestamp, hash, this)
     }
 
@@ -158,11 +216,7 @@ data class AttoWork(val value: ByteArray) {
         return value.contentEquals(other.value)
     }
 
-    override fun hashCode(): Int {
-        return value.contentHashCode()
-    }
+    override fun hashCode(): Int = value.contentHashCode()
 
-    override fun toString(): String {
-        return value.toHex()
-    }
+    override fun toString(): String = value.toHex()
 }

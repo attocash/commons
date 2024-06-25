@@ -8,15 +8,16 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.protobuf.ProtoBuf
 
-
-val attoProtobufSerializersModule = SerializersModule {
-    contextual(AttoHash::class, AttoHashProtobufSerializer)
-    contextual(AttoPublicKey::class, AttoPublicKeyProtobufSerializer)
-    contextual(AttoSignature::class, AttoSignatureProtobufSerializer)
-    contextual(AttoWork::class, AttoWorkProtobufSerializer)
-}
+val attoProtobufSerializersModule =
+    SerializersModule {
+        contextual(AttoHash::class, AttoHashProtobufSerializer)
+        contextual(AttoPublicKey::class, AttoPublicKeyProtobufSerializer)
+        contextual(AttoSignature::class, AttoSignatureProtobufSerializer)
+        contextual(AttoWork::class, AttoWorkProtobufSerializer)
+    }
 
 @OptIn(ExperimentalSerializationApi::class)
-val AttoProtobuf = ProtoBuf {
-    serializersModule = attoProtobufSerializersModule
-}
+val AttoProtobuf =
+    ProtoBuf {
+        serializersModule = attoProtobufSerializersModule
+    }

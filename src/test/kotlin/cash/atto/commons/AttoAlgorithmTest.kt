@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class AttoAlgorithmTest {
-
     @Test
     fun `should serialize json`() {
         // given

@@ -11,11 +11,12 @@ import kotlinx.serialization.encoding.Encoder
 object AttoPublicKeyProtobufSerializer : KSerializer<AttoPublicKey> {
     override val descriptor = PrimitiveSerialDescriptor("AttoPublicKey", PrimitiveKind.BYTE)
 
-    override fun serialize(encoder: Encoder, value: AttoPublicKey) {
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoPublicKey,
+    ) {
         encoder.encodeSerializableValue(ByteArraySerializer(), value.value)
     }
 
-    override fun deserialize(decoder: Decoder): AttoPublicKey {
-        return AttoPublicKey(decoder.decodeSerializableValue(ByteArraySerializer()))
-    }
+    override fun deserialize(decoder: Decoder): AttoPublicKey = AttoPublicKey(decoder.decodeSerializableValue(ByteArraySerializer()))
 }

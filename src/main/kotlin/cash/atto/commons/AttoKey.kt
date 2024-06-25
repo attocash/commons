@@ -1,6 +1,5 @@
 package cash.atto.commons
 
-
 import kotlinx.serialization.Serializable
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import java.nio.ByteBuffer
@@ -10,11 +9,13 @@ import java.security.SecureRandom
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-private class AttoBIP44(val key: ByteArray, val secretKeySpec: SecretKeySpec) {
-
+private class AttoBIP44(
+    val key: ByteArray,
+    val secretKeySpec: SecretKeySpec,
+) {
     private constructor(derived: ByteArray) : this(
         derived.copyOfRange(0, 32),
-        SecretKeySpec(derived, 32, 32, "HmacSHA512")
+        SecretKeySpec(derived, 32, 32, "HmacSHA512"),
     )
 
     fun derive(value: Int): AttoBIP44 {
@@ -26,7 +27,7 @@ private class AttoBIP44(val key: ByteArray, val secretKeySpec: SecretKeySpec) {
 
         val indexBytes = ByteArray(4)
         ByteBuffer.wrap(indexBytes).order(ByteOrder.BIG_ENDIAN).putInt(value)
-        indexBytes[0] = (indexBytes[0].toInt() or 128.toByte().toInt()).toByte() //hardened
+        indexBytes[0] = (indexBytes[0].toInt() or 128.toByte().toInt()).toByte() // hardened
 
         hmacSha512.update(indexBytes, 0, indexBytes.size)
 
@@ -36,19 +37,24 @@ private class AttoBIP44(val key: ByteArray, val secretKeySpec: SecretKeySpec) {
         return AttoBIP44(derived)
     }
 
-
     companion object {
-        fun ed25519(seed: AttoSeed, path: String): ByteArray {
+        fun ed25519(
+            seed: AttoSeed,
+            path: String,
+        ): ByteArray {
             val hmacSha512 = Mac.getInstance("HmacSHA512")
 
             hmacSha512.init(SecretKeySpec("ed25519 seed".toByteArray(StandardCharsets.UTF_8), "HmacSHA512"))
             hmacSha512.update(seed.value, 0, seed.value.size)
 
-            val values = path.split("/").asSequence()
-                .map { it.trim() }
-                .filter { !"M".equals(it, ignoreCase = true) }
-                .map { it.replace("'", "").toInt() }
-                .toList()
+            val values =
+                path
+                    .split("/")
+                    .asSequence()
+                    .map { it.trim() }
+                    .filter { !"M".equals(it, ignoreCase = true) }
+                    .map { it.replace("'", "").toInt() }
+                    .toList()
 
             var bip44 = AttoBIP44(hmacSha512.doFinal())
             for (v in values) {
@@ -60,12 +66,14 @@ private class AttoBIP44(val key: ByteArray, val secretKeySpec: SecretKeySpec) {
     }
 }
 
-class AttoPrivateKey(val value: ByteArray) {
+class AttoPrivateKey(
+    val value: ByteArray,
+) {
     init {
         value.checkLength(32)
     }
 
-    constructor(seed: AttoSeed, index: UInt) : this(AttoBIP44.ed25519(seed, "m/44'/${coinType}'/${index}'"))
+    constructor(seed: AttoSeed, index: UInt) : this(AttoBIP44.ed25519(seed, "m/44'/$coinType'/$index'"))
 
     companion object {
         private val coinType = 1869902945 // "atto".toByteArray().toUInt()
@@ -92,7 +100,9 @@ class AttoPrivateKey(val value: ByteArray) {
 }
 
 @Serializable
-data class AttoPublicKey(val value: ByteArray) {
+data class AttoPublicKey(
+    val value: ByteArray,
+) {
     init {
         value.checkLength(32)
     }
@@ -100,8 +110,8 @@ data class AttoPublicKey(val value: ByteArray) {
     constructor(privateKey: AttoPrivateKey) : this(
         Ed25519PrivateKeyParameters(
             privateKey.value,
-            0
-        ).generatePublicKey().encoded
+            0,
+        ).generatePublicKey().encoded,
     )
 
     companion object {
@@ -130,8 +140,10 @@ fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey {
     return AttoPrivateKey(this, index)
 }
 
-
-class AttoAlgorithmPrivateKey(val algorithm: AttoAlgorithm, val privateKey: AttoPrivateKey) {
+class AttoAlgorithmPrivateKey(
+    val algorithm: AttoAlgorithm,
+    val privateKey: AttoPrivateKey,
+) {
     val value = byteArrayOf(algorithm.code.toByte()) + privateKey.value
 
     init {
@@ -153,7 +165,10 @@ class AttoAlgorithmPrivateKey(val algorithm: AttoAlgorithm, val privateKey: Atto
     }
 }
 
-data class AttoAlgorithmPublicKey(val algorithm: AttoAlgorithm, val publicKey: AttoPublicKey) {
+data class AttoAlgorithmPublicKey(
+    val algorithm: AttoAlgorithm,
+    val publicKey: AttoPublicKey,
+) {
     val value = byteArrayOf(algorithm.code.toByte()) + publicKey.value
 
     init {
@@ -170,7 +185,5 @@ data class AttoAlgorithmPublicKey(val algorithm: AttoAlgorithm, val publicKey: A
         }
     }
 
-    override fun toString(): String {
-        return value.toHex()
-    }
+    override fun toString(): String = value.toHex()
 }

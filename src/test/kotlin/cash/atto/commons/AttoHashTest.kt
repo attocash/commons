@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class AttoHashTest {
-
     @Test
     fun `should hash`() {
         // given
@@ -23,7 +22,6 @@ internal class AttoHashTest {
         val expectedHash = "89EB0D6A8A691DAE2CD15ED0369931CE0A949ECAFA5C3F93F8121833646E15C3"
         assertEquals(expectedHash, hash)
     }
-
 
     @Test
     fun `should serialize json`() {
@@ -52,5 +50,7 @@ internal class AttoHashTest {
     }
 
     @Serializable
-    private data class Holder(@Contextual val hash: AttoHash)
+    private data class Holder(
+        @Contextual val hash: AttoHash,
+    )
 }

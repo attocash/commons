@@ -9,11 +9,12 @@ import kotlinx.serialization.encoding.Encoder
 object AttoAmountSerializer : KSerializer<AttoAmount> {
     override val descriptor = ULong.serializer().descriptor
 
-    override fun serialize(encoder: Encoder, value: AttoAmount) {
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoAmount,
+    ) {
         ULong.serializer().serialize(encoder, value.raw)
     }
 
-    override fun deserialize(decoder: Decoder): AttoAmount {
-        return AttoAmount(ULong.serializer().deserialize(decoder))
-    }
+    override fun deserialize(decoder: Decoder): AttoAmount = AttoAmount(ULong.serializer().deserialize(decoder))
 }

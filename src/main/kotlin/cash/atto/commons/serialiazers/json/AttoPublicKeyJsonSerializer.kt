@@ -10,11 +10,12 @@ import kotlinx.serialization.encoding.Encoder
 object AttoPublicKeyJsonSerializer : KSerializer<AttoPublicKey> {
     override val descriptor = PrimitiveSerialDescriptor("AttoPublicKey", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: AttoPublicKey) {
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoPublicKey,
+    ) {
         encoder.encodeString(value.toString())
     }
 
-    override fun deserialize(decoder: Decoder): AttoPublicKey {
-        return AttoPublicKey.parse(decoder.decodeString())
-    }
+    override fun deserialize(decoder: Decoder): AttoPublicKey = AttoPublicKey.parse(decoder.decodeString())
 }

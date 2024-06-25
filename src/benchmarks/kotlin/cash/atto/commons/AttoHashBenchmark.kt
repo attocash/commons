@@ -9,10 +9,8 @@ import kotlin.random.Random
 open class AttoHashBenchmark {
     private val block = Random.nextBytes(ByteArray(200))
 
-
     @Benchmark
     fun hash() {
         AttoHash.hash(32, block)
     }
-
 }

@@ -10,11 +10,12 @@ import kotlinx.serialization.encoding.Encoder
 object AttoSignatureJsonSerializer : KSerializer<AttoSignature> {
     override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: AttoSignature) {
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoSignature,
+    ) {
         encoder.encodeString(value.toString())
     }
 
-    override fun deserialize(decoder: Decoder): AttoSignature {
-        return AttoSignature.parse(decoder.decodeString())
-    }
+    override fun deserialize(decoder: Decoder): AttoSignature = AttoSignature.parse(decoder.decodeString())
 }

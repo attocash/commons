@@ -19,5 +19,4 @@ open class AttoKeysBenchmark {
     fun toPublicKey() {
         privateKey.toPublicKey()
     }
-
 }

@@ -10,7 +10,10 @@ import kotlinx.serialization.protobuf.ProtoNumber
 
 val maxVersion: UShort = 0U
 
-enum class AttoBlockType(val code: UByte, val size: Int) {
+enum class AttoBlockType(
+    val code: UByte,
+    val size: Int,
+) {
     @ProtoNumber(255)
     UNKNOWN(UByte.MAX_VALUE, 0),
 
@@ -24,10 +27,12 @@ enum class AttoBlockType(val code: UByte, val size: Int) {
     SEND(2u, 133),
 
     @ProtoNumber(3)
-    CHANGE(3u, 124);
+    CHANGE(3u, 124),
+    ;
 
     companion object {
         private val map = entries.associateBy(AttoBlockType::code)
+
         fun from(code: UByte): AttoBlockType {
             return map.getOrDefault(code, UNKNOWN)
         }
@@ -82,8 +87,8 @@ sealed interface AttoBlock : HeightSupport {
 
     fun isValid(): Boolean {
         return version <= maxVersion &&
-                timestamp <= Clock.System.now() &&
-                algorithm != AttoAlgorithm.UNKNOWN
+            timestamp <= Clock.System.now() &&
+            algorithm != AttoAlgorithm.UNKNOWN
     }
 }
 
@@ -128,7 +133,8 @@ data class AttoSendBlock(
     val receiverPublicKey: AttoPublicKey,
     @ProtoNumber(9)
     val amount: AttoAmount,
-) : AttoBlock, PreviousSupport {
+) : AttoBlock,
+    PreviousSupport {
     @Transient
     override val type = AttoBlockType.SEND
 
@@ -180,11 +186,11 @@ data class AttoSendBlock(
 
     override fun isValid(): Boolean {
         return super.isValid() &&
-                height > 1u &&
-                amount.raw > 0u &&
-                receiverPublicKey != publicKey &&
-                receiverAlgorithm != AttoAlgorithm.UNKNOWN &&
-                receiverAlgorithm.publicKeySize == receiverPublicKey.value.size
+            height > 1u &&
+            amount.raw > 0u &&
+            receiverPublicKey != publicKey &&
+            receiverAlgorithm != AttoAlgorithm.UNKNOWN &&
+            receiverAlgorithm.publicKeySize == receiverPublicKey.value.size
     }
 }
 
@@ -213,7 +219,9 @@ data class AttoReceiveBlock(
     @Contextual
     @ProtoNumber(8)
     override val sendHash: AttoHash,
-) : AttoBlock, PreviousSupport, ReceiveSupport {
+) : AttoBlock,
+    PreviousSupport,
+    ReceiveSupport {
     @Transient
     override val type = AttoBlockType.RECEIVE
 
@@ -221,7 +229,6 @@ data class AttoReceiveBlock(
     override val hash = toByteBuffer().toHash()
 
     companion object {
-
         internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoReceiveBlock? {
             if (AttoBlockType.RECEIVE.size > serializedBlock.size) {
                 return null
@@ -241,7 +248,7 @@ data class AttoReceiveBlock(
                 timestamp = serializedBlock.getInstant(),
                 previous = serializedBlock.getBlockHash(),
                 sendHashAlgorithm = serializedBlock.getAlgorithm(),
-                sendHash = serializedBlock.getBlockHash()
+                sendHash = serializedBlock.getBlockHash(),
             )
         }
     }
@@ -264,10 +271,10 @@ data class AttoReceiveBlock(
 
     override fun isValid(): Boolean {
         return super.isValid() &&
-                height > 1u &&
-                balance > AttoAmount.MIN &&
-                sendHashAlgorithm != AttoAlgorithm.UNKNOWN &&
-                sendHash.value.size == sendHashAlgorithm.hashSize
+            height > 1u &&
+            balance > AttoAmount.MIN &&
+            sendHashAlgorithm != AttoAlgorithm.UNKNOWN &&
+            sendHash.value.size == sendHashAlgorithm.hashSize
     }
 }
 
@@ -294,7 +301,9 @@ data class AttoOpenBlock(
     @Contextual
     @ProtoNumber(7)
     override val representative: AttoPublicKey,
-) : AttoBlock, ReceiveSupport, RepresentativeSupport {
+) : AttoBlock,
+    ReceiveSupport,
+    RepresentativeSupport {
     @Transient
     override val type = AttoBlockType.OPEN
 
@@ -345,13 +354,11 @@ data class AttoOpenBlock(
 
     override fun isValid(): Boolean {
         return super.isValid() &&
-                balance > AttoAmount.MIN &&
-                sendHashAlgorithm != AttoAlgorithm.UNKNOWN &&
-                sendHash.value.size == sendHashAlgorithm.hashSize
+            balance > AttoAmount.MIN &&
+            sendHashAlgorithm != AttoAlgorithm.UNKNOWN &&
+            sendHash.value.size == sendHashAlgorithm.hashSize
     }
-
 }
-
 
 @Serializable
 @SerialName("CHANGE")
@@ -376,7 +383,9 @@ data class AttoChangeBlock(
     @Contextual
     @ProtoNumber(7)
     override val representative: AttoPublicKey,
-) : AttoBlock, PreviousSupport, RepresentativeSupport {
+) : AttoBlock,
+    PreviousSupport,
+    RepresentativeSupport {
     @Transient
     override val type = AttoBlockType.CHANGE
 
@@ -422,7 +431,5 @@ data class AttoChangeBlock(
             .resetIndex()
     }
 
-    override fun isValid(): Boolean {
-        return super.isValid() && height > 1u
-    }
+    override fun isValid(): Boolean = super.isValid() && height > 1u
 }

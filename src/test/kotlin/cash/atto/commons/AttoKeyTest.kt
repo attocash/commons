@@ -10,12 +10,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class AttoKeyTest {
-
     @Test
     fun `should create private key`() {
         // given
         val mnemonic =
-            AttoMnemonic("edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly occur")
+            AttoMnemonic(
+                "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly occur",
+            )
         val seed = mnemonic.toSeed("some password")
 
         // when
@@ -30,7 +31,9 @@ internal class AttoKeyTest {
     fun `should create public key`() {
         // given
         val mnemonic =
-            AttoMnemonic("edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly occur")
+            AttoMnemonic(
+                "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly occur",
+            )
         val seed = mnemonic.toSeed("some password")
         val privateKey = seed.toPrivateKey(0U)
 
@@ -69,5 +72,7 @@ internal class AttoKeyTest {
     }
 
     @Serializable
-    private data class Holder(@Contextual val publicKey: AttoPublicKey)
+    private data class Holder(
+        @Contextual val publicKey: AttoPublicKey,
+    )
 }

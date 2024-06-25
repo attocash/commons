@@ -10,7 +10,10 @@ import kotlinx.serialization.encoding.Encoder
 object InstantMillisSerializer : KSerializer<Instant> {
     override val descriptor = PrimitiveSerialDescriptor("InstantMillis", PrimitiveKind.LONG)
 
-    override fun serialize(encoder: Encoder, value: Instant) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Instant,
+    ) {
         encoder.encodeLong(value.toEpochMilliseconds())
     }
 

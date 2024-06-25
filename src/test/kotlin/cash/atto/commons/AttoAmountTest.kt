@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class AttoAmountTest {
-
     @Test
     fun sum() {
         // given
@@ -91,5 +90,7 @@ internal class AttoAmountTest {
     }
 
     @Serializable
-    private data class Holder(val amount: AttoAmount)
+    private data class Holder(
+        val amount: AttoAmount,
+    )
 }

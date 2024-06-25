@@ -36,18 +36,24 @@ internal class AttoWorkTest {
     @Test
     fun `should validate work using decreased threshold`() {
         val work = AttoWork("888f6824075cabc3".fromHexToByteArray())
-        val timestamp = AttoNetwork.INITIAL_DATE.plus(4, DateTimeUnit.YEAR)
-            .atTime(LocalTime.fromSecondOfDay(0))
-            .toInstant(TimeZone.UTC)
+        val timestamp =
+            AttoNetwork
+                .INITIAL_DATE
+                .plus(4, DateTimeUnit.YEAR)
+                .atTime(LocalTime.fromSecondOfDay(0))
+                .toInstant(TimeZone.UTC)
         assertTrue(work.isValid(AttoNetwork.LIVE, timestamp, hash))
     }
 
     @Test
     fun `should not validate when work is below threshold`() {
         val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
-        val timestamp = AttoNetwork.INITIAL_DATE.plus(4, DateTimeUnit.YEAR)
-            .atTime(LocalTime.fromSecondOfDay(0))
-            .toInstant(TimeZone.UTC)
+        val timestamp =
+            AttoNetwork
+                .INITIAL_DATE
+                .plus(4, DateTimeUnit.YEAR)
+                .atTime(LocalTime.fromSecondOfDay(0))
+                .toInstant(TimeZone.UTC)
         assertFalse(work.isValid(AttoNetwork.LIVE, timestamp, hash))
     }
 
@@ -60,7 +66,10 @@ internal class AttoWorkTest {
 
     @ParameterizedTest
     @MethodSource("provider")
-    fun `should return threshold`(instant: Instant, expectedThreshold: Long) {
+    fun `should return threshold`(
+        instant: Instant,
+        expectedThreshold: Long,
+    ) {
         val threshold = AttoWork.threshold(AttoNetwork.LIVE, instant)
         assertEquals(expectedThreshold.toULong(), threshold)
     }
@@ -113,5 +122,7 @@ internal class AttoWorkTest {
     }
 
     @Serializable
-    private data class Holder(@Contextual val work: AttoWork)
+    private data class Holder(
+        @Contextual val work: AttoWork,
+    )
 }

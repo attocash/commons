@@ -11,11 +11,12 @@ import kotlinx.serialization.encoding.Encoder
 object AttoHashProtobufSerializer : KSerializer<AttoHash> {
     override val descriptor = PrimitiveSerialDescriptor("AttoHash", PrimitiveKind.BYTE)
 
-    override fun serialize(encoder: Encoder, value: AttoHash) {
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoHash,
+    ) {
         encoder.encodeSerializableValue(ByteArraySerializer(), value.value)
     }
 
-    override fun deserialize(decoder: Decoder): AttoHash {
-        return AttoHash(decoder.decodeSerializableValue(ByteArraySerializer()))
-    }
+    override fun deserialize(decoder: Decoder): AttoHash = AttoHash(decoder.decodeSerializableValue(ByteArraySerializer()))
 }

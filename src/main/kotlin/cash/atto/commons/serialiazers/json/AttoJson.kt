@@ -7,14 +7,15 @@ import cash.atto.commons.AttoWork
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 
+val attoJsonSerializersModule =
+    SerializersModule {
+        contextual(AttoHash::class, AttoHashJsonSerializer)
+        contextual(AttoPublicKey::class, AttoPublicKeyJsonSerializer)
+        contextual(AttoSignature::class, AttoSignatureJsonSerializer)
+        contextual(AttoWork::class, AttoWorkJsonSerializer)
+    }
 
-val attoJsonSerializersModule = SerializersModule {
-    contextual(AttoHash::class, AttoHashJsonSerializer)
-    contextual(AttoPublicKey::class, AttoPublicKeyJsonSerializer)
-    contextual(AttoSignature::class, AttoSignatureJsonSerializer)
-    contextual(AttoWork::class, AttoWorkJsonSerializer)
-}
-
-val AttoJson = Json {
-    serializersModule = attoJsonSerializersModule
-}
+val AttoJson =
+    Json {
+        serializersModule = attoJsonSerializersModule
+    }

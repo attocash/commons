@@ -1,5 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     val kotlinVersion = "2.0.0"
@@ -10,6 +10,7 @@ plugins {
     id("maven-publish")
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("org.jetbrains.kotlinx.benchmark") version "0.4.11"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 
     signing
 }
@@ -17,8 +18,9 @@ plugins {
 group = "cash.atto"
 
 java {
-    withJavadocJar()
-    withSourcesJar()
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 java.sourceCompatibility = JavaVersion.VERSION_1_9
@@ -91,7 +93,10 @@ publishing {
 
             pom {
                 name.set("Atto Commons")
-                description.set("Atto Commons provides a set of low-level operations that includes signing, seed generation, block hashing, and account creation.")
+                description.set(
+                    "Atto Commons provides a set of low-level operations that includes signing, " +
+                        "seed generation, block hashing, and account creation.",
+                )
                 url.set("https://github.com/attocash/commons")
 
                 licenses {

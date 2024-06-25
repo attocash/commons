@@ -10,14 +10,15 @@ class AttoReceivableTest {
     @Test
     fun `should serialize json`() {
         // given
-        val expectedReceivable = AttoReceivable(
-            hash = AttoHash(Random.Default.nextBytes(32)),
-            version = 0U,
-            algorithm = AttoAlgorithm.V1,
-            receiverAlgorithm = AttoAlgorithm.V1,
-            receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
-            amount = AttoAmount.MAX,
-        )
+        val expectedReceivable =
+            AttoReceivable(
+                hash = AttoHash(Random.Default.nextBytes(32)),
+                version = 0U,
+                algorithm = AttoAlgorithm.V1,
+                receiverAlgorithm = AttoAlgorithm.V1,
+                receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                amount = AttoAmount.MAX,
+            )
 
         // when
         val json = AttoJson.encodeToString(expectedReceivable)
@@ -36,7 +37,6 @@ class AttoReceivableTest {
         // when
         val receivable = AttoJson.decodeFromString<AttoReceivable>(expectedJson)
         val json = AttoJson.encodeToString(receivable)
-
 
         // then
         assertEquals(expectedJson, json)

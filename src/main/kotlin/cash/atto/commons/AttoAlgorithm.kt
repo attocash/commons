@@ -17,12 +17,12 @@ enum class AttoAlgorithm(
     UNKNOWN(UByte.MAX_VALUE, 0, 0, 0),
 
     @ProtoNumber(0)
-    V1(0u, 32, 32, 32); // BLAKE2B + ED25519
+    V1(0u, 32, 32, 32), // BLAKE2B + ED25519
+    ;
 
     companion object {
         private val map = AttoAlgorithm.entries.associateBy(AttoAlgorithm::code)
-        fun from(code: UByte): AttoAlgorithm {
-            return map.getOrDefault(code, UNKNOWN)
-        }
+
+        fun from(code: UByte): AttoAlgorithm = map.getOrDefault(code, UNKNOWN)
     }
 }

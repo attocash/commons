@@ -9,7 +9,6 @@ import java.net.InetSocketAddress
 import kotlin.random.Random
 
 internal class AttoByteBufferTest {
-
     @Test
     fun test() {
         // given
@@ -100,10 +99,11 @@ internal class AttoByteBufferTest {
     @Test
     fun toByteArray() {
         // given
-        val buffer = AttoByteBuffer(2)
-            .add((1u).toUByte())
-            .add((2u).toUByte())
-            .slice(1)
+        val buffer =
+            AttoByteBuffer(2)
+                .add((1u).toUByte())
+                .add((2u).toUByte())
+                .slice(1)
 
         buffer.getUByte()
 
@@ -113,5 +113,4 @@ internal class AttoByteBufferTest {
         // then
         assertEquals(1, byteArray.size)
     }
-
 }

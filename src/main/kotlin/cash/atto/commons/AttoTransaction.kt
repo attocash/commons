@@ -17,7 +17,7 @@ data class AttoTransaction(
     val signature: AttoSignature,
     @ProtoNumber(2)
     @Contextual
-    val work: AttoWork
+    val work: AttoWork,
 ) : HeightSupport {
     @Transient
     val hash = block.hash
@@ -26,20 +26,24 @@ data class AttoTransaction(
     override val height = block.height
 
     companion object {
-        const val size = 72
+        const val SIZE = 72
 
-        fun fromByteBuffer(network: AttoNetwork, byteBuffer: AttoByteBuffer): AttoTransaction? {
-            if (size > byteBuffer.size) {
+        fun fromByteBuffer(
+            network: AttoNetwork,
+            byteBuffer: AttoByteBuffer,
+        ): AttoTransaction? {
+            if (SIZE > byteBuffer.size) {
                 return null
             }
 
             val block = AttoBlock.fromByteBuffer(byteBuffer) ?: return null
 
-            val transaction = AttoTransaction(
-                block = block,
-                signature = byteBuffer.getSignature(),
-                work = byteBuffer.getWork(),
-            )
+            val transaction =
+                AttoTransaction(
+                    block = block,
+                    signature = byteBuffer.getSignature(),
+                    work = byteBuffer.getWork(),
+                )
 
             if (!transaction.isValid(network)) {
                 return null
@@ -56,7 +60,6 @@ data class AttoTransaction(
         if (!block.isValid()) {
             return false
         }
-
 
         if (block is PreviousSupport && !work.isValid(network, block.timestamp, block.previous)) {
             return false
@@ -76,21 +79,14 @@ data class AttoTransaction(
     /**
      * Return the transaction and block size
      */
-    fun getTotalSize(): Int {
-        return size + block.type.size
-    }
+    fun getTotalSize(): Int = SIZE + block.type.size
 
-    fun toByteBuffer(): AttoByteBuffer {
-        return AttoByteBuffer(getTotalSize())
+    fun toByteBuffer(): AttoByteBuffer =
+        AttoByteBuffer(getTotalSize())
             .add(block.toByteBuffer())
             .add(signature)
             .add(work)
             .resetIndex()
-    }
 
-    override fun toString(): String {
-        return "AttoTransaction(hash=$hash, block=$block, signature=$signature, work=$work, hash=$hash)"
-    }
-
-
+    override fun toString(): String = "AttoTransaction(hash=$hash, block=$block, signature=$signature, work=$work, hash=$hash)"
 }

@@ -21,5 +21,4 @@ open class AttoSignatureBenchmark {
     fun isValid() {
         signature.isValid(publicKey, hash)
     }
-
 }

@@ -17,5 +17,4 @@ open class AttoMnemonicsBenchmark {
     fun toEntropy() {
         mnemonic.toEntropy()
     }
-
 }

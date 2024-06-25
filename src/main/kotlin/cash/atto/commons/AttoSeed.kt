@@ -4,7 +4,9 @@ import java.nio.charset.StandardCharsets
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
-data class AttoSeed(val value: ByteArray) {
+data class AttoSeed(
+    val value: ByteArray,
+) {
     init {
         value.checkLength(64)
     }

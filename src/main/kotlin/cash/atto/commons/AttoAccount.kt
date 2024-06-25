@@ -10,7 +10,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
-
 @Serializable
 data class AttoAccount(
     @ProtoNumber(0)
@@ -33,7 +32,6 @@ data class AttoAccount(
     @ProtoNumber(7)
     @Contextual val representative: AttoPublicKey,
 ) : HeightSupport {
-
     companion object {
         fun open(
             representative: AttoPublicKey,
@@ -55,10 +53,10 @@ data class AttoAccount(
     fun send(
         receiverAlgorithm: AttoAlgorithm,
         receiverPublicKey: AttoPublicKey,
-        amount: AttoAmount
+        amount: AttoAmount,
     ): AttoSendBlock {
         if (receiverPublicKey == publicKey) {
-            throw IllegalArgumentException("You can't send money to yourself");
+            throw IllegalArgumentException("You can't send money to yourself")
         }
         return AttoSendBlock(
             version = version,
@@ -101,11 +99,13 @@ data class AttoAccount(
         )
     }
 
-    private fun max(n1: UShort, n2: UShort): UShort {
+    private fun max(
+        n1: UShort,
+        n2: UShort,
+    ): UShort {
         if (n1 > n2) {
             return n1
         }
         return n2
     }
 }
-
