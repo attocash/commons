@@ -20,10 +20,10 @@ class AttoTransactionTest {
 
     val receiveBlock =
         AttoReceiveBlock(
-            version = 0U,
+            version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
             publicKey = publicKey,
-            height = 2U,
+            height = 2U.toAttoHeight(),
             balance = AttoAmount.MAX,
             timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             previous = AttoHash(Random.nextBytes(ByteArray(32))),
@@ -39,10 +39,10 @@ class AttoTransactionTest {
         )
 
     @Test
-    fun `should serialize byteBuffer`() {
+    fun `should serialize buffer`() {
         // when
-        val byteBuffer = expectedTransaction.toByteBuffer()
-        val transaction = AttoTransaction.fromByteBuffer(AttoNetwork.LOCAL, byteBuffer)
+        val buffer = expectedTransaction.toBuffer()
+        val transaction = AttoTransaction.fromBuffer(AttoNetwork.LOCAL, buffer)
 
         // then
         assertEquals(expectedTransaction, transaction)

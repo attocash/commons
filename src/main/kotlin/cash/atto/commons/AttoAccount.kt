@@ -16,11 +16,11 @@ data class AttoAccount(
     @Contextual
     val publicKey: AttoPublicKey,
     @ProtoNumber(1)
-    val version: UShort,
+    val version: AttoVersion,
     @ProtoNumber(2)
     val algorithm: AttoAlgorithm,
     @ProtoNumber(3)
-    override val height: ULong,
+    override val height: AttoHeight,
     @ProtoNumber(4)
     val balance: AttoAmount,
     @ProtoNumber(5)
@@ -74,7 +74,7 @@ data class AttoAccount(
 
     fun receive(receivable: AttoReceivable): AttoReceiveBlock {
         return AttoReceiveBlock(
-            version = max(version, receivable.version),
+            version = version.max(receivable.version),
             algorithm = algorithm,
             publicKey = publicKey,
             height = height + 1U,

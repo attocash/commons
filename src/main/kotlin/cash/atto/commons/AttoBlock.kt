@@ -5,10 +5,11 @@ package cash.atto.commons
 import cash.atto.commons.serialiazers.InstantMillisSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.io.Buffer
 import kotlinx.serialization.*
 import kotlinx.serialization.protobuf.ProtoNumber
 
-val maxVersion: UShort = 0U
+val maxVersion = AttoVersion(0U)
 
 enum class AttoBlockType(
     val code: UByte,
@@ -40,7 +41,7 @@ enum class AttoBlockType(
 }
 
 interface HeightSupport {
-    val height: ULong
+    val height: AttoHeight
 }
 
 @Serializable
@@ -50,32 +51,36 @@ sealed interface AttoBlock : HeightSupport {
 
     val hash: AttoHash
 
-    val version: UShort
+    val version: AttoVersion
     val publicKey: AttoPublicKey
-    override val height: ULong
+    override val height: AttoHeight
     val balance: AttoAmount
     val timestamp: Instant
 
-    fun toByteBuffer(): AttoByteBuffer
+    fun toBuffer(): Buffer
 
     companion object {
-        fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoBlock? {
-            val type = serializedBlock.getBlockType()
+        fun fromBuffer(serializedBlock: Buffer): AttoBlock? {
+            val type =
+                Buffer().let {
+                    serializedBlock.copyTo(it, 0, 1)
+                    it.readAttoBlockType()
+                }
             return when (type) {
                 AttoBlockType.SEND -> {
-                    AttoSendBlock.fromByteBuffer(serializedBlock)
+                    AttoSendBlock.fromBuffer(serializedBlock)
                 }
 
                 AttoBlockType.RECEIVE -> {
-                    AttoReceiveBlock.fromByteBuffer(serializedBlock)
+                    AttoReceiveBlock.fromBuffer(serializedBlock)
                 }
 
                 AttoBlockType.OPEN -> {
-                    AttoOpenBlock.fromByteBuffer(serializedBlock)
+                    AttoOpenBlock.fromBuffer(serializedBlock)
                 }
 
                 AttoBlockType.CHANGE -> {
-                    AttoChangeBlock.fromByteBuffer(serializedBlock)
+                    AttoChangeBlock.fromBuffer(serializedBlock)
                 }
 
                 AttoBlockType.UNKNOWN -> {
@@ -93,7 +98,7 @@ sealed interface AttoBlock : HeightSupport {
 }
 
 interface PreviousSupport {
-    val height: ULong
+    val height: AttoHeight
     val previous: AttoHash
 }
 
@@ -107,17 +112,17 @@ interface RepresentativeSupport {
 }
 
 @Serializable
-@SerialName("SEND")
+@SerialName("AttoSendBlock")
 data class AttoSendBlock(
     @ProtoNumber(0)
-    override val version: UShort,
+    override val version: AttoVersion,
     @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
     @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
     @ProtoNumber(3)
-    override val height: ULong,
+    override val height: AttoHeight,
     @ProtoNumber(4)
     override val balance: AttoAmount,
     @ProtoNumber(5)
@@ -139,54 +144,53 @@ data class AttoSendBlock(
     override val type = AttoBlockType.SEND
 
     @Transient
-    override val hash = toByteBuffer().toHash()
+    override val hash = toBuffer().hash()
 
     companion object {
-        internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoSendBlock? {
+        internal fun fromBuffer(serializedBlock: Buffer): AttoSendBlock? {
             if (AttoBlockType.SEND.size > serializedBlock.size) {
                 return null
             }
 
-            val blockType = serializedBlock.getBlockType(0)
+            val blockType = serializedBlock.readAttoBlockType()
             if (blockType != AttoBlockType.SEND) {
                 throw IllegalArgumentException("Invalid block type: $blockType")
             }
 
             return AttoSendBlock(
-                version = serializedBlock.getUShort(),
-                algorithm = serializedBlock.getAlgorithm(),
-                publicKey = serializedBlock.getPublicKey(),
-                height = serializedBlock.getULong(),
-                balance = serializedBlock.getAmount(),
-                timestamp = serializedBlock.getInstant(),
-                previous = serializedBlock.getBlockHash(),
-                receiverAlgorithm = serializedBlock.getAlgorithm(),
-                receiverPublicKey = serializedBlock.getPublicKey(),
-                amount = serializedBlock.getAmount(),
+                version = serializedBlock.readAttoVersion(),
+                algorithm = serializedBlock.readAttoAlgorithm(),
+                publicKey = serializedBlock.readAttoPublicKey(),
+                height = serializedBlock.readAttoHeight(),
+                balance = serializedBlock.readAttoAmount(),
+                timestamp = serializedBlock.readInstant(),
+                previous = serializedBlock.readAttoHash(),
+                receiverAlgorithm = serializedBlock.readAttoAlgorithm(),
+                receiverPublicKey = serializedBlock.readAttoPublicKey(),
+                amount = serializedBlock.readAttoAmount(),
             )
         }
     }
 
-    override fun toByteBuffer(): AttoByteBuffer {
-        val byteBuffer = AttoByteBuffer(type.size)
-        return byteBuffer
-            .add(type)
-            .add(algorithm)
-            .add(version)
-            .add(publicKey)
-            .add(height)
-            .add(balance)
-            .add(timestamp)
-            .add(previous)
-            .add(receiverAlgorithm)
-            .add(receiverPublicKey)
-            .add(amount)
-            .resetIndex()
+    override fun toBuffer(): Buffer {
+        return Buffer().apply {
+            this.writeAttoBlockType(type)
+            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoVersion(version)
+            this.writeAttoPublicKey(publicKey)
+            this.writeAttoHeight(height)
+            this.writeAttoAmount(balance)
+            this.writeInstant(timestamp)
+            this.writeAttoHash(previous)
+            this.writeAttoAlgorithm(receiverAlgorithm)
+            this.writeAttoPublicKey(receiverPublicKey)
+            this.writeAttoAmount(amount)
+        }
     }
 
     override fun isValid(): Boolean {
         return super.isValid() &&
-            height > 1u &&
+            height > AttoHeight(1u) &&
             amount.raw > 0u &&
             receiverPublicKey != publicKey &&
             receiverAlgorithm != AttoAlgorithm.UNKNOWN &&
@@ -195,17 +199,17 @@ data class AttoSendBlock(
 }
 
 @Serializable
-@SerialName("RECEIVE")
+@SerialName("AttoReceiveBlock")
 data class AttoReceiveBlock(
     @ProtoNumber(0)
-    override val version: UShort,
+    override val version: AttoVersion,
     @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
     @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
     @ProtoNumber(3)
-    override val height: ULong,
+    override val height: AttoHeight,
     @ProtoNumber(4)
     override val balance: AttoAmount,
     @ProtoNumber(5)
@@ -226,52 +230,51 @@ data class AttoReceiveBlock(
     override val type = AttoBlockType.RECEIVE
 
     @Transient
-    override val hash = toByteBuffer().toHash()
+    override val hash = toBuffer().hash()
 
     companion object {
-        internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoReceiveBlock? {
+        internal fun fromBuffer(serializedBlock: Buffer): AttoReceiveBlock? {
             if (AttoBlockType.RECEIVE.size > serializedBlock.size) {
                 return null
             }
 
-            val blockType = serializedBlock.getBlockType(0)
+            val blockType = serializedBlock.readAttoBlockType()
             if (blockType != AttoBlockType.RECEIVE) {
                 throw IllegalArgumentException("Invalid block type: $blockType")
             }
 
             return AttoReceiveBlock(
-                version = serializedBlock.getUShort(),
-                algorithm = serializedBlock.getAlgorithm(),
-                publicKey = serializedBlock.getPublicKey(),
-                height = serializedBlock.getULong(),
-                balance = serializedBlock.getAmount(),
-                timestamp = serializedBlock.getInstant(),
-                previous = serializedBlock.getBlockHash(),
-                sendHashAlgorithm = serializedBlock.getAlgorithm(),
-                sendHash = serializedBlock.getBlockHash(),
+                version = serializedBlock.readAttoVersion(),
+                algorithm = serializedBlock.readAttoAlgorithm(),
+                publicKey = serializedBlock.readAttoPublicKey(),
+                height = serializedBlock.readAttoHeight(),
+                balance = serializedBlock.readAttoAmount(),
+                timestamp = serializedBlock.readInstant(),
+                previous = serializedBlock.readAttoHash(),
+                sendHashAlgorithm = serializedBlock.readAttoAlgorithm(),
+                sendHash = serializedBlock.readAttoHash(),
             )
         }
     }
 
-    override fun toByteBuffer(): AttoByteBuffer {
-        val byteBuffer = AttoByteBuffer(type.size)
-        return byteBuffer
-            .add(type)
-            .add(algorithm)
-            .add(version)
-            .add(publicKey)
-            .add(height)
-            .add(balance)
-            .add(timestamp)
-            .add(previous)
-            .add(sendHashAlgorithm)
-            .add(sendHash)
-            .resetIndex()
+    override fun toBuffer(): Buffer {
+        return Buffer().apply {
+            this.writeAttoBlockType(type)
+            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoVersion(version)
+            this.writeAttoPublicKey(publicKey)
+            this.writeAttoHeight(height)
+            this.writeAttoAmount(balance)
+            this.writeInstant(timestamp)
+            this.writeAttoHash(previous)
+            this.writeAttoAlgorithm(sendHashAlgorithm)
+            this.writeAttoHash(sendHash)
+        }
     }
 
     override fun isValid(): Boolean {
         return super.isValid() &&
-            height > 1u &&
+            height > AttoHeight(1u) &&
             balance > AttoAmount.MIN &&
             sendHashAlgorithm != AttoAlgorithm.UNKNOWN &&
             sendHash.value.size == sendHashAlgorithm.hashSize
@@ -279,10 +282,10 @@ data class AttoReceiveBlock(
 }
 
 @Serializable
-@SerialName("OPEN")
+@SerialName("AttoOpenBlock")
 data class AttoOpenBlock(
     @ProtoNumber(0)
-    override val version: UShort,
+    override val version: AttoVersion,
     @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
@@ -308,48 +311,47 @@ data class AttoOpenBlock(
     override val type = AttoBlockType.OPEN
 
     @Transient
-    override val hash = toByteBuffer().toHash()
+    override val hash = toBuffer().hash()
 
     @Transient
-    override val height = 1UL
+    override val height = AttoHeight(1UL)
 
     companion object {
-        internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoOpenBlock? {
+        internal fun fromBuffer(serializedBlock: Buffer): AttoOpenBlock? {
             if (AttoBlockType.OPEN.size > serializedBlock.size) {
                 return null
             }
 
-            val blockType = serializedBlock.getBlockType(0)
+            val blockType = serializedBlock.readAttoBlockType()
             if (blockType != AttoBlockType.OPEN) {
                 throw IllegalArgumentException("Invalid block type: $blockType")
             }
 
             return AttoOpenBlock(
-                version = serializedBlock.getUShort(),
-                algorithm = serializedBlock.getAlgorithm(),
-                publicKey = serializedBlock.getPublicKey(),
-                balance = serializedBlock.getAmount(),
-                timestamp = serializedBlock.getInstant(),
-                sendHashAlgorithm = serializedBlock.getAlgorithm(),
-                sendHash = serializedBlock.getBlockHash(),
-                representative = serializedBlock.getPublicKey(),
+                version = serializedBlock.readAttoVersion(),
+                algorithm = serializedBlock.readAttoAlgorithm(),
+                publicKey = serializedBlock.readAttoPublicKey(),
+                balance = serializedBlock.readAttoAmount(),
+                timestamp = serializedBlock.readInstant(),
+                sendHashAlgorithm = serializedBlock.readAttoAlgorithm(),
+                sendHash = serializedBlock.readAttoHash(),
+                representative = serializedBlock.readAttoPublicKey(),
             )
         }
     }
 
-    override fun toByteBuffer(): AttoByteBuffer {
-        val byteBuffer = AttoByteBuffer(type.size)
-        return byteBuffer
-            .add(type)
-            .add(algorithm)
-            .add(version)
-            .add(publicKey)
-            .add(balance)
-            .add(timestamp)
-            .add(sendHashAlgorithm)
-            .add(sendHash)
-            .add(representative)
-            .resetIndex()
+    override fun toBuffer(): Buffer {
+        return Buffer().apply {
+            this.writeAttoBlockType(type)
+            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoVersion(version)
+            this.writeAttoPublicKey(publicKey)
+            this.writeAttoAmount(balance)
+            this.writeInstant(timestamp)
+            this.writeAttoAlgorithm(sendHashAlgorithm)
+            this.writeAttoHash(sendHash)
+            this.writeAttoPublicKey(representative)
+        }
     }
 
     override fun isValid(): Boolean {
@@ -361,17 +363,17 @@ data class AttoOpenBlock(
 }
 
 @Serializable
-@SerialName("CHANGE")
+@SerialName("AttoChangeBlock")
 data class AttoChangeBlock(
     @ProtoNumber(0)
-    override val version: UShort,
+    override val version: AttoVersion,
     @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
     @Contextual
     @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
     @ProtoNumber(3)
-    override val height: ULong,
+    override val height: AttoHeight,
     @ProtoNumber(4)
     override val balance: AttoAmount,
     @ProtoNumber(5)
@@ -390,46 +392,44 @@ data class AttoChangeBlock(
     override val type = AttoBlockType.CHANGE
 
     @Transient
-    override val hash = toByteBuffer().toHash()
+    override val hash = toBuffer().hash()
 
     companion object {
-        internal fun fromByteBuffer(serializedBlock: AttoByteBuffer): AttoChangeBlock? {
+        internal fun fromBuffer(serializedBlock: Buffer): AttoChangeBlock? {
             if (AttoBlockType.CHANGE.size > serializedBlock.size) {
                 return null
             }
 
-            val blockType = serializedBlock.getBlockType(0)
+            val blockType = serializedBlock.readAttoBlockType()
             if (blockType != AttoBlockType.CHANGE) {
                 throw IllegalArgumentException("Invalid block type: $blockType")
             }
 
             return AttoChangeBlock(
-                version = serializedBlock.getUShort(),
-                algorithm = serializedBlock.getAlgorithm(),
-                publicKey = serializedBlock.getPublicKey(),
-                height = serializedBlock.getULong(),
-                balance = serializedBlock.getAmount(),
-                timestamp = serializedBlock.getInstant(),
-                previous = serializedBlock.getBlockHash(),
-                representative = serializedBlock.getPublicKey(),
+                version = serializedBlock.readAttoVersion(),
+                algorithm = serializedBlock.readAttoAlgorithm(),
+                publicKey = serializedBlock.readAttoPublicKey(),
+                height = serializedBlock.readAttoHeight(),
+                balance = serializedBlock.readAttoAmount(),
+                timestamp = serializedBlock.readInstant(),
+                previous = serializedBlock.readAttoHash(),
+                representative = serializedBlock.readAttoPublicKey(),
             )
         }
     }
 
-    override fun toByteBuffer(): AttoByteBuffer {
-        val byteBuffer = AttoByteBuffer(type.size)
-        return byteBuffer
-            .add(type)
-            .add(algorithm)
-            .add(version)
-            .add(publicKey)
-            .add(height)
-            .add(balance)
-            .add(timestamp)
-            .add(previous)
-            .add(representative)
-            .resetIndex()
-    }
+    override fun toBuffer(): Buffer =
+        Buffer().apply {
+            this.writeAttoBlockType(type)
+            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoVersion(version)
+            this.writeAttoPublicKey(publicKey)
+            this.writeAttoHeight(height)
+            this.writeAttoAmount(balance)
+            this.writeInstant(timestamp)
+            this.writeAttoHash(previous)
+            this.writeAttoPublicKey(representative)
+        }
 
-    override fun isValid(): Boolean = super.isValid() && height > 1u
+    override fun isValid(): Boolean = super.isValid() && height > AttoHeight(1u)
 }

@@ -15,9 +15,9 @@ class AttoAccountTest {
         val expectedAccount =
             AttoAccount(
                 publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
-                version = 0U,
+                version = 0U.toAttoVersion(),
                 algorithm = AttoAlgorithm.V1,
-                height = 1U,
+                height = 1U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
                 lastTransactionTimestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),

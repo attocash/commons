@@ -21,7 +21,7 @@ jobs:
       - uses: gradle/gradle-build-action@v3
 
       - run: |
-          gradle --info test
+          gradle --info build
   codeql:
     runs-on: ubuntu-latest
     steps:
@@ -39,6 +39,6 @@ jobs:
           languages: java
 
       - run: |
-          gradle --info build -x test
+          gradle --info build -x test -x ktlintCheck
 
       - uses: github/codeql-action/analyze@v3

@@ -81,8 +81,8 @@ class AttoBlockTest {
     @MethodSource("blockProvider")
     fun `should serialize and deserialize bytes`(expectedBlock: AttoBlock) {
         // when
-        val bytes = expectedBlock.toByteBuffer()
-        val block = AttoBlock.fromByteBuffer(bytes)
+        val bytes = expectedBlock.toBuffer()
+        val block = AttoBlock.fromBuffer(bytes)
 
         // then
         assertEquals(expectedBlock, block)
@@ -193,15 +193,15 @@ class AttoBlockTest {
         fun invalidBlockProvider(): Stream<Arguments> =
             Stream.of(
                 // unknown version
-                Arguments.of(sendBlock.copy(version = UShort.MAX_VALUE)),
+                Arguments.of(sendBlock.copy(version = UShort.MAX_VALUE.toAttoVersion())),
                 // future timestamp
                 Arguments.of(receiveBlock.copy(timestamp = Clock.System.now().plus(1.days))),
                 // invalid height
-                Arguments.of(sendBlock.copy(height = 0U)),
+                Arguments.of(sendBlock.copy(height = 0U.toAttoHeight())),
                 // invalid height
-                Arguments.of(receiveBlock.copy(height = 0U)),
+                Arguments.of(receiveBlock.copy(height = 0U.toAttoHeight())),
                 // invalid height
-                Arguments.of(changeBlock.copy(height = 0U)),
+                Arguments.of(changeBlock.copy(height = 0U.toAttoHeight())),
                 // zero amount
                 Arguments.of(sendBlock.copy(amount = AttoAmount.MIN)),
                 // self send
@@ -228,7 +228,7 @@ class AttoBlockTest {
 
 val openBlock =
     AttoOpenBlock(
-        version = 0U,
+        version = 0U.toAttoVersion(),
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
         balance = AttoAmount.MAX,
@@ -240,10 +240,10 @@ val openBlock =
 
 val sendBlock =
     AttoSendBlock(
-        version = 0U,
+        version = 0U.toAttoVersion(),
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
-        height = 2U,
+        height = 2U.toAttoHeight(),
         balance = AttoAmount(1U),
         timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
         previous = AttoHash(Random.Default.nextBytes(ByteArray(32))),
@@ -254,10 +254,10 @@ val sendBlock =
 
 val receiveBlock =
     AttoReceiveBlock(
-        version = 0U,
+        version = 0U.toAttoVersion(),
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
-        height = 2U,
+        height = 2U.toAttoHeight(),
         balance = AttoAmount.MAX,
         timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
         previous = AttoHash(Random.nextBytes(ByteArray(32))),
@@ -267,10 +267,10 @@ val receiveBlock =
 
 val changeBlock =
     AttoChangeBlock(
-        version = 0U,
+        version = 0U.toAttoVersion(),
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
-        height = 2U,
+        height = 2U.toAttoHeight(),
         balance = AttoAmount.MAX,
         timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
         previous = AttoHash(Random.nextBytes(ByteArray(32))),

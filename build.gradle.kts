@@ -19,12 +19,9 @@ group = "cash.atto"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
-
-java.sourceCompatibility = JavaVersion.VERSION_1_9
-java.targetCompatibility = JavaVersion.VERSION_1_9
 
 configurations {
     val benchmarksCompile by creating {
@@ -56,10 +53,12 @@ repositories {
 }
 
 dependencies {
-    val kotlinxSerializationVersion = "1.7.0"
+    val kotlinxIoVersion = "0.4.0"
+    val kotlinxSerializationVersion = "1.7.1"
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
     implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:$kotlinxIoVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlinxSerializationVersion")
 
@@ -69,7 +68,7 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_9)
+        jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs = listOf("-Xjsr305=strict")
     }
 }
@@ -132,9 +131,9 @@ nexusPublishing {
         }
     }
 }
-
-signing {
-    val signingKey: String? by project
-    useInMemoryPgpKeys(signingKey, "")
-    sign(publishing.publications["maven"])
-}
+//
+//signing {
+//    val signingKey: String? by project
+//    useInMemoryPgpKeys(signingKey, "")
+//    sign(publishing.publications["maven"])
+//}

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 
 internal class AttoKeyTest {
     @Test
+    @Suppress("ktlint:standard:max-line-length")
     fun `should create private key`() {
         // given
         val mnemonic =
@@ -28,6 +29,7 @@ internal class AttoKeyTest {
     }
 
     @Test
+    @Suppress("ktlint:standard:max-line-length")
     fun `should create public key`() {
         // given
         val mnemonic =

@@ -13,7 +13,7 @@ data class AttoReceivable(
     @Contextual
     val hash: AttoHash,
     @ProtoNumber(1)
-    val version: UShort,
+    val version: AttoVersion,
     @ProtoNumber(2)
     val algorithm: AttoAlgorithm,
     @ProtoNumber(3)

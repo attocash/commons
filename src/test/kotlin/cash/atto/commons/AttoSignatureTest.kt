@@ -14,6 +14,8 @@ internal class AttoSignatureTest {
     private val privateKey = AttoPrivateKey("00".repeat(32).fromHexToByteArray())
     private val publicKey = privateKey.toPublicKey()
     private val hash = AttoHash("0000000000000000000000000000000000000000000000000000000000000000".fromHexToByteArray())
+
+    @Suppress("ktlint:standard:max-line-length")
     private val expectedSignature =
         AttoSignature(
             "3DA1EBDFA96EDD181DBE3659D1C051C431F056A5AD6A97A60D5CCA10460438783546461E31285FC59F91C7072642745061E2451D5FF33BCCD8C3C74DABCAF60A"
@@ -52,6 +54,7 @@ internal class AttoSignatureTest {
     }
 
     @Test
+    @Suppress("ktlint:standard:max-line-length")
     fun `should serialize json`() {
         // given
         val expectedJson =
@@ -66,6 +69,7 @@ internal class AttoSignatureTest {
     }
 
     @Test
+    @Suppress("ktlint:standard:max-line-length")
     fun `should serialize protobuf`() {
         // given
         val expectedProtobuf =

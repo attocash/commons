@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 
 internal class AttoSeedTest {
     @Test
+    @Suppress("ktlint:standard:max-line-length")
     fun `should crete seed from mnemonic`() {
         // given
         val mnemonic =

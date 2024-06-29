@@ -6,6 +6,7 @@ import org.junit.jupiter.api.assertThrows
 
 internal class AttoMnemonicTest {
     @Test
+    @Suppress("ktlint:standard:max-line-length")
     fun `should create mnemonic`() {
         // given
         val expectedMnemonic =
@@ -37,6 +38,7 @@ internal class AttoMnemonicTest {
     }
 
     @Test
+    @Suppress("ktlint:standard:max-line-length")
     fun `should throw exception when mnemonic has invalid checksum`() {
         assertThrows<AttoMnemonicException> {
             AttoMnemonic(

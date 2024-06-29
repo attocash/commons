@@ -2,6 +2,7 @@
 
 package cash.atto.commons
 
+import kotlinx.io.Buffer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -28,21 +29,21 @@ data class AttoTransaction(
     companion object {
         const val SIZE = 72
 
-        fun fromByteBuffer(
+        fun fromBuffer(
             network: AttoNetwork,
-            byteBuffer: AttoByteBuffer,
+            buffer: Buffer,
         ): AttoTransaction? {
-            if (SIZE > byteBuffer.size) {
+            if (SIZE > buffer.size) {
                 return null
             }
 
-            val block = AttoBlock.fromByteBuffer(byteBuffer) ?: return null
+            val block = AttoBlock.fromBuffer(buffer) ?: return null
 
             val transaction =
                 AttoTransaction(
                     block = block,
-                    signature = byteBuffer.getSignature(),
-                    work = byteBuffer.getWork(),
+                    signature = buffer.readAttoSignature(),
+                    work = buffer.readAttoWork(),
                 )
 
             if (!transaction.isValid(network)) {
@@ -81,12 +82,14 @@ data class AttoTransaction(
      */
     fun getTotalSize(): Int = SIZE + block.type.size
 
-    fun toByteBuffer(): AttoByteBuffer =
-        AttoByteBuffer(getTotalSize())
-            .add(block.toByteBuffer())
-            .add(signature)
-            .add(work)
-            .resetIndex()
+    fun toBuffer(): Buffer {
+        val serializedBlock = block.toBuffer()
+        return Buffer().apply {
+            this.write(serializedBlock, serializedBlock.size)
+            this.writeAttoSignature(signature)
+            this.writeAttoWork(work)
+        }
+    }
 
     override fun toString(): String = "AttoTransaction(hash=$hash, block=$block, signature=$signature, work=$work, hash=$hash)"
 }
