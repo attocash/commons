@@ -131,9 +131,9 @@ nexusPublishing {
         }
     }
 }
-//
-//signing {
-//    val signingKey: String? by project
-//    useInMemoryPgpKeys(signingKey, "")
-//    sign(publishing.publications["maven"])
-//}
+
+ signing {
+    val signingKey: String? by project
+    useInMemoryPgpKeys(signingKey, "")
+    sign(publishing.publications["maven"])
+ }

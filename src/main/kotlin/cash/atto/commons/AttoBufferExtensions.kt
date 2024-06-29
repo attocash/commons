@@ -132,7 +132,6 @@ fun Buffer.writeAttoNetwork(network: AttoNetwork): Buffer {
 
 fun Buffer.readAttoNetwork(): AttoNetwork = AttoNetwork.from(this.readByteArray(3).toString(Charsets.UTF_8))
 
-
 fun ByteArray.toBuffer(): Buffer {
     val buffer = Buffer()
     buffer.write(this)

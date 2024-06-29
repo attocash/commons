@@ -10,9 +10,11 @@ value class AttoVersion(
     override operator fun compareTo(other: AttoVersion): Int = value.compareTo(other.value)
 
     operator fun plus(uShort: UShort): AttoVersion = AttoVersion((value + uShort).toUShort())
+
     operator fun plus(uInt: UInt): AttoVersion = AttoVersion((value + uInt).toUShort())
 
     operator fun minus(uShort: UShort): AttoVersion = AttoVersion((value - uShort).toUShort())
+
     operator fun minus(uInt: UInt): AttoVersion = AttoVersion((value - uInt).toUShort())
 }
 
