@@ -132,8 +132,8 @@ nexusPublishing {
     }
 }
 
- signing {
+signing {
     val signingKey: String? by project
     useInMemoryPgpKeys(signingKey, "")
     sign(publishing.publications["maven"])
- }
+}
