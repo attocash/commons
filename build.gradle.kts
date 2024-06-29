@@ -83,12 +83,25 @@ benchmark {
     }
 }
 
+val sourcesJar by tasks.creating(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets["main"].allSource)
+}
+
+val javadocJar by tasks.creating(Jar::class) {
+    archiveClassifier.set("javadoc")
+    from(tasks.named("javadoc"))
+}
+
 publishing {
     publications {
         register<MavenPublication>("maven") {
             from(components["java"])
             groupId = "cash.atto"
             artifactId = "commons"
+
+            artifact(sourcesJar)
+            artifact(javadocJar)
 
             pom {
                 name.set("Atto Commons")
