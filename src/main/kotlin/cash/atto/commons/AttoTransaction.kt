@@ -19,7 +19,8 @@ data class AttoTransaction(
     @ProtoNumber(2)
     @Contextual
     val work: AttoWork,
-) : HeightSupport {
+) : HeightSupport,
+    AttoSerializable {
     @Transient
     val hash = block.hash
 
@@ -82,7 +83,7 @@ data class AttoTransaction(
      */
     fun getTotalSize(): Int = SIZE + block.type.size
 
-    fun toBuffer(): Buffer {
+    override fun toBuffer(): Buffer {
         val serializedBlock = block.toBuffer()
         return Buffer().apply {
             this.write(serializedBlock, serializedBlock.size)

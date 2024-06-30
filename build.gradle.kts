@@ -58,7 +58,7 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
     implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:$kotlinxIoVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlinxSerializationVersion")
 

@@ -45,7 +45,9 @@ interface HeightSupport {
 }
 
 @Serializable
-sealed interface AttoBlock : HeightSupport {
+sealed interface AttoBlock :
+    HeightSupport,
+    AttoSerializable {
     val type: AttoBlockType
     val algorithm: AttoAlgorithm
 
@@ -57,7 +59,7 @@ sealed interface AttoBlock : HeightSupport {
     val balance: AttoAmount
     val timestamp: Instant
 
-    fun toBuffer(): Buffer
+    override fun toBuffer(): Buffer
 
     companion object {
         fun fromBuffer(serializedBlock: Buffer): AttoBlock? {
