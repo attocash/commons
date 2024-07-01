@@ -1,6 +1,6 @@
-package cash.atto.commons.serialiazers.protobuf
+package cash.atto.commons.serialiazers
 
-import cash.atto.commons.AttoHash
+import cash.atto.commons.AttoWork
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -8,15 +8,15 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-object AttoHashProtobufSerializer : KSerializer<AttoHash> {
-    override val descriptor = PrimitiveSerialDescriptor("AttoHash", PrimitiveKind.BYTE)
+object AttoWorkAsByteArraySerializer : KSerializer<AttoWork> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoWork", PrimitiveKind.BYTE)
 
     override fun serialize(
         encoder: Encoder,
-        value: AttoHash,
+        value: AttoWork,
     ) {
         encoder.encodeSerializableValue(ByteArraySerializer(), value.value)
     }
 
-    override fun deserialize(decoder: Decoder): AttoHash = AttoHash(decoder.decodeSerializableValue(ByteArraySerializer()))
+    override fun deserialize(decoder: Decoder): AttoWork = AttoWork(decoder.decodeSerializableValue(ByteArraySerializer()))
 }

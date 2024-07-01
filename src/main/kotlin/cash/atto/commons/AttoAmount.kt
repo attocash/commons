@@ -1,7 +1,10 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.AttoAmountSerializer
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -69,3 +72,16 @@ fun String.toAttoAmount(): AttoAmount = AttoAmount(this.toULong())
 fun BigInteger.toAttoAmount(): AttoAmount = AttoAmount(toString().toULong())
 
 fun BigDecimal.toAttoAmount(): AttoAmount = AttoAmount(toString().toULong())
+
+object AttoAmountSerializer : KSerializer<AttoAmount> {
+    override val descriptor = ULong.serializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoAmount,
+    ) {
+        ULong.serializer().serialize(encoder, value.raw)
+    }
+
+    override fun deserialize(decoder: Decoder): AttoAmount = AttoAmount(ULong.serializer().deserialize(decoder))
+}

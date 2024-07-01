@@ -2,9 +2,13 @@
 
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoJson
-import cash.atto.commons.serialiazers.protobuf.AttoProtobuf
-import kotlinx.serialization.*
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromHexString
+import kotlinx.serialization.encodeToHexString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -67,8 +71,8 @@ internal class AttoAmountTest {
         val expectedJson = "18000000000000000000"
 
         // when
-        val amount = AttoJson.decodeFromString<AttoAmount>(expectedJson)
-        val json = AttoJson.encodeToString(amount)
+        val amount = Json.decodeFromString<AttoAmount>(expectedJson)
+        val json = Json.encodeToString(amount)
 
         // then
         assertEquals(expectedJson, json)
@@ -81,8 +85,8 @@ internal class AttoAmountTest {
         val expectedProtobuf = "088080A0A89C94B6E6F901"
 
         // when
-        val holder = AttoProtobuf.decodeFromHexString<Holder>(expectedProtobuf)
-        val protobuf = AttoProtobuf.encodeToHexString(holder).uppercase()
+        val holder = ProtoBuf.decodeFromHexString<Holder>(expectedProtobuf)
+        val protobuf = ProtoBuf.encodeToHexString(holder).uppercase()
 
         // then
         assertEquals(expectedProtobuf, protobuf)

@@ -11,7 +11,7 @@ internal class AttoBufferExtensionsTest {
     @Test
     fun test() {
         // given
-        val size = 185L
+        val size = 183L
         val buffer = Buffer()
 
         // when
@@ -66,37 +66,4 @@ internal class AttoBufferExtensionsTest {
         assertEquals(expectedNetwork, buffer.readAttoNetwork())
         assertEquals(expectedAlgorithm, buffer.readAttoAlgorithm())
     }
-
-//    @Test
-//    fun slice() {
-//        // given
-//        val buffer = AttoByteBuffer(6)
-//        buffer.add((1).toShort())
-//        buffer.add((2).toShort())
-//        buffer.add((3).toShort())
-//
-//        // when
-//        val short = buffer.slice(4).getShort()
-//
-//        // then
-//        assertEquals(3, short)
-//    }
-//
-//    @Test
-//    fun toByteArray() {
-//        // given
-//        val buffer =
-//            AttoByteBuffer(2)
-//                .add((1u).toUByte())
-//                .add((2u).toUByte())
-//                .slice(1)
-//
-//        buffer.getUByte()
-//
-//        // when
-//        val byteArray = buffer.toByteArray()
-//
-//        // then
-//        assertEquals(1, byteArray.size)
-//    }
 }

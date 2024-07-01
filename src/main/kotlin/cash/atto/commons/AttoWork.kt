@@ -8,7 +8,12 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.util.stream.Stream
 import kotlin.math.pow
 import kotlin.random.Random
@@ -56,7 +61,7 @@ private fun isValid(
     return difficult <= threshold
 }
 
-private fun isValid(
+internal fun isValid(
     network: AttoNetwork,
     timestamp: Instant,
     hash: ByteArray,
@@ -111,7 +116,7 @@ private class Worker(
     }
 }
 
-@Serializable
+@Serializable(with = AttoWorkSerializer::class)
 data class AttoWork(
     val value: ByteArray,
 ) {
@@ -126,37 +131,17 @@ data class AttoWork(
         }
 
         fun isValid(
-            network: AttoNetwork,
-            timestamp: Instant,
-            hash: AttoHash,
+            block: AttoOpenBlock,
             work: AttoWork,
         ): Boolean {
-            return isValid(network, timestamp, hash.value, work.value)
+            return isValid(block.network, block.timestamp, block.publicKey.value, work.value)
         }
 
-        fun isValid(
-            network: AttoNetwork,
-            timestamp: Instant,
-            publicKey: AttoPublicKey,
+        fun <T> isValid(
+            block: T,
             work: AttoWork,
-        ): Boolean {
-            return isValid(network, timestamp, publicKey.value, work.value)
-        }
-
-        fun work(
-            network: AttoNetwork,
-            timestamp: Instant,
-            hash: AttoHash,
-        ): AttoWork {
-            return work(network, timestamp, hash.value)
-        }
-
-        fun work(
-            network: AttoNetwork,
-            timestamp: Instant,
-            publicKey: AttoPublicKey,
-        ): AttoWork {
-            return work(network, timestamp, publicKey.value)
+        ): Boolean where T : PreviousSupport, T : AttoBlock {
+            return isValid(block.network, block.timestamp, block.previous.value, work.value)
         }
 
         fun work(
@@ -175,7 +160,19 @@ data class AttoWork(
                 .get()
         }
 
-        private fun work(
+        fun work(block: AttoOpenBlock): AttoWork {
+            return work(block.network, block.timestamp, block.publicKey.value)
+        }
+
+        fun <T> work(block: T): AttoWork where T : PreviousSupport, T : AttoBlock {
+            return work(block.network, block.timestamp, block.previous.value)
+        }
+
+        fun parse(value: String): AttoWork {
+            return AttoWork(value.fromHexToByteArray())
+        }
+
+        fun work(
             network: AttoNetwork,
             timestamp: Instant,
             hash: ByteArray,
@@ -183,30 +180,18 @@ data class AttoWork(
             val threshold = getThreshold(network, timestamp)
             return work(threshold, hash)
         }
-
-        fun parse(value: String): AttoWork {
-            return AttoWork(value.fromHexToByteArray())
-        }
     }
 
     init {
         value.checkLength(SIZE)
     }
 
-    fun isValid(
-        network: AttoNetwork,
-        timestamp: Instant,
-        publicKey: AttoPublicKey,
-    ): Boolean {
-        return isValid(network, timestamp, publicKey, this)
+    fun isValid(block: AttoOpenBlock): Boolean {
+        return isValid(block, this)
     }
 
-    fun isValid(
-        network: AttoNetwork,
-        timestamp: Instant,
-        hash: AttoHash,
-    ): Boolean {
-        return isValid(network, timestamp, hash, this)
+    fun <T> isValid(block: T): Boolean where T : PreviousSupport, T : AttoBlock {
+        return isValid(block, this)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -219,4 +204,17 @@ data class AttoWork(
     override fun hashCode(): Int = value.contentHashCode()
 
     override fun toString(): String = value.toHex()
+}
+
+object AttoWorkSerializer : KSerializer<AttoWork> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoWork", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoWork,
+    ) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): AttoWork = AttoWork.parse(decoder.decodeString())
 }

@@ -2,11 +2,16 @@
 
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoJson
-import cash.atto.commons.serialiazers.json.AttoSignatureJsonSerializer
-import cash.atto.commons.serialiazers.protobuf.AttoProtobuf
-import kotlinx.serialization.*
-import org.junit.jupiter.api.Assertions.*
+import cash.atto.commons.serialiazers.AttoSignatureAsByteArraySerializer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromHexString
+import kotlinx.serialization.encodeToHexString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
@@ -61,8 +66,8 @@ internal class AttoSignatureTest {
             "\"B2DE82D68C24A618B4B3C5077F90779757B071737108FB7B131AB658320B8347DC9530DB0277D7802FE05C9EE5E845ED5D7D9E8B6812D55051F89B2C7084B584\""
 
         // when
-        val signature = AttoJson.decodeFromString(AttoSignatureJsonSerializer, expectedJson)
-        val json = AttoJson.encodeToString(AttoSignatureJsonSerializer, signature)
+        val signature = Json.decodeFromString(AttoSignatureSerializer, expectedJson)
+        val json = Json.encodeToString(AttoSignatureSerializer, signature)
 
         // then
         assertEquals(expectedJson, json)
@@ -76,8 +81,8 @@ internal class AttoSignatureTest {
             "0A40E9DBF6ED1F41864C3903FFAC35E2A9205601A64077F3FBCDC5D66E02E400DFD8BBD6BE6EC500BAE9B0F536E03AE0983402F00D316B8FF8540E1601AA556364A3"
 
         // when
-        val holder = AttoProtobuf.decodeFromHexString<Holder>(expectedProtobuf)
-        val protobuf = AttoProtobuf.encodeToHexString(holder).uppercase()
+        val holder = ProtoBuf.decodeFromHexString<Holder>(expectedProtobuf)
+        val protobuf = ProtoBuf.encodeToHexString(holder).uppercase()
 
         // then
         assertEquals(expectedProtobuf, protobuf)
@@ -85,6 +90,7 @@ internal class AttoSignatureTest {
 
     @Serializable
     private data class Holder(
-        @Contextual val signature: AttoSignature,
+        @Serializable(with = AttoSignatureAsByteArraySerializer::class)
+        val signature: AttoSignature,
     )
 }

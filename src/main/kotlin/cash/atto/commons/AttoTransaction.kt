@@ -3,21 +3,14 @@
 package cash.atto.commons
 
 import kotlinx.io.Buffer
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 data class AttoTransaction(
-    @ProtoNumber(0)
     val block: AttoBlock,
-    @ProtoNumber(1)
-    @Contextual
     val signature: AttoSignature,
-    @ProtoNumber(2)
-    @Contextual
     val work: AttoWork,
 ) : HeightSupport,
     AttoSerializable {
@@ -30,10 +23,7 @@ data class AttoTransaction(
     companion object {
         const val SIZE = 72
 
-        fun fromBuffer(
-            network: AttoNetwork,
-            buffer: Buffer,
-        ): AttoTransaction? {
+        fun fromBuffer(buffer: Buffer): AttoTransaction? {
             if (SIZE > buffer.size) {
                 return null
             }
@@ -47,7 +37,7 @@ data class AttoTransaction(
                     work = buffer.readAttoWork(),
                 )
 
-            if (!transaction.isValid(network)) {
+            if (!transaction.isValid()) {
                 return null
             }
 
@@ -58,16 +48,16 @@ data class AttoTransaction(
     /**
      * Minimal block validation. This method doesn't check this transaction against the ledger so further validations are required.
      */
-    fun isValid(network: AttoNetwork): Boolean {
+    fun isValid(): Boolean {
         if (!block.isValid()) {
             return false
         }
 
-        if (block is PreviousSupport && !work.isValid(network, block.timestamp, block.previous)) {
+        if (block is PreviousSupport && !work.isValid(block)) {
             return false
         }
 
-        if (block is AttoOpenBlock && !work.isValid(network, block.timestamp, block.publicKey)) {
+        if (block is AttoOpenBlock && !work.isValid(block)) {
             return false
         }
 

@@ -126,11 +126,11 @@ fun Buffer.readAttoSocketAddress(): AttoSocketAddress {
 }
 
 fun Buffer.writeAttoNetwork(network: AttoNetwork): Buffer {
-    this.write(network.environment.toByteArray(Charsets.UTF_8))
+    this.writeUByte(network.code)
     return this
 }
 
-fun Buffer.readAttoNetwork(): AttoNetwork = AttoNetwork.from(this.readByteArray(3).toString(Charsets.UTF_8))
+fun Buffer.readAttoNetwork(): AttoNetwork = AttoNetwork.from(this.readUByte())
 
 fun ByteArray.toBuffer(): Buffer {
     val buffer = Buffer()

@@ -2,14 +2,10 @@
 
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoJson
-import cash.atto.commons.serialiazers.protobuf.AttoProtobuf
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.decodeFromHexString
-import kotlinx.serialization.encodeToHexString
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -35,32 +31,10 @@ class AttoBlockTest {
 
     @ParameterizedTest
     @MethodSource("blockProvider")
-    fun `should serialize and deserialize protobuf`(expectedBlock: AttoBlock) {
-        // when
-        val byteArray = AttoProtobuf.encodeToByteArray(AttoBlock.serializer(), expectedBlock)
-        val block = AttoProtobuf.decodeFromByteArray<AttoBlock>(byteArray)
-
-        // then
-        assertEquals(expectedBlock, block)
-    }
-
-    @ParameterizedTest
-    @MethodSource("protobufBlockProvider")
-    fun `should deserialize protobuf`(expectedProtobuf: String) {
-        // when
-        val block = AttoProtobuf.decodeFromHexString<AttoBlock>(expectedProtobuf)
-        val protoBuf = AttoProtobuf.encodeToHexString(AttoBlock.serializer(), block).uppercase()
-
-        // then
-        assertEquals(expectedProtobuf, protoBuf)
-    }
-
-    @ParameterizedTest
-    @MethodSource("blockProvider")
     fun `should serialize and deserialize json`(expectedBlock: AttoBlock) {
         // when
-        val json = AttoJson.encodeToString(AttoBlock.serializer(), expectedBlock)
-        val block = AttoJson.decodeFromString<AttoBlock>(json)
+        val json = Json.encodeToString(AttoBlock.serializer(), expectedBlock)
+        val block = Json.decodeFromString<AttoBlock>(json)
 
         // then
         assertEquals(expectedBlock, block)
@@ -70,8 +44,8 @@ class AttoBlockTest {
     @MethodSource("jsonBlockProvider")
     fun `should deserialize json`(expectedJson: String) {
         // when
-        val block = AttoJson.decodeFromString<AttoBlock>(expectedJson)
-        val json = AttoJson.encodeToString(AttoBlock.serializer(), block)
+        val block = Json.decodeFromString<AttoBlock>(expectedJson)
+        val json = Json.encodeToString(AttoBlock.serializer(), block)
 
         // then
         assertEquals(expectedJson.compactJson(), json)
@@ -127,7 +101,8 @@ class AttoBlockTest {
                 Arguments.of(
                     """
                     {
-                       "type":"AttoSendBlock",
+                       "type":"SEND",
+                       "network":"LOCAL",
                        "version":0,
                        "algorithm":"V1",
                        "publicKey":"A5E7E4B3B93150314E1177D5B9DE0057626B16A4B3C3F1DB37DF67628A5EF457",
@@ -144,7 +119,8 @@ class AttoBlockTest {
                 Arguments.of(
                     """
                     {
-                       "type":"AttoReceiveBlock",
+                       "type":"RECEIVE",
+                       "network":"LOCAL",
                        "version":0,
                        "algorithm":"V1",
                        "publicKey":"39B56483A0DE38D9578CAF7EA791C2FEC96B318C7BD9989207B575334C5D9F1B",
@@ -160,7 +136,8 @@ class AttoBlockTest {
                 Arguments.of(
                     """
                    {
-                       "type":"AttoOpenBlock",
+                       "type":"OPEN",
+                       "network":"LOCAL",
                        "version":0,
                        "algorithm":"V1",
                        "publicKey":"15625A4831C8F1312F1DB41550D0FD6C730FCC259ACE0FF88B500EA96783A348",
@@ -175,7 +152,8 @@ class AttoBlockTest {
                 Arguments.of(
                     """
                     {
-                       "type":"AttoChangeBlock",
+                       "type":"CHANGE",
+                       "network":"LOCAL",
                        "version":0,
                        "algorithm":"V1",
                        "publicKey":"2415EE860847B3A1CE8B605267E83481D8426A4C42F8128EA72D72F0AD072DCC",
@@ -229,6 +207,7 @@ class AttoBlockTest {
 val openBlock =
     AttoOpenBlock(
         version = 0U.toAttoVersion(),
+        network = AttoNetwork.LOCAL,
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
         balance = AttoAmount.MAX,
@@ -241,6 +220,7 @@ val openBlock =
 val sendBlock =
     AttoSendBlock(
         version = 0U.toAttoVersion(),
+        network = AttoNetwork.LOCAL,
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
         height = 2U.toAttoHeight(),
@@ -255,6 +235,7 @@ val sendBlock =
 val receiveBlock =
     AttoReceiveBlock(
         version = 0U.toAttoVersion(),
+        network = AttoNetwork.LOCAL,
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
         height = 2U.toAttoHeight(),
@@ -268,6 +249,7 @@ val receiveBlock =
 val changeBlock =
     AttoChangeBlock(
         version = 0U.toAttoVersion(),
+        network = AttoNetwork.LOCAL,
         algorithm = AttoAlgorithm.V1,
         publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
         height = 2U.toAttoHeight(),

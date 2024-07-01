@@ -2,10 +2,13 @@
 
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoJson
-import cash.atto.commons.serialiazers.json.AttoPublicKeyJsonSerializer
-import cash.atto.commons.serialiazers.protobuf.AttoProtobuf
-import kotlinx.serialization.*
+import cash.atto.commons.serialiazers.AttoPublicKeyAsByteArraySerializer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromHexString
+import kotlinx.serialization.encodeToHexString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -53,8 +56,8 @@ internal class AttoKeyTest {
         val expectedJson = "\"67FFDB1309565DF8566D22ABFBB30E37615A401174D863821FFC3FE5C458CA8C\""
 
         // when
-        val publicKey = AttoJson.decodeFromString(AttoPublicKeyJsonSerializer, expectedJson)
-        val json = AttoJson.encodeToString(AttoPublicKeyJsonSerializer, publicKey)
+        val publicKey = Json.decodeFromString(AttoPublicKey.serializer(), expectedJson)
+        val json = Json.encodeToString(AttoPublicKey.serializer(), publicKey)
 
         // then
         assertEquals(expectedJson, json)
@@ -66,8 +69,8 @@ internal class AttoKeyTest {
         val expectedProtobuf = "0A20FD213897BE32302B06BF2B99005B05002CFAAF635391A8DBE178B32EB98A45C6"
 
         // when
-        val holder = AttoProtobuf.decodeFromHexString<Holder>(expectedProtobuf)
-        val protobuf = AttoProtobuf.encodeToHexString(holder).uppercase()
+        val holder = ProtoBuf.decodeFromHexString<Holder>(expectedProtobuf)
+        val protobuf = ProtoBuf.encodeToHexString(holder).uppercase()
 
         // then
         assertEquals(expectedProtobuf, protobuf)
@@ -75,6 +78,7 @@ internal class AttoKeyTest {
 
     @Serializable
     private data class Holder(
-        @Contextual val publicKey: AttoPublicKey,
+        @Serializable(with = AttoPublicKeyAsByteArraySerializer::class)
+        val publicKey: AttoPublicKey,
     )
 }

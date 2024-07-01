@@ -2,14 +2,14 @@
 
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoJson
-import cash.atto.commons.serialiazers.protobuf.AttoProtobuf
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
@@ -21,6 +21,7 @@ class AttoTransactionTest {
     val receiveBlock =
         AttoReceiveBlock(
             version = 0U.toAttoVersion(),
+            network = AttoNetwork.LOCAL,
             algorithm = AttoAlgorithm.V1,
             publicKey = publicKey,
             height = 2U.toAttoHeight(),
@@ -35,14 +36,14 @@ class AttoTransactionTest {
         AttoTransaction(
             block = receiveBlock,
             signature = privateKey.sign(receiveBlock.hash),
-            work = AttoWork.work(AttoNetwork.LOCAL, receiveBlock.timestamp, receiveBlock.previous),
+            work = AttoWork.work(receiveBlock),
         )
 
     @Test
     fun `should serialize buffer`() {
         // when
         val buffer = expectedTransaction.toBuffer()
-        val transaction = AttoTransaction.fromBuffer(AttoNetwork.LOCAL, buffer)
+        val transaction = AttoTransaction.fromBuffer(buffer)
 
         // then
         assertEquals(expectedTransaction, transaction)
@@ -51,8 +52,8 @@ class AttoTransactionTest {
     @Test
     fun `should serialize json`() {
         // when
-        val json = AttoJson.encodeToString(expectedTransaction)
-        val transaction = AttoJson.decodeFromString<AttoTransaction>(json)
+        val json = Json.encodeToString(expectedTransaction)
+        val transaction = Json.decodeFromString<AttoTransaction>(json)
 
         // then
         assertEquals(expectedTransaction, transaction)
@@ -61,8 +62,8 @@ class AttoTransactionTest {
     @Test
     fun `should serialize protobuf`() {
         // when
-        val protobuf = AttoProtobuf.encodeToByteArray(expectedTransaction)
-        val transaction = AttoProtobuf.decodeFromByteArray<AttoTransaction>(protobuf)
+        val protobuf = ProtoBuf.encodeToByteArray(expectedTransaction)
+        val transaction = ProtoBuf.decodeFromByteArray<AttoTransaction>(protobuf)
 
         // then
         assertEquals(expectedTransaction, transaction)

@@ -6,15 +6,15 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
 enum class AttoNetwork(
-    val environment: String,
+    val code: UByte,
     val thresholdIncreaseFactor: ULong,
 ) {
-    LIVE("XT0", 1u),
-    BETA("XT1", 10u),
-    DEV("XT2", 100u),
-    LOCAL("XT3", 1_000u),
+    LIVE(0U, 1u),
+    BETA(1U, 10u),
+    DEV(2U, 100u),
+    LOCAL(3U, 1_000u),
 
-    UNKNOWN("???", ULong.MAX_VALUE),
+    UNKNOWN(9U, ULong.MAX_VALUE),
     ;
 
     companion object {
@@ -23,8 +23,8 @@ enum class AttoNetwork(
         val INITIAL_INSTANT: Instant = INITIAL_DATE.atStartOfDayIn(TimeZone.UTC)
         val DOUBLING_PERIOD = 2.0
 
-        private val map = entries.associateBy { it.environment }
+        private val map = entries.associateBy { it.code }
 
-        fun from(environment: String): AttoNetwork = map.getOrDefault(environment, UNKNOWN)
+        fun from(code: UByte): AttoNetwork = map.getOrDefault(code, UNKNOWN)
     }
 }

@@ -1,7 +1,7 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
@@ -21,8 +21,8 @@ class AttoReceivableTest {
             )
 
         // when
-        val json = AttoJson.encodeToString(expectedReceivable)
-        val account = AttoJson.decodeFromString<AttoReceivable>(json)
+        val json = Json.encodeToString(expectedReceivable)
+        val account = Json.decodeFromString<AttoReceivable>(json)
 
         // then
         assertEquals(expectedReceivable, account)
@@ -44,8 +44,8 @@ class AttoReceivableTest {
             """
 
         // when
-        val receivable = AttoJson.decodeFromString<AttoReceivable>(expectedJson)
-        val json = AttoJson.encodeToString(receivable)
+        val receivable = Json.decodeFromString<AttoReceivable>(expectedJson)
+        val json = Json.encodeToString(receivable)
 
         // then
         assertEquals(expectedJson.compactJson(), json)

@@ -1,11 +1,16 @@
 package cash.atto.commons
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
 
-@Serializable
+@Serializable(with = AttoSignatureSerializer::class)
 data class AttoSignature(
     val value: ByteArray,
 ) {
@@ -56,3 +61,16 @@ data class AttoSignature(
 }
 
 fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature = AttoSignature.sign(this, hash)
+
+object AttoSignatureSerializer : KSerializer<AttoSignature> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoSignature,
+    ) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): AttoSignature = AttoSignature.parse(decoder.decodeString())
+}

@@ -5,39 +5,30 @@ package cash.atto.commons
 import cash.atto.commons.serialiazers.InstantMillisSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 data class AttoAccount(
-    @ProtoNumber(0)
-    @Contextual
     val publicKey: AttoPublicKey,
-    @ProtoNumber(1)
+    val network: AttoNetwork,
     val version: AttoVersion,
-    @ProtoNumber(2)
     val algorithm: AttoAlgorithm,
-    @ProtoNumber(3)
     override val height: AttoHeight,
-    @ProtoNumber(4)
     val balance: AttoAmount,
-    @ProtoNumber(5)
-    @Contextual
     val lastTransactionHash: AttoHash,
-    @ProtoNumber(6)
     @Serializable(with = InstantMillisSerializer::class)
     val lastTransactionTimestamp: Instant,
-    @ProtoNumber(7)
-    @Contextual val representative: AttoPublicKey,
+    val representative: AttoPublicKey,
 ) : HeightSupport {
     companion object {
         fun open(
             representative: AttoPublicKey,
             receivable: AttoReceivable,
+            network: AttoNetwork,
         ): AttoOpenBlock {
             return AttoOpenBlock(
+                network = network,
                 version = receivable.version,
                 algorithm = receivable.receiverAlgorithm,
                 publicKey = receivable.receiverPublicKey,
@@ -59,6 +50,7 @@ data class AttoAccount(
             throw IllegalArgumentException("You can't send money to yourself")
         }
         return AttoSendBlock(
+            network = network,
             version = version,
             algorithm = algorithm,
             publicKey = publicKey,
@@ -74,6 +66,7 @@ data class AttoAccount(
 
     fun receive(receivable: AttoReceivable): AttoReceiveBlock {
         return AttoReceiveBlock(
+            network = network,
             version = version.max(receivable.version),
             algorithm = algorithm,
             publicKey = publicKey,
@@ -88,6 +81,7 @@ data class AttoAccount(
 
     fun change(representative: AttoPublicKey): AttoChangeBlock {
         return AttoChangeBlock(
+            network = network,
             version = version,
             algorithm = algorithm,
             publicKey = publicKey,

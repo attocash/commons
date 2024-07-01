@@ -1,9 +1,9 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoJson
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
@@ -15,6 +15,7 @@ class AttoAccountTest {
         val expectedAccount =
             AttoAccount(
                 publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                network = AttoNetwork.LOCAL,
                 version = 0U.toAttoVersion(),
                 algorithm = AttoAlgorithm.V1,
                 height = 1U.toAttoHeight(),
@@ -25,8 +26,8 @@ class AttoAccountTest {
             )
 
         // when
-        val json = AttoJson.encodeToString(expectedAccount)
-        val account = AttoJson.decodeFromString<AttoAccount>(json)
+        val json = Json.encodeToString(expectedAccount)
+        val account = Json.decodeFromString<AttoAccount>(json)
 
         // then
         assertEquals(expectedAccount, account)
@@ -39,6 +40,7 @@ class AttoAccountTest {
             """
                 {
                    "publicKey":"45B3B58C26181580EEAFC1791046D54EEC2854BF550A211E2362761077D6590C",
+                   "network":"LOCAL",
                    "version":0,
                    "algorithm":"V1",
                    "height":1,
@@ -50,8 +52,8 @@ class AttoAccountTest {
           """
 
         // when
-        val account = AttoJson.decodeFromString<AttoAccount>(expectedJson)
-        val json = AttoJson.encodeToString(account)
+        val account = Json.decodeFromString<AttoAccount>(expectedJson)
+        val json = Json.encodeToString(account)
 
         // then
         assertEquals(expectedJson.compactJson(), json)

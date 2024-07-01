@@ -6,7 +6,10 @@ import cash.atto.commons.serialiazers.InstantMillisSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
-import kotlinx.serialization.*
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.protobuf.ProtoNumber
 
 val maxVersion = AttoVersion(0U)
@@ -49,11 +52,12 @@ sealed interface AttoBlock :
     HeightSupport,
     AttoSerializable {
     val type: AttoBlockType
+    val network: AttoNetwork
+    val version: AttoVersion
     val algorithm: AttoAlgorithm
 
     val hash: AttoHash
 
-    val version: AttoVersion
     val publicKey: AttoPublicKey
     override val height: AttoHeight
     val balance: AttoAmount
@@ -114,31 +118,19 @@ interface RepresentativeSupport {
 }
 
 @Serializable
-@SerialName("AttoSendBlock")
+@SerialName("SEND")
 data class AttoSendBlock(
-    @ProtoNumber(0)
+    override val network: AttoNetwork,
     override val version: AttoVersion,
-    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
-    @Contextual
-    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(3)
     override val height: AttoHeight,
-    @ProtoNumber(4)
     override val balance: AttoAmount,
-    @ProtoNumber(5)
     @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
-    @Contextual
-    @ProtoNumber(6)
     override val previous: AttoHash,
-    @ProtoNumber(7)
     val receiverAlgorithm: AttoAlgorithm,
-    @Contextual
-    @ProtoNumber(8)
     val receiverPublicKey: AttoPublicKey,
-    @ProtoNumber(9)
     val amount: AttoAmount,
 ) : AttoBlock,
     PreviousSupport {
@@ -160,6 +152,7 @@ data class AttoSendBlock(
             }
 
             return AttoSendBlock(
+                network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
                 algorithm = serializedBlock.readAttoAlgorithm(),
                 publicKey = serializedBlock.readAttoPublicKey(),
@@ -177,8 +170,9 @@ data class AttoSendBlock(
     override fun toBuffer(): Buffer {
         return Buffer().apply {
             this.writeAttoBlockType(type)
-            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
+            this.writeAttoAlgorithm(algorithm)
             this.writeAttoPublicKey(publicKey)
             this.writeAttoHeight(height)
             this.writeAttoAmount(balance)
@@ -201,29 +195,18 @@ data class AttoSendBlock(
 }
 
 @Serializable
-@SerialName("AttoReceiveBlock")
+@SerialName("RECEIVE")
 data class AttoReceiveBlock(
-    @ProtoNumber(0)
+    override val network: AttoNetwork,
     override val version: AttoVersion,
-    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
-    @Contextual
-    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(3)
     override val height: AttoHeight,
-    @ProtoNumber(4)
     override val balance: AttoAmount,
-    @ProtoNumber(5)
     @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
-    @Contextual
-    @ProtoNumber(6)
     override val previous: AttoHash,
-    @ProtoNumber(7)
     override val sendHashAlgorithm: AttoAlgorithm,
-    @Contextual
-    @ProtoNumber(8)
     override val sendHash: AttoHash,
 ) : AttoBlock,
     PreviousSupport,
@@ -246,6 +229,7 @@ data class AttoReceiveBlock(
             }
 
             return AttoReceiveBlock(
+                network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
                 algorithm = serializedBlock.readAttoAlgorithm(),
                 publicKey = serializedBlock.readAttoPublicKey(),
@@ -262,8 +246,9 @@ data class AttoReceiveBlock(
     override fun toBuffer(): Buffer {
         return Buffer().apply {
             this.writeAttoBlockType(type)
-            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
+            this.writeAttoAlgorithm(algorithm)
             this.writeAttoPublicKey(publicKey)
             this.writeAttoHeight(height)
             this.writeAttoAmount(balance)
@@ -284,27 +269,17 @@ data class AttoReceiveBlock(
 }
 
 @Serializable
-@SerialName("AttoOpenBlock")
+@SerialName("OPEN")
 data class AttoOpenBlock(
-    @ProtoNumber(0)
+    override val network: AttoNetwork,
     override val version: AttoVersion,
-    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
-    @Contextual
-    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(3)
     override val balance: AttoAmount,
-    @ProtoNumber(4)
     @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
-    @ProtoNumber(5)
     override val sendHashAlgorithm: AttoAlgorithm,
-    @Contextual
-    @ProtoNumber(6)
     override val sendHash: AttoHash,
-    @Contextual
-    @ProtoNumber(7)
     override val representative: AttoPublicKey,
 ) : AttoBlock,
     ReceiveSupport,
@@ -330,6 +305,7 @@ data class AttoOpenBlock(
             }
 
             return AttoOpenBlock(
+                network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
                 algorithm = serializedBlock.readAttoAlgorithm(),
                 publicKey = serializedBlock.readAttoPublicKey(),
@@ -345,8 +321,9 @@ data class AttoOpenBlock(
     override fun toBuffer(): Buffer {
         return Buffer().apply {
             this.writeAttoBlockType(type)
-            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
+            this.writeAttoAlgorithm(algorithm)
             this.writeAttoPublicKey(publicKey)
             this.writeAttoAmount(balance)
             this.writeInstant(timestamp)
@@ -365,27 +342,17 @@ data class AttoOpenBlock(
 }
 
 @Serializable
-@SerialName("AttoChangeBlock")
+@SerialName("CHANGE")
 data class AttoChangeBlock(
-    @ProtoNumber(0)
+    override val network: AttoNetwork,
     override val version: AttoVersion,
-    @ProtoNumber(1)
     override val algorithm: AttoAlgorithm,
-    @Contextual
-    @ProtoNumber(2)
     override val publicKey: AttoPublicKey,
-    @ProtoNumber(3)
     override val height: AttoHeight,
-    @ProtoNumber(4)
     override val balance: AttoAmount,
-    @ProtoNumber(5)
     @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
-    @Contextual
-    @ProtoNumber(6)
     override val previous: AttoHash,
-    @Contextual
-    @ProtoNumber(7)
     override val representative: AttoPublicKey,
 ) : AttoBlock,
     PreviousSupport,
@@ -408,6 +375,7 @@ data class AttoChangeBlock(
             }
 
             return AttoChangeBlock(
+                network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
                 algorithm = serializedBlock.readAttoAlgorithm(),
                 publicKey = serializedBlock.readAttoPublicKey(),
@@ -423,8 +391,9 @@ data class AttoChangeBlock(
     override fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeAttoBlockType(type)
-            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
+            this.writeAttoAlgorithm(algorithm)
             this.writeAttoPublicKey(publicKey)
             this.writeAttoHeight(height)
             this.writeAttoAmount(balance)

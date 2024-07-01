@@ -1,6 +1,11 @@
 package cash.atto.commons
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -99,7 +104,7 @@ class AttoPrivateKey(
     }
 }
 
-@Serializable
+@Serializable(with = AttoPublicKeySerializer::class)
 data class AttoPublicKey(
     val value: ByteArray,
 ) {
@@ -186,4 +191,17 @@ data class AttoAlgorithmPublicKey(
     }
 
     override fun toString(): String = value.toHex()
+}
+
+object AttoPublicKeySerializer : KSerializer<AttoPublicKey> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoPublicKey", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoPublicKey,
+    ) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): AttoPublicKey = AttoPublicKey.parse(decoder.decodeString())
 }

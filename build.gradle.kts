@@ -53,7 +53,6 @@ repositories {
 }
 
 dependencies {
-    val kotlinxIoVersion = "0.4.0"
     val kotlinxSerializationVersion = "1.7.1"
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
@@ -146,7 +145,10 @@ nexusPublishing {
 }
 
 signing {
-    val signingKey: String? by project
-    useInMemoryPgpKeys(signingKey, "")
-    sign(publishing.publications["maven"])
+    val shouldSign = project.findProperty("signing.skip")?.toString()?.toBoolean() != true
+    if (shouldSign) {
+        val signingKey: String? by project
+        useInMemoryPgpKeys(signingKey, "")
+        sign(publishing.publications["maven"])
+    }
 }

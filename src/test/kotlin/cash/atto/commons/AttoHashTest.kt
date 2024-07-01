@@ -2,10 +2,13 @@
 
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.json.AttoHashJsonSerializer
-import cash.atto.commons.serialiazers.json.AttoJson
-import cash.atto.commons.serialiazers.protobuf.AttoProtobuf
-import kotlinx.serialization.*
+import cash.atto.commons.serialiazers.AttoHashAsByteArraySerializer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromHexString
+import kotlinx.serialization.encodeToHexString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -29,8 +32,8 @@ internal class AttoHashTest {
         val expectedJson = "\"67FFDB1309565DF8566D22ABFBB30E37615A401174D863821FFC3FE5C458CA8C\""
 
         // when
-        val hash = AttoJson.decodeFromString(AttoHashJsonSerializer, expectedJson)
-        val json = AttoJson.encodeToString(AttoHashJsonSerializer, hash)
+        val hash = Json.decodeFromString(AttoHash.serializer(), expectedJson)
+        val json = Json.encodeToString(AttoHash.serializer(), hash)
 
         // then
         assertEquals(expectedJson, json)
@@ -42,8 +45,8 @@ internal class AttoHashTest {
         val expectedProtobuf = "0A20F65437187FEEB1F9BF2D4A3BEDE9BFC25746C511779E8E0CFEFBF9D610A6D8AD"
 
         // when
-        val holder = AttoProtobuf.decodeFromHexString<Holder>(expectedProtobuf)
-        val protobuf = AttoProtobuf.encodeToHexString(holder).uppercase()
+        val holder = ProtoBuf.decodeFromHexString<Holder>(expectedProtobuf)
+        val protobuf = ProtoBuf.encodeToHexString(holder).uppercase()
 
         // then
         assertEquals(expectedProtobuf, protobuf)
@@ -51,6 +54,7 @@ internal class AttoHashTest {
 
     @Serializable
     private data class Holder(
-        @Contextual val hash: AttoHash,
+        @Serializable(with = AttoHashAsByteArraySerializer::class)
+        val hash: AttoHash,
     )
 }
