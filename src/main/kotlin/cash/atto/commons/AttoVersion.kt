@@ -16,6 +16,10 @@ value class AttoVersion(
     operator fun minus(uShort: UShort): AttoVersion = AttoVersion((value - uShort).toUShort())
 
     operator fun minus(uInt: UInt): AttoVersion = AttoVersion((value - uInt).toUShort())
+
+    override fun toString(): String {
+        return value.toString()
+    }
 }
 
 fun AttoVersion.max(anotherVersion: AttoVersion): AttoVersion {

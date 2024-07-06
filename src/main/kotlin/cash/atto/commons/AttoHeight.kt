@@ -20,6 +20,8 @@ value class AttoHeight(
     operator fun minus(uInt: UInt): AttoHeight = AttoHeight(value - uInt)
 
     operator fun minus(height: AttoHeight): AttoHeight = AttoHeight(value - height.value)
+
+    override fun toString(): String = value.toString()
 }
 
 fun ULong.toAttoHeight() = AttoHeight(this)
