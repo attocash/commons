@@ -15,6 +15,7 @@ jobs:
 
       - name: opencl
         run: |
+          sudo apt-get update
           sudo apt-get install -y ocl-icd-opencl-dev pocl-opencl-icd clinfo
           clinfo
 
@@ -28,7 +29,7 @@ jobs:
       - run: |
           gradle --info build
         env:
-          POCL_DEVICES: "pthread"
+          POCL_DEVICES: "basic"
           POCL_DEBUG: "all"
 
   codeql:
