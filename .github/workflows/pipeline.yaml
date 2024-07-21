@@ -27,6 +27,9 @@ jobs:
 
       - run: |
           gradle --info build
+        env:
+          POCL_DEVICE: basic
+
   codeql:
     runs-on: ubuntu-latest
     permissions:
