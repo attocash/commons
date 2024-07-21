@@ -15,8 +15,7 @@ jobs:
 
       - name: opencl
         run: |
-          sudo apt get update
-          sudo apt get install -y ocl-icd-opencl-dev clinfo
+          sudo apt-get install -y ocl-icd-opencl-dev clinfo
 
       - uses: actions/setup-java@v4
         with:
