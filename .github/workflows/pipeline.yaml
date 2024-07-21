@@ -28,7 +28,8 @@ jobs:
       - run: |
           gradle --info build
         env:
-          POCL_DEVICE: basic
+          POCL_DEVICES: "pthread"
+          POCL_DEBUG: "all"
 
   codeql:
     runs-on: ubuntu-latest
