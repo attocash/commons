@@ -31,7 +31,7 @@ jobs:
         env:
           POCL_DEVICES: "basic"
           POCL_DEBUG: "all"
-          POCL_LLVM_CPU: "x86-64"
+          POCL_LLVM_CPU_NAME: "x86-64"
 
   codeql:
     runs-on: ubuntu-latest
