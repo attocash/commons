@@ -21,6 +21,9 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
     }
+    registerFeature("opencl") {
+        usingSourceSet(sourceSets["main"])
+    }
 }
 
 configurations {
@@ -61,8 +64,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlinxSerializationVersion")
 
+    "openclImplementation"("org.jocl:jocl:2.0.5")
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
+
     "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.11")
+    "benchmarksImplementation"("org.jocl:jocl:2.0.5")
 }
 
 tasks.withType<KotlinCompile> {

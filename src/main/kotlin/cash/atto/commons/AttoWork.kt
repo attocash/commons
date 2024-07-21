@@ -14,9 +14,7 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import java.util.stream.Stream
 import kotlin.math.pow
-import kotlin.random.Random
 
 private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
     val cache = mutableMapOf<AttoNetwork, Map<Int, ULong>>()
@@ -52,7 +50,7 @@ internal fun getThreshold(
     return thresholdCache[network]!![timestamp.toLocalDateTime(TimeZone.UTC).year]!!
 }
 
-private fun isValid(
+internal fun isValid(
     threshold: ULong,
     hash: ByteArray,
     work: ByteArray,
@@ -73,49 +71,6 @@ internal fun isValid(
     return isValid(getThreshold(network, timestamp), hash, work)
 }
 
-private class WorkerController {
-    private var work: AttoWork? = null
-
-    fun isEmpty(): Boolean {
-        return work == null
-    }
-
-    fun add(work: ByteArray) {
-        this.work = AttoWork(work)
-    }
-
-    fun get(): AttoWork? {
-        return work
-    }
-}
-
-private class Worker(
-    val controller: WorkerController,
-    val threshold: ULong,
-    val hash: ByteArray,
-) {
-    private val work = ByteArray(8)
-
-    fun work() {
-        while (true) {
-            Random.nextBytes(work)
-            for (i in work.indices) {
-                val byte = work[i]
-                for (b in -128..126) {
-                    work[i] = b.toByte()
-                    if (isValid(threshold, hash, work)) {
-                        controller.add(work)
-                    }
-                    if (!controller.isEmpty()) {
-                        return
-                    }
-                }
-                work[i] = byte
-            }
-        }
-    }
-}
-
 @Serializable(with = AttoWorkSerializer::class)
 data class AttoWork(
     val value: ByteArray,
@@ -130,55 +85,8 @@ data class AttoWork(
             return getThreshold(network, timestamp)
         }
 
-        fun isValid(
-            block: AttoOpenBlock,
-            work: AttoWork,
-        ): Boolean {
-            return isValid(block.network, block.timestamp, block.publicKey.value, work.value)
-        }
-
-        fun <T> isValid(
-            block: T,
-            work: AttoWork,
-        ): Boolean where T : PreviousSupport, T : AttoBlock {
-            return isValid(block.network, block.timestamp, block.previous.value, work.value)
-        }
-
-        fun work(
-            threshold: ULong,
-            hash: ByteArray,
-        ): AttoWork {
-            val controller = WorkerController()
-            return Stream
-                .generate { Worker(controller, threshold, hash) }
-                .takeWhile { controller.isEmpty() }
-                .parallel()
-                .peek { it.work() }
-                .map { controller.get() }
-                .filter { it != null }
-                .findAny()
-                .get()
-        }
-
-        fun work(block: AttoOpenBlock): AttoWork {
-            return work(block.network, block.timestamp, block.publicKey.value)
-        }
-
-        fun <T> work(block: T): AttoWork where T : PreviousSupport, T : AttoBlock {
-            return work(block.network, block.timestamp, block.previous.value)
-        }
-
         fun parse(value: String): AttoWork {
             return AttoWork(value.fromHexToByteArray())
-        }
-
-        fun work(
-            network: AttoNetwork,
-            timestamp: Instant,
-            hash: ByteArray,
-        ): AttoWork {
-            val threshold = getThreshold(network, timestamp)
-            return work(threshold, hash)
         }
     }
 
@@ -187,11 +95,11 @@ data class AttoWork(
     }
 
     fun isValid(block: AttoOpenBlock): Boolean {
-        return isValid(block, this)
+        return isValid(block.network, block.timestamp, block.publicKey.value, value)
     }
 
     fun <T> isValid(block: T): Boolean where T : PreviousSupport, T : AttoBlock {
-        return isValid(block, this)
+        return isValid(block.network, block.timestamp, block.previous.value, value)
     }
 
     override fun equals(other: Any?): Boolean {

@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.readULongLe
+import kotlinx.io.writeULongLe
 
 @OptIn(ExperimentalStdlibApi::class)
 fun ByteArray.toHex(): String = this.toHexString(HexFormat.UpperCase)
@@ -33,4 +34,10 @@ fun ByteArray.toULong(): ULong {
     val buffer = Buffer()
     buffer.write(this)
     return buffer.readULongLe()
+}
+
+fun ULong.toByteArray(): ByteArray {
+    val buffer = Buffer()
+    buffer.writeULongLe(this)
+    return buffer.readByteArray()
 }

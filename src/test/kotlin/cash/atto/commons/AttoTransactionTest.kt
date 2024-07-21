@@ -36,7 +36,7 @@ class AttoTransactionTest {
         AttoTransaction(
             block = receiveBlock,
             signature = privateKey.sign(receiveBlock.hash),
-            work = AttoWork.work(receiveBlock),
+            work = AttoWorker.cpu().work(receiveBlock),
         )
 
     @Test
