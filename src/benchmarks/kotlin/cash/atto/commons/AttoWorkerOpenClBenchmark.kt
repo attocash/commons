@@ -9,11 +9,12 @@ import kotlin.random.Random
 
 @State(Scope.Thread)
 open class AttoWorkerOpenClBenchmark {
-    private val openclWorker = AttoWorker.opencl(0U)
+    private val worker = AttoWorker.opencl(0U)
+    private val byteArray = ByteArray(32)
 
     @Benchmark
     @Threads(4)
     fun workOpenCl() {
-        openclWorker.work(AttoNetwork.LOCAL, INITIAL_INSTANT, Random.Default.nextBytes(ByteArray(32)))
+        worker.work(AttoNetwork.LOCAL, INITIAL_INSTANT, Random.Default.nextBytes(byteArray))
     }
 }

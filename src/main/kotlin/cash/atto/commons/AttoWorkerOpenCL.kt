@@ -25,7 +25,11 @@ import org.jocl.CL.clFinish
 import org.jocl.CL.clGetDeviceIDs
 import org.jocl.CL.clGetDeviceInfo
 import org.jocl.CL.clGetPlatformIDs
+import org.jocl.CL.clReleaseCommandQueue
+import org.jocl.CL.clReleaseContext
+import org.jocl.CL.clReleaseKernel
 import org.jocl.CL.clReleaseMemObject
+import org.jocl.CL.clReleaseProgram
 import org.jocl.CL.clSetKernelArg
 import org.jocl.Pointer
 import org.jocl.Sizeof
@@ -37,12 +41,9 @@ import org.jocl.cl_kernel
 import org.jocl.cl_platform_id
 import org.jocl.cl_program
 import org.jocl.cl_queue_properties
+import java.io.Closeable
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
-import kotlin.math.max
 
 private val OPENCL = AttoWorkerOpenCL()
 
@@ -52,7 +53,8 @@ fun AttoWorker.Companion.opencl(deviceNumber: UByte): AttoWorker = AttoWorkerOpe
 
 class AttoWorkerOpenCL(
     deviceNumber: UByte = 0U,
-) : AttoWorker {
+) : AttoWorker,
+    Closeable {
     private val kernelSource: String by lazy {
         val fileLocation = AttoMnemonic::class.java.classLoader.getResource("kernels/work.cl")!!
         String(Files.readAllBytes(Paths.get(fileLocation.toURI())))
@@ -62,9 +64,7 @@ class AttoWorkerOpenCL(
     private val queue: cl_command_queue
     private val program: cl_program
     private val kernel: cl_kernel
-    private val maxWorkGroupSize: Long
-    private val computeUnits: Long
-    private val unitPool: WorkUnitPool
+    private val globalWorkSize: LongArray
 
     init {
         CL.setExceptionsEnabled(true)
@@ -102,30 +102,16 @@ class AttoWorkerOpenCL(
 
         val maxWorkGroupSizeArray = LongArray(1)
         clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.cl_long.toLong(), Pointer.to(maxWorkGroupSizeArray), null)
-        maxWorkGroupSize = maxWorkGroupSizeArray[0]
+        val maxWorkGroupSize = maxWorkGroupSizeArray[0]
 
         val computeUnitsArray = LongArray(1)
         clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, Sizeof.cl_long.toLong(), Pointer.to(computeUnitsArray), null)
-        computeUnits = computeUnitsArray[0]
+        val computeUnits = computeUnitsArray[0]
 
-        unitPool = WorkUnitPool(maxWorkGroupSize * computeUnits)
+        globalWorkSize = LongArray(1) { maxWorkGroupSize * computeUnits }
     }
 
     override fun work(
-        threshold: ULong,
-        hash: ByteArray,
-    ): AttoWork {
-        val workUnits = unitPool.get()
-        try {
-            val globalWorkSize = LongArray(1) { workUnits.value }
-            return work(globalWorkSize, threshold, hash)
-        } finally {
-            workUnits.release()
-        }
-    }
-
-    private fun work(
-        globalWorkSize: LongArray,
         threshold: ULong,
         hash: ByteArray,
     ): AttoWork {
@@ -158,43 +144,11 @@ class AttoWorkerOpenCL(
 
         return AttoWork(result)
     }
-}
 
-private interface WorkUnits {
-    val value: Long
-
-    fun release()
-}
-
-private class WorkUnitPool(
-    totalUnits: Long,
-) {
-    private val lock = ReentrantLock()
-    private val condition = lock.newCondition()
-    private val requestSize = AtomicLong(0)
-    private val availableUnits = AtomicLong(totalUnits)
-
-    fun get(): WorkUnits {
-        requestSize.incrementAndGet()
-        while (true) {
-            lock.withLock {
-                if (availableUnits.get() > 0) {
-                    val units = max((availableUnits.get() / requestSize.get()), 1L)
-                    requestSize.updateAndGet { it - 1 }
-                    availableUnits.updateAndGet { it - units }
-                    return object : WorkUnits {
-                        override val value: Long = units
-
-                        override fun release() {
-                            lock.withLock {
-                                availableUnits.updateAndGet { it + units }
-                                condition.signalAll()
-                            }
-                        }
-                    }
-                }
-                condition.await()
-            }
-        }
+    override fun close() {
+        clReleaseKernel(kernel)
+        clReleaseProgram(program)
+        clReleaseCommandQueue(queue)
+        clReleaseContext(context)
     }
 }
