@@ -7,7 +7,7 @@ private val CPU = AttoWorkerCpu()
 
 fun AttoWorker.Companion.cpu(): AttoWorker = CPU
 
-internal class AttoWorkerCpu : AttoWorker {
+private class AttoWorkerCpu : AttoWorker {
     override fun work(
         threshold: ULong,
         hash: ByteArray,

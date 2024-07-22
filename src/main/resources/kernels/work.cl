@@ -89,8 +89,13 @@ static inline ulong blake2b(ulong const nonce, __constant ulong *hash)
     return xor_iv0 ^ vv[0].s0 ^ vv[4].s0;
 }
 
+#undef G32
+#undef G2v
+#undef G2v_split
+#undef ROUND
+
 __kernel void work(__global ulong *result,
-                   __constant ulong *hash,
+                   __constant uchar *hash,
                    const ulong threshold,
                    volatile __global int *found) {
     const ulong global_id = get_global_id(0);
@@ -122,4 +127,3 @@ __kernel void work(__global ulong *result,
         nonce += global_size;
     }
 }
-
