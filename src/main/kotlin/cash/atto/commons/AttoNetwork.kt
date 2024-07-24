@@ -18,8 +18,8 @@ enum class AttoNetwork(
     ;
 
     companion object {
-        val INITIAL_LIVE_THRESHOLD = (0x7FFFFFFFF).toULong()
-        val INITIAL_DATE: LocalDate = LocalDate(2023, 1, 1)
+        val INITIAL_LIVE_THRESHOLD = 8589934591UL
+        val INITIAL_DATE: LocalDate = LocalDate(2024, 1, 1)
         val INITIAL_INSTANT: Instant = INITIAL_DATE.atStartOfDayIn(TimeZone.UTC)
         val DOUBLING_PERIOD = 2.0
 

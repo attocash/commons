@@ -29,13 +29,13 @@ class AttoWorkerTest {
 
     @Test
     fun `should validate work`() {
-        val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
+        val work = AttoWork("576887B000000000".fromHexToByteArray())
         assertTrue(isValid(AttoNetwork.LIVE, AttoNetwork.INITIAL_INSTANT, hash.value, work.value))
     }
 
     @Test
     fun `should validate work using decreased threshold`() {
-        val work = AttoWork("888f6824075cabc3".fromHexToByteArray())
+        val work = AttoWork("0582489800000000".fromHexToByteArray())
         val timestamp =
             AttoNetwork
                 .INITIAL_DATE
