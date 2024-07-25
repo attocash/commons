@@ -1,15 +1,9 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
@@ -54,16 +48,6 @@ class AttoTransactionTest {
         // when
         val json = Json.encodeToString(expectedTransaction)
         val transaction = Json.decodeFromString<AttoTransaction>(json)
-
-        // then
-        assertEquals(expectedTransaction, transaction)
-    }
-
-    @Test
-    fun `should serialize protobuf`() {
-        // when
-        val protobuf = ProtoBuf.encodeToByteArray(expectedTransaction)
-        val transaction = ProtoBuf.decodeFromByteArray<AttoTransaction>(protobuf)
 
         // then
         assertEquals(expectedTransaction, transaction)

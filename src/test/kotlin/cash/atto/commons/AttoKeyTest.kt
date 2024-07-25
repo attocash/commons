@@ -1,14 +1,6 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.AttoPublicKeyAsByteArraySerializer
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromHexString
-import kotlinx.serialization.encodeToHexString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -62,23 +54,4 @@ internal class AttoKeyTest {
         // then
         assertEquals(expectedJson, json)
     }
-
-    @Test
-    fun `should serialize protobuf`() {
-        // given
-        val expectedProtobuf = "0A20FD213897BE32302B06BF2B99005B05002CFAAF635391A8DBE178B32EB98A45C6"
-
-        // when
-        val holder = ProtoBuf.decodeFromHexString<Holder>(expectedProtobuf)
-        val protobuf = ProtoBuf.encodeToHexString(holder).uppercase()
-
-        // then
-        assertEquals(expectedProtobuf, protobuf)
-    }
-
-    @Serializable
-    private data class Holder(
-        @Serializable(with = AttoPublicKeyAsByteArraySerializer::class)
-        val publicKey: AttoPublicKey,
-    )
 }

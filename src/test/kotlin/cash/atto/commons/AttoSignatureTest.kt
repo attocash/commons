@@ -1,14 +1,6 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.AttoSignatureAsByteArraySerializer
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromHexString
-import kotlinx.serialization.encodeToHexString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -72,25 +64,4 @@ internal class AttoSignatureTest {
         // then
         assertEquals(expectedJson, json)
     }
-
-    @Test
-    @Suppress("ktlint:standard:max-line-length")
-    fun `should serialize protobuf`() {
-        // given
-        val expectedProtobuf =
-            "0A40E9DBF6ED1F41864C3903FFAC35E2A9205601A64077F3FBCDC5D66E02E400DFD8BBD6BE6EC500BAE9B0F536E03AE0983402F00D316B8FF8540E1601AA556364A3"
-
-        // when
-        val holder = ProtoBuf.decodeFromHexString<Holder>(expectedProtobuf)
-        val protobuf = ProtoBuf.encodeToHexString(holder).uppercase()
-
-        // then
-        assertEquals(expectedProtobuf, protobuf)
-    }
-
-    @Serializable
-    private data class Holder(
-        @Serializable(with = AttoSignatureAsByteArraySerializer::class)
-        val signature: AttoSignature,
-    )
 }

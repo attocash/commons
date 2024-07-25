@@ -1,14 +1,7 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromHexString
-import kotlinx.serialization.encodeToHexString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -78,23 +71,4 @@ internal class AttoAmountTest {
         assertEquals(expectedJson, json)
         assertEquals(AttoAmount.MAX, amount)
     }
-
-    @Test
-    fun `should serialize protobuf`() {
-        // given
-        val expectedProtobuf = "088080A0A89C94B6E6F901"
-
-        // when
-        val holder = ProtoBuf.decodeFromHexString<Holder>(expectedProtobuf)
-        val protobuf = ProtoBuf.encodeToHexString(holder).uppercase()
-
-        // then
-        assertEquals(expectedProtobuf, protobuf)
-        assertEquals(AttoAmount.MAX, holder.amount)
-    }
-
-    @Serializable
-    private data class Holder(
-        val amount: AttoAmount,
-    )
 }
