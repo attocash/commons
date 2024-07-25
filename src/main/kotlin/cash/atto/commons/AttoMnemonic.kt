@@ -1,13 +1,11 @@
 package cash.atto.commons
 
 import java.nio.ByteBuffer
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.security.MessageDigest
 import java.security.SecureRandom
 
 private val fileLocation = AttoMnemonic::class.java.classLoader.getResource("mnemonics/english.txt")!!
-private val dictionary = Files.readAllLines(Paths.get(fileLocation.toURI()))
+private val dictionary = fileLocation.openStream().bufferedReader().use { it.readLines() }
 private val dictionaryMap = dictionary.indices.associateBy({ dictionary[it] }) { it }
 
 private fun toEntropyWithChecksum(words: List<String>): ByteArray {

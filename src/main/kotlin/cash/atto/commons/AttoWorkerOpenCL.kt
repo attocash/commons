@@ -42,8 +42,6 @@ import org.jocl.cl_platform_id
 import org.jocl.cl_program
 import org.jocl.cl_queue_properties
 import java.io.Closeable
-import java.nio.file.Files
-import java.nio.file.Paths
 
 private val OPENCL = AttoWorkerOpenCL()
 
@@ -56,8 +54,8 @@ class AttoWorkerOpenCL(
 ) : AttoWorker,
     Closeable {
     private val kernelSource: String by lazy {
-        val fileLocation = AttoMnemonic::class.java.classLoader.getResource("kernels/work.cl")!!
-        String(Files.readAllBytes(Paths.get(fileLocation.toURI())))
+        val fileLocation = AttoWorkerOpenCL::class.java.classLoader.getResource("kernels/work.cl")!!
+        fileLocation.openStream().bufferedReader().use { it.readText() }
     }
 
     private val context: cl_context
