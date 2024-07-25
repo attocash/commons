@@ -10,7 +10,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.protobuf.ProtoNumber
 
 val maxVersion = AttoVersion(0U)
 
@@ -18,19 +17,14 @@ enum class AttoBlockType(
     val code: UByte,
     val size: Int,
 ) {
-    @ProtoNumber(255)
     UNKNOWN(UByte.MAX_VALUE, 0),
 
-    @ProtoNumber(0)
     OPEN(0u, 117),
 
-    @ProtoNumber(1)
     RECEIVE(1u, 125),
 
-    @ProtoNumber(2)
     SEND(2u, 133),
 
-    @ProtoNumber(3)
     CHANGE(3u, 124),
     ;
 

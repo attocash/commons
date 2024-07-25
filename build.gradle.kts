@@ -24,6 +24,9 @@ java {
     registerFeature("opencl") {
         usingSourceSet(sourceSets["main"])
     }
+    registerFeature("json") {
+        usingSourceSet(sourceSets["main"])
+    }
 }
 
 configurations {
@@ -58,13 +61,11 @@ repositories {
 dependencies {
     val kotlinxSerializationVersion = "1.7.1"
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    api("org.jetbrains.kotlinx:kotlinx-io-core:0.5.1")
+    api("org.bouncycastle:bcprov-jdk18on:1.78.1")
 
-    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlinxSerializationVersion")
-
-    "openclImplementation"("org.jocl:jocl:2.0.5")
+    "jsonApi"("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+    "openclApi"("org.jocl:jocl:2.0.5")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
 
