@@ -10,11 +10,11 @@ fun AttoWorker.Companion.cpu(): AttoWorker = CPU
 private class AttoWorkerCpu : AttoWorker {
     override fun work(
         threshold: ULong,
-        hash: ByteArray,
+        target: ByteArray,
     ): AttoWork {
         val controller = WorkerController()
         return Stream
-            .generate { Worker(controller, threshold, hash) }
+            .generate { Worker(controller, threshold, target) }
             .takeWhile { controller.isEmpty() }
             .parallel()
             .peek { it.work() }

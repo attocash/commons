@@ -7,7 +7,7 @@ sealed interface AttoWorker {
 
     fun work(
         threshold: ULong,
-        hash: ByteArray,
+        target: ByteArray,
     ): AttoWork
 
     fun work(block: AttoOpenBlock): AttoWork {
@@ -21,9 +21,9 @@ sealed interface AttoWorker {
     fun work(
         network: AttoNetwork,
         timestamp: Instant,
-        hash: ByteArray,
+        target: ByteArray,
     ): AttoWork {
         val threshold = getThreshold(network, timestamp)
-        return work(threshold, hash)
+        return work(threshold, target)
     }
 }
