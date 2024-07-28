@@ -69,7 +69,7 @@ class AttoWorkerTest {
         fun workerProvider(): Stream<Arguments> =
             Stream.of(
                 Arguments.of(AttoWorker.cpu()),
-                // Arguments.of(AttoWorker.opencl()), // causes github actions to crash most of time
+                Arguments.of(AttoWorker.opencl()),
             )
     }
 }
