@@ -111,14 +111,14 @@ class AttoWorkerOpenCL(
 
     override fun work(
         threshold: ULong,
-        hash: ByteArray,
+        target: ByteArray,
     ): AttoWork {
         val resultHostData = LongArray(1)
         val foundHostData = IntArray(1)
         val bufResult = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Sizeof.cl_long.toLong(), null, null)
         val bufFound =
             clCreateBuffer(context, CL_MEM_READ_WRITE or CL_MEM_COPY_HOST_PTR, Sizeof.cl_int.toLong(), Pointer.to(foundHostData), null)
-        val bufHash = clCreateBuffer(context, CL_MEM_READ_ONLY or CL_MEM_COPY_HOST_PTR, hash.size.toLong(), Pointer.to(hash), null)
+        val bufHash = clCreateBuffer(context, CL_MEM_READ_ONLY or CL_MEM_COPY_HOST_PTR, target.size.toLong(), Pointer.to(target), null)
 
         clSetKernelArg(kernel, 0, Sizeof.cl_mem.toLong(), Pointer.to(bufResult))
         clSetKernelArg(kernel, 1, Sizeof.cl_mem.toLong(), Pointer.to(bufHash))
