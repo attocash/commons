@@ -43,14 +43,12 @@ import org.jocl.cl_program
 import org.jocl.cl_queue_properties
 import java.io.Closeable
 
-private val OPENCL = AttoWorkerOpenCL()
-
-fun AttoWorker.Companion.opencl(): AttoWorker = OPENCL
+fun AttoWorker.Companion.opencl(): AttoWorker = opencl(0U)
 
 fun AttoWorker.Companion.opencl(deviceNumber: UByte): AttoWorker = AttoWorkerOpenCL(deviceNumber)
 
 class AttoWorkerOpenCL(
-    deviceNumber: UByte = 0U,
+    deviceNumber: UByte,
 ) : AttoWorker,
     Closeable {
     private val kernelSource: String by lazy {

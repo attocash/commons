@@ -52,10 +52,10 @@ internal fun getThreshold(
 
 internal fun isValid(
     threshold: ULong,
-    hash: ByteArray,
+    target: ByteArray,
     work: ByteArray,
 ): Boolean {
-    val difficult = hashRaw(8, work, hash).toULong()
+    val difficult = hashRaw(8, work, target).toULong()
     return difficult <= threshold
 }
 

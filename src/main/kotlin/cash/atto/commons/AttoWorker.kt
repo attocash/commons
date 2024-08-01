@@ -1,8 +1,9 @@
 package cash.atto.commons
 
 import kotlinx.datetime.Instant
+import java.io.Closeable
 
-sealed interface AttoWorker {
+sealed interface AttoWorker : Closeable {
     companion object
 
     fun work(
