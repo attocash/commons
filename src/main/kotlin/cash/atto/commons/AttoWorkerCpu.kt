@@ -10,8 +10,10 @@ fun AttoWorker.Companion.cpu(): AttoWorker = cpu(Runtime.getRuntime().availableP
 
 fun AttoWorker.Companion.cpu(count: UShort): AttoWorker = AttoWorkerCpu(count)
 
-
-private class AttoWorkerCpu(val count: UShort) : AttoWorker, Closeable {
+private class AttoWorkerCpu(
+    val count: UShort,
+) : AttoWorker,
+    Closeable {
     private val threadPool = Executors.newFixedThreadPool(count.toInt())
 
     override fun work(
@@ -77,7 +79,6 @@ private class WorkerController : Closeable {
     }
 }
 
-
 private class Worker(
     val controller: WorkerController,
     val threshold: ULong,
@@ -85,7 +86,6 @@ private class Worker(
     val startWork: ULong,
     val size: ULong,
 ) {
-
     fun work() {
         var tries = 0UL
         val work = startWork.toByteArray()
