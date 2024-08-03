@@ -21,7 +21,7 @@ open class AttoWorkBenchmark {
             sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
             representative = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
         )
-    private val work = AttoWorker.cpu().work(openBlock)
+    private val work = AttoWorker.cpu().use { it.work(openBlock) }
 
     @Benchmark
     fun isValid() {

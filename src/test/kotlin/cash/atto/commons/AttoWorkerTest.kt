@@ -7,6 +7,7 @@ import kotlinx.datetime.atTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -65,11 +66,21 @@ class AttoWorkerTest {
     }
 
     companion object {
+        val cpuWorker = AttoWorker.cpu()
+        val openclWorker = AttoWorker.opencl()
+
         @JvmStatic
         fun workerProvider(): Stream<Arguments> =
             Stream.of(
-                Arguments.of(AttoWorker.cpu()),
-                Arguments.of(AttoWorker.opencl()),
+                Arguments.of(cpuWorker),
+                Arguments.of(openclWorker),
             )
+
+        @JvmStatic
+        @AfterAll
+        fun afterAll() {
+            cpuWorker.close()
+            openclWorker.close()
+        }
     }
 }

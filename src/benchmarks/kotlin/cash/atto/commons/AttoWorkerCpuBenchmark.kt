@@ -1,6 +1,7 @@
 package cash.atto.commons
 
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
+import kotlinx.benchmark.TearDown
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.State
@@ -14,5 +15,10 @@ open class AttoWorkerCpuBenchmark {
     @Benchmark
     fun work() {
         openclWorker.work(AttoNetwork.LOCAL, INITIAL_INSTANT, Random.Default.nextBytes(byteArray))
+    }
+
+    @TearDown
+    fun tearDown() {
+        openclWorker.close()
     }
 }
