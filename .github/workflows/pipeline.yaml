@@ -23,7 +23,7 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v4
 
       - run: |
           ./gradlew --info --no-daemon build
@@ -42,7 +42,7 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v4
 
       - uses: github/codeql-action/init@v3
         with:
