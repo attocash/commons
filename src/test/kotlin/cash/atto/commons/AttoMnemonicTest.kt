@@ -46,4 +46,9 @@ internal class AttoMnemonicTest {
             )
         }
     }
+
+    @Test
+    fun `should return dictionary`() {
+        assertEquals(2048, AttoMnemonic.dictionary.size)
+    }
 }

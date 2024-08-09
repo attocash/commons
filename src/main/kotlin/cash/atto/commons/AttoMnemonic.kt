@@ -5,8 +5,8 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 private val fileLocation = AttoMnemonic::class.java.classLoader.getResource("mnemonics/english.txt")!!
-private val dictionary = fileLocation.openStream().bufferedReader().use { it.readLines() }
-private val dictionaryMap = dictionary.indices.associateBy({ dictionary[it] }) { it }
+private val internalDictionary = fileLocation.openStream().bufferedReader().use { it.readLines() }
+private val internalDictionaryMap = internalDictionary.indices.associateBy({ internalDictionary[it] }) { it }
 
 private fun toEntropyWithChecksum(words: List<String>): ByteArray {
     val buffer = ByteBuffer.allocate(33)
@@ -14,7 +14,7 @@ private fun toEntropyWithChecksum(words: List<String>): ByteArray {
     var scratch = 0
     var offset = 0
     for (word in words) {
-        val index = dictionaryMap[word]!!
+        val index = internalDictionaryMap[word]!!
         scratch = scratch shl 11
         scratch = scratch or index
         offset += 11
@@ -48,7 +48,7 @@ class AttoMnemonic {
         }
 
         for (word in words) {
-            if (!dictionary.contains(word)) {
+            if (!internalDictionaryMap.contains(word)) {
                 throw AttoMnemonicException("The word $word is not part of english mnemonic dictionary")
             }
         }
@@ -79,13 +79,14 @@ class AttoMnemonic {
             if (offset >= 11) {
                 val index: Int = scratch shr offset - 11 and 0x7FF
                 offset -= 11
-                words.add(dictionary[index])
+                words.add(internalDictionary[index])
             }
         }
         this.words = words.toList()
     }
 
     companion object {
+        val dictionary = internalDictionary.toSortedSet()
         fun generate(): AttoMnemonic {
             val random = SecureRandom.getInstanceStrong()
             val entropy = ByteArray(33)
