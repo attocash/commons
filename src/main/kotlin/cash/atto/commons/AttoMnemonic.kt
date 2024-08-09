@@ -87,6 +87,7 @@ class AttoMnemonic {
 
     companion object {
         val dictionary = internalDictionary.toSortedSet()
+
         fun generate(): AttoMnemonic {
             val random = SecureRandom.getInstanceStrong()
             val entropy = ByteArray(33)
