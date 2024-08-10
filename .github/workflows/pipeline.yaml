@@ -26,8 +26,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v3
 
       - run: |
-          ./gradlew test --no-daemon --info --fail-fast
-          ./gradlew build -x test
+          ./gradlew --info --no-daemon build
 
   codeql:
     runs-on: ubuntu-latest
