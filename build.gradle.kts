@@ -9,7 +9,7 @@ plugins {
 
     id("maven-publish")
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.11"
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.12"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 
     signing
