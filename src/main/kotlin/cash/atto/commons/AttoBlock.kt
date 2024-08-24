@@ -108,7 +108,8 @@ interface ReceiveSupport {
 }
 
 interface RepresentativeSupport {
-    val representative: AttoPublicKey
+    val representativeAlgorithm: AttoAlgorithm
+    val representativePublicKey: AttoPublicKey
 }
 
 @Serializable
@@ -274,7 +275,8 @@ data class AttoOpenBlock(
     override val timestamp: Instant,
     override val sendHashAlgorithm: AttoAlgorithm,
     override val sendHash: AttoHash,
-    override val representative: AttoPublicKey,
+    override val representativeAlgorithm: AttoAlgorithm,
+    override val representativePublicKey: AttoPublicKey,
 ) : AttoBlock,
     ReceiveSupport,
     RepresentativeSupport {
@@ -307,7 +309,8 @@ data class AttoOpenBlock(
                 timestamp = serializedBlock.readInstant(),
                 sendHashAlgorithm = serializedBlock.readAttoAlgorithm(),
                 sendHash = serializedBlock.readAttoHash(),
-                representative = serializedBlock.readAttoPublicKey(),
+                representativeAlgorithm = serializedBlock.readAttoAlgorithm(),
+                representativePublicKey = serializedBlock.readAttoPublicKey(),
             )
         }
     }
@@ -323,7 +326,8 @@ data class AttoOpenBlock(
             this.writeInstant(timestamp)
             this.writeAttoAlgorithm(sendHashAlgorithm)
             this.writeAttoHash(sendHash)
-            this.writeAttoPublicKey(representative)
+            this.writeAttoAlgorithm(representativeAlgorithm)
+            this.writeAttoPublicKey(representativePublicKey)
         }
     }
 
@@ -347,7 +351,8 @@ data class AttoChangeBlock(
     @Serializable(with = InstantMillisSerializer::class)
     override val timestamp: Instant,
     override val previous: AttoHash,
-    override val representative: AttoPublicKey,
+    override val representativeAlgorithm: AttoAlgorithm,
+    override val representativePublicKey: AttoPublicKey,
 ) : AttoBlock,
     PreviousSupport,
     RepresentativeSupport {
@@ -377,7 +382,8 @@ data class AttoChangeBlock(
                 balance = serializedBlock.readAttoAmount(),
                 timestamp = serializedBlock.readInstant(),
                 previous = serializedBlock.readAttoHash(),
-                representative = serializedBlock.readAttoPublicKey(),
+                representativeAlgorithm = serializedBlock.readAttoAlgorithm(),
+                representativePublicKey = serializedBlock.readAttoPublicKey(),
             )
         }
     }
@@ -393,7 +399,8 @@ data class AttoChangeBlock(
             this.writeAttoAmount(balance)
             this.writeInstant(timestamp)
             this.writeAttoHash(previous)
-            this.writeAttoPublicKey(representative)
+            this.writeAttoAlgorithm(representativeAlgorithm)
+            this.writeAttoPublicKey(representativePublicKey)
         }
 
     override fun isValid(): Boolean = super.isValid() && height > AttoHeight(1u)

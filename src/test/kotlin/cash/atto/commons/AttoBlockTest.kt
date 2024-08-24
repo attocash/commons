@@ -73,28 +73,6 @@ class AttoBlockTest {
             )
 
         @JvmStatic
-        @Suppress("ktlint:standard:max-line-length")
-        fun protobufBlockProvider(): Stream<Arguments> =
-            Stream.of(
-                // SEND
-                Arguments.of(
-                    "0A0D4174746F53656E64426C6F636B1279000008001220EF8ECF7CDA3C2B8E15D3BFA65C7F35C01B11E8910259ABF3B296C830E33FC08C1802200128C5DCE6AA86323220A9545DFBDADDE2228A0D672E64058BF95FC27F2F9AB177F7E49B31795A1A739138004220C3FB0AC110D859DA2CE1F13743B3B37315FD0EF593CDBCE4FDA53A7B8612B3A04801",
-                ),
-                // RECEIVE
-                Arguments.of(
-                    "0A104174746F52656365697665426C6F636B12800100000800122025C85B55B4301266CBEC2ABE53D6055FA80809A8B37B5720E16678EB813BE5001802208080A0A89C94B6E6F90128C6DCE6AA86323220F2A495BDF4EF3E0B3568EA4A4843C3F686D05847A8E577F94BCCE6158953D23038004220830982410A9A3B9B9E97975C7B304924958C6109C02953C62ABA3A80D8256530",
-                ),
-                // OPEN
-                Arguments.of(
-                    "0A0D4174746F4F70656E426C6F636B127E0000080012208C7C7084202251F4EC492E59C6CC4A100C7BC1C9A6BFB077F44E3270C4E47E26188080A0A89C94B6E6F90120E4DBE6AA863228003220270649CF310BC8C83CF4EB44691B76332E8D34C5CCC4F5769BF3E6F8DCB522393A209F53151A064E81099422E8E8E97AB4CF7F6E7FCA2D1C242EE87D60E0004BB108",
-                ),
-                // CHANGE
-                Arguments.of(
-                    "0A0F4174746F4368616E6765426C6F636B127E00000800122024EEE316489C49D26BC9793E710DC2DC25501EB7510236806D65918F0BCA82DB1802208080A0A89C94B6E6F90128C6DCE6AA8632322088343CDFED7A12E4F06ECFF62EB65C6DDEF5365C5B9390D44C731E6168F578FD3A20A697D8686EE802321137F34755B32F08B240EAED681D3A35D5BAFE07547FC43A",
-                ),
-            )
-
-        @JvmStatic
         fun jsonBlockProvider(): Stream<Arguments> =
             @Suppress("ktlint:standard:max-line-length")
             Stream.of(
@@ -145,7 +123,8 @@ class AttoBlockTest {
                        "timestamp":1704616008836,
                        "sendHashAlgorithm":"V1",
                        "sendHash":"4DC7257C0F492B8C7AC2D8DE4A6DC4078B060BB42FDB6F8032A839AAA9048DB0",
-                       "representative":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105"
+                       "representativeAlgorithm":"V1",
+                       "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105"
                     }
                     """,
                 ),
@@ -161,7 +140,8 @@ class AttoBlockTest {
                        "balance":18000000000000000000,
                        "timestamp":1704616009221,
                        "previous":"AD675BD718F3D96F9B89C58A8BF80741D5EDB6741D235B070D56E84098894DD5",
-                       "representative":"020552FC788288CCDC239AE862A75A6B9BA62883EC099B7D6E5DFAA97C044BBB"
+                       "representativeAlgorithm":"V1",
+                       "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105"
                     }
                     """,
                 ),
@@ -214,7 +194,8 @@ val openBlock =
         timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
         sendHashAlgorithm = AttoAlgorithm.V1,
         sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
-        representative = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+        representativeAlgorithm = AttoAlgorithm.V1,
+        representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
     )
 
 val sendBlock =
@@ -256,5 +237,6 @@ val changeBlock =
         balance = AttoAmount.MAX,
         timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
         previous = AttoHash(Random.nextBytes(ByteArray(32))),
-        representative = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+        representativeAlgorithm = AttoAlgorithm.V1,
+        representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
     )

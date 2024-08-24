@@ -19,11 +19,13 @@ data class AttoAccount(
     val lastTransactionHash: AttoHash,
     @Serializable(with = InstantMillisSerializer::class)
     val lastTransactionTimestamp: Instant,
-    val representative: AttoPublicKey,
+    val representativeAlgorithm: AttoAlgorithm,
+    val representativePublicKey: AttoPublicKey,
 ) : HeightSupport {
     companion object {
         fun open(
-            representative: AttoPublicKey,
+            representativeAlgorithm: AttoAlgorithm,
+            representativePublicKey: AttoPublicKey,
             receivable: AttoReceivable,
             network: AttoNetwork,
         ): AttoOpenBlock {
@@ -36,7 +38,8 @@ data class AttoAccount(
                 timestamp = Clock.System.now(),
                 sendHashAlgorithm = receivable.algorithm,
                 sendHash = receivable.hash,
-                representative = representative,
+                representativeAlgorithm = representativeAlgorithm,
+                representativePublicKey = representativePublicKey,
             )
         }
     }
@@ -64,8 +67,8 @@ data class AttoAccount(
         )
     }
 
-    fun receive(receivable: AttoReceivable): AttoReceiveBlock {
-        return AttoReceiveBlock(
+    fun receive(receivable: AttoReceivable): AttoReceiveBlock =
+        AttoReceiveBlock(
             network = network,
             version = version.max(receivable.version),
             algorithm = algorithm,
@@ -77,10 +80,12 @@ data class AttoAccount(
             sendHashAlgorithm = receivable.algorithm,
             sendHash = receivable.hash,
         )
-    }
 
-    fun change(representative: AttoPublicKey): AttoChangeBlock {
-        return AttoChangeBlock(
+    fun change(
+        representativeAlgorithm: AttoAlgorithm,
+        representativePublicKey: AttoPublicKey,
+    ): AttoChangeBlock =
+        AttoChangeBlock(
             network = network,
             version = version,
             algorithm = algorithm,
@@ -89,17 +94,7 @@ data class AttoAccount(
             balance = balance,
             timestamp = Clock.System.now(),
             previous = lastTransactionHash,
-            representative = representative,
+            representativeAlgorithm = representativeAlgorithm,
+            representativePublicKey = representativePublicKey,
         )
-    }
-
-    private fun max(
-        n1: UShort,
-        n2: UShort,
-    ): UShort {
-        if (n1 > n2) {
-            return n1
-        }
-        return n2
-    }
 }

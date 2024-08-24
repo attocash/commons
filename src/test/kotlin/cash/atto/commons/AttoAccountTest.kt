@@ -22,7 +22,8 @@ class AttoAccountTest {
                 balance = AttoAmount.MAX,
                 lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
                 lastTransactionTimestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
-                representative = AttoPublicKey(Random.Default.nextBytes(32)),
+                representativeAlgorithm = AttoAlgorithm.V1,
+                representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
             )
 
         // when
@@ -47,7 +48,8 @@ class AttoAccountTest {
                    "balance":18000000000000000000,
                    "lastTransactionHash":"70F9406609BCB2E3E18F22BD0839C95E5540E95489DC6F24DBF6A1F7CFD83A92",
                    "lastTransactionTimestamp":1705517157478,
-                   "representative":"99E439410A4DDD2A3A8D0B667C7A090286B8553378CF3C7AA806C3E60B6C4CBE"
+                   "representativeAlgorithm":"V1",
+                   "representativePublicKey":"99E439410A4DDD2A3A8D0B667C7A090286B8553378CF3C7AA806C3E60B6C4CBE"
                 }
           """
 

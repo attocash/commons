@@ -19,7 +19,8 @@ open class AttoWorkBenchmark {
             timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             sendHashAlgorithm = AttoAlgorithm.V1,
             sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
-            representative = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+            representativeAlgorithm = AttoAlgorithm.V1,
+            representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
         )
     private val work = AttoWorker.cpu().work(openBlock)
 
