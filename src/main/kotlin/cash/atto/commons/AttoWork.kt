@@ -94,11 +94,11 @@ data class AttoWork(
         value.checkLength(SIZE)
     }
 
-    fun isValid(block: AttoOpenBlock): Boolean {
-        return isValid(block.network, block.timestamp, block.publicKey.value, value)
-    }
-
-    fun <T> isValid(block: T): Boolean where T : PreviousSupport, T : AttoBlock {
+    fun isValid(block: AttoBlock): Boolean {
+        if (block is AttoOpenBlock) {
+            return isValid(block.network, block.timestamp, block.publicKey.value, value)
+        }
+        block as PreviousSupport
         return isValid(block.network, block.timestamp, block.previous.value, value)
     }
 
