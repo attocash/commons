@@ -5,35 +5,52 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class AttoAddressTest {
-    private val expectedAccount =
+    private val expectedAddress =
         AttoAddress.parse("atto://aarfzz26z5pfwrkdcwt4jdhhe2vvixscqwehgmfjqxku43rgtjso5p5cjw6fw")
 
     @Test
     fun `should create account`() {
         // given
-        val publicKey =
-            AttoPublicKey("225CE75ECF5E5B454315A7C48CE726AB545E4285887330A985D54E6E269A64EE".fromHexToByteArray())
+        val publicKey = expectedAddress.publicKey
 
         // when
-        val account = publicKey.toAddress(AttoAlgorithm.V1)
+        val account = publicKey.toAddress(expectedAddress.algorithm)
 
         // then
-        assertEquals(expectedAccount, account)
+        assertEquals(expectedAddress, account)
     }
 
     @Test
     fun `should extract address to public key`() {
         // when
-        val publicKey = expectedAccount.publicKey
+        val publicKey = expectedAddress.publicKey
 
         // then
-        assertEquals(expectedAccount, publicKey.toAddress(AttoAlgorithm.V1))
+        assertEquals(expectedAddress, publicKey.toAddress(AttoAlgorithm.V1))
+    }
+
+    @Test
+    fun `should parse address`() {
+        // when
+        val address = AttoAddress.parse(expectedAddress.value)
+
+        // then
+        assertEquals(expectedAddress, address)
+    }
+
+    @Test
+    fun `should parse path`() {
+        // when
+        val address = AttoAddress.parsePath(expectedAddress.path)
+
+        // then
+        assertEquals(expectedAddress, address)
     }
 
     @Test
     fun `should throw illegal argument exception when regex doesn't match`() {
         // given
-        val wrongAccount = expectedAccount.value.replace("atto:", "nano_")
+        val wrongAccount = expectedAddress.value.replace("atto:", "nano_")
 
         // when
         Assertions.assertThrows(IllegalArgumentException::class.java) {
@@ -44,7 +61,7 @@ internal class AttoAddressTest {
     @Test
     fun `should throw illegal argument exception when checksum doesn't match`() {
         // given
-        val wrongAccount = expectedAccount.value.substring(0, expectedAccount.value.length - 1) + "a"
+        val wrongAccount = expectedAddress.value.substring(0, expectedAddress.value.length - 1) + "a"
 
         Assertions.assertThrows(IllegalArgumentException::class.java) {
             AttoAddress.parse(wrongAccount)

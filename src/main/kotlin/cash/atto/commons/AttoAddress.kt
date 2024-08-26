@@ -2,15 +2,15 @@ package cash.atto.commons
 
 import org.bouncycastle.util.encoders.Base32
 
-private const val PREFIX = "atto://"
+private const val SCHEMA = "atto://"
 
 private fun ByteArray.toAddress(): String {
     require(this.size == 38) { "ByteArray should have 38 bytes" }
-    return PREFIX + String(Base32.encode(this)).replace("=", "").lowercase()
+    return String(Base32.encode(this)).replace("=", "").lowercase()
 }
 
 private fun String.fromAddress(): ByteArray {
-    return Base32.decode(this.substring(PREFIX.length).uppercase() + "===")
+    return Base32.decode(this.substring(SCHEMA.length).uppercase() + "===")
 }
 
 data class AttoAddress(
@@ -18,12 +18,14 @@ data class AttoAddress(
 ) {
     val algorithm = algorithmPublicKey.algorithm
     val publicKey = algorithmPublicKey.publicKey
-    val value = toAddress(algorithmPublicKey)
+    val schema = SCHEMA
+    val path = toAddress(algorithmPublicKey)
+    val value = schema + path
 
     constructor(algorithm: AttoAlgorithm, publicKey: AttoPublicKey) : this(AttoAlgorithmPublicKey(algorithm, publicKey))
 
     companion object {
-        private val regex = "^$PREFIX[a-z2-7]{61}$".toRegex()
+        private val regex = "^$SCHEMA[a-z2-7]{61}$".toRegex()
         private const val CHECKSUM_SIZE = 5
 
         private fun checksum(algorithmPublicKey: AttoAlgorithmPublicKey): ByteArray {
@@ -57,6 +59,11 @@ data class AttoAddress(
             return checksum.contentEquals(checksum(algorithmPublicKey))
         }
 
+        fun isValidPath(path: String): Boolean {
+            val value = SCHEMA + path
+            return isValid(value)
+        }
+
         fun toAddress(algorithmPublicKey: AttoAlgorithmPublicKey): String {
             val algorithm = byteArrayOf(algorithmPublicKey.algorithm.code.toByte())
             val publicKey = algorithmPublicKey.publicKey.value
@@ -71,6 +78,11 @@ data class AttoAddress(
             val algorithmPublicKey = toAlgorithmPublicKey(value)
 
             return AttoAddress(algorithmPublicKey)
+        }
+
+        fun parsePath(path: String): AttoAddress {
+            val value = SCHEMA + path
+            return parse(value)
         }
     }
 
