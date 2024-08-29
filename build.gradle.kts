@@ -59,7 +59,7 @@ repositories {
 }
 
 dependencies {
-    val kotlinxSerializationVersion = "1.7.1"
+    val kotlinxSerializationVersion = "1.7.2"
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
     api("org.jetbrains.kotlinx:kotlinx-io-core:0.5.3")
     api("org.bouncycastle:bcprov-jdk18on:1.78.1")
