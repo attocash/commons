@@ -166,20 +166,6 @@ class AttoBlockTest {
                 Arguments.of(sendBlock.copy(receiverPublicKey = sendBlock.publicKey)),
                 // zero balance
                 Arguments.of(receiveBlock.copy(balance = AttoAmount.MIN)),
-                // unknown account algorithm
-                Arguments.of(openBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)),
-                // unknown account algorithm
-                Arguments.of(sendBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)),
-                // unknown account algorithm
-                Arguments.of(receiveBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)),
-                // unknown account algorithm
-                Arguments.of(changeBlock.copy(algorithm = AttoAlgorithm.UNKNOWN)),
-                // unknown send algorithm
-                Arguments.of(openBlock.copy(sendHashAlgorithm = AttoAlgorithm.UNKNOWN)),
-                // unknown send algorithm
-                Arguments.of(receiveBlock.copy(sendHashAlgorithm = AttoAlgorithm.UNKNOWN)),
-                // unknown receiver algorithm
-                Arguments.of(sendBlock.copy(receiverAlgorithm = AttoAlgorithm.UNKNOWN)),
             )
     }
 }

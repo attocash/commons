@@ -152,7 +152,6 @@ class AttoAlgorithmPrivateKey(
     val value = byteArrayOf(algorithm.code.toByte()) + privateKey.value
 
     init {
-        require(algorithm != AttoAlgorithm.UNKNOWN) { "Algorithm can't be $algorithm" }
         privateKey.value.checkLength(algorithm.privateKeySize)
     }
 
@@ -177,7 +176,6 @@ data class AttoAlgorithmPublicKey(
     val value = byteArrayOf(algorithm.code.toByte()) + publicKey.value
 
     init {
-        require(algorithm != AttoAlgorithm.UNKNOWN) { "Algorithm can't be $algorithm" }
         publicKey.value.checkLength(algorithm.publicKeySize)
     }
 

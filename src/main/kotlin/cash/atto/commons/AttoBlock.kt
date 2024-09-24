@@ -92,8 +92,7 @@ sealed interface AttoBlock :
 
     fun isValid(): Boolean {
         return version <= maxVersion &&
-            timestamp <= Clock.System.now() &&
-            algorithm != AttoAlgorithm.UNKNOWN
+            timestamp <= Clock.System.now()
     }
 }
 
@@ -184,7 +183,6 @@ data class AttoSendBlock(
             height > AttoHeight(1u) &&
             amount.raw > 0u &&
             receiverPublicKey != publicKey &&
-            receiverAlgorithm != AttoAlgorithm.UNKNOWN &&
             receiverAlgorithm.publicKeySize == receiverPublicKey.value.size
     }
 }
@@ -258,7 +256,6 @@ data class AttoReceiveBlock(
         return super.isValid() &&
             height > AttoHeight(1u) &&
             balance > AttoAmount.MIN &&
-            sendHashAlgorithm != AttoAlgorithm.UNKNOWN &&
             sendHash.value.size == sendHashAlgorithm.hashSize
     }
 }
@@ -334,7 +331,6 @@ data class AttoOpenBlock(
     override fun isValid(): Boolean {
         return super.isValid() &&
             balance > AttoAmount.MIN &&
-            sendHashAlgorithm != AttoAlgorithm.UNKNOWN &&
             sendHash.value.size == sendHashAlgorithm.hashSize
     }
 }
