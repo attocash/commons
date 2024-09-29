@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 
 class AttoBlockTest {
     @ParameterizedTest
@@ -68,6 +69,18 @@ class AttoBlockTest {
             Stream.of(
                 Arguments.of(sendBlock),
                 Arguments.of(receiveBlock),
+                Arguments.of(
+                    receiveBlock.copy(
+                        timestamp =
+                            Instant.fromEpochMilliseconds(
+                                Clock
+                                    .System
+                                    .now()
+                                    .plus(1.minutes)
+                                    .toEpochMilliseconds(),
+                            ),
+                    ),
+                ),
                 Arguments.of(openBlock),
                 Arguments.of(changeBlock),
             )

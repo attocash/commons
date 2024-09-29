@@ -10,6 +10,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlin.time.Duration.Companion.minutes
 
 val maxVersion = AttoVersion(0U)
 
@@ -92,7 +93,7 @@ sealed interface AttoBlock :
 
     fun isValid(): Boolean {
         return version <= maxVersion &&
-            timestamp <= Clock.System.now()
+            timestamp <= Clock.System.now() + 1.minutes
     }
 }
 
