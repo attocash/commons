@@ -28,6 +28,7 @@ data class AttoAccount(
             representativePublicKey: AttoPublicKey,
             receivable: AttoReceivable,
             network: AttoNetwork,
+            timestamp: Instant = Clock.System.now(),
         ): AttoOpenBlock {
             return AttoOpenBlock(
                 network = network,
@@ -35,7 +36,7 @@ data class AttoAccount(
                 algorithm = receivable.receiverAlgorithm,
                 publicKey = receivable.receiverPublicKey,
                 balance = receivable.amount,
-                timestamp = Clock.System.now(),
+                timestamp = timestamp,
                 sendHashAlgorithm = receivable.algorithm,
                 sendHash = receivable.hash,
                 representativeAlgorithm = representativeAlgorithm,
@@ -48,6 +49,7 @@ data class AttoAccount(
         receiverAlgorithm: AttoAlgorithm,
         receiverPublicKey: AttoPublicKey,
         amount: AttoAmount,
+        timestamp: Instant = Clock.System.now(),
     ): AttoSendBlock {
         if (receiverPublicKey == publicKey) {
             throw IllegalArgumentException("You can't send money to yourself")
@@ -59,7 +61,7 @@ data class AttoAccount(
             publicKey = publicKey,
             height = height + 1U,
             balance = balance.minus(amount),
-            timestamp = Clock.System.now(),
+            timestamp = timestamp,
             previous = lastTransactionHash,
             receiverAlgorithm = receiverAlgorithm,
             receiverPublicKey = receiverPublicKey,
@@ -67,7 +69,10 @@ data class AttoAccount(
         )
     }
 
-    fun receive(receivable: AttoReceivable): AttoReceiveBlock =
+    fun receive(
+        receivable: AttoReceivable,
+        timestamp: Instant = Clock.System.now(),
+    ): AttoReceiveBlock =
         AttoReceiveBlock(
             network = network,
             version = version.max(receivable.version),
@@ -75,7 +80,7 @@ data class AttoAccount(
             publicKey = publicKey,
             height = height + 1U,
             balance = balance.plus(receivable.amount),
-            timestamp = Clock.System.now(),
+            timestamp = timestamp,
             previous = lastTransactionHash,
             sendHashAlgorithm = receivable.algorithm,
             sendHash = receivable.hash,
@@ -84,6 +89,7 @@ data class AttoAccount(
     fun change(
         representativeAlgorithm: AttoAlgorithm,
         representativePublicKey: AttoPublicKey,
+        timestamp: Instant = Clock.System.now(),
     ): AttoChangeBlock =
         AttoChangeBlock(
             network = network,
@@ -92,7 +98,7 @@ data class AttoAccount(
             publicKey = publicKey,
             height = height + 1U,
             balance = balance,
-            timestamp = Clock.System.now(),
+            timestamp = timestamp,
             previous = lastTransactionHash,
             representativeAlgorithm = representativeAlgorithm,
             representativePublicKey = representativePublicKey,
