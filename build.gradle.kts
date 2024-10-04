@@ -68,7 +68,7 @@ dependencies {
     "jsonApi"("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     "openclApi"("org.jocl:jocl:2.0.5")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.2")
 
     "benchmarksImplementation"("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.12")
     "benchmarksImplementation"("org.jocl:jocl:2.0.5")
