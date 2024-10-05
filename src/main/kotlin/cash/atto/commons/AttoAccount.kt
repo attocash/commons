@@ -72,8 +72,10 @@ data class AttoAccount(
     fun receive(
         receivable: AttoReceivable,
         timestamp: Instant = Clock.System.now(),
-    ): AttoReceiveBlock =
-        AttoReceiveBlock(
+    ): AttoReceiveBlock {
+        require(timestamp > receivable.timestamp) { "Timestamp can't be before receivable timestamp" }
+
+        return AttoReceiveBlock(
             network = network,
             version = version.max(receivable.version),
             algorithm = algorithm,
@@ -85,6 +87,7 @@ data class AttoAccount(
             sendHashAlgorithm = receivable.algorithm,
             sendHash = receivable.hash,
         )
+    }
 
     fun change(
         representativeAlgorithm: AttoAlgorithm,
