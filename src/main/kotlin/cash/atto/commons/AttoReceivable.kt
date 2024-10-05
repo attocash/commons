@@ -25,5 +25,5 @@ fun AttoSendBlock.toReceivable(): AttoReceivable =
         timestamp = this.timestamp,
         receiverAlgorithm = this.receiverAlgorithm,
         receiverPublicKey = this.receiverPublicKey,
-        amount = this.amount
+        amount = this.amount,
     )

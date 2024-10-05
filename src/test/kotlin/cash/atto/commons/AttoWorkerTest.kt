@@ -13,7 +13,7 @@ class AttoWorkerTest {
     }
 
     @Test
-    @Disabled("OpenCL stopped working in Github actions")
+//    @Disabled("OpenCL stopped working in Github actions")
     fun `should perform work with opencl`() {
         work(AttoWorker.opencl())
     }
