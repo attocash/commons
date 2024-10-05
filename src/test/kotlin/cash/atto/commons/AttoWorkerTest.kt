@@ -1,7 +1,6 @@
 package cash.atto.commons
 
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class AttoWorkerTest {
@@ -12,8 +11,8 @@ class AttoWorkerTest {
         work(AttoWorker.cpu())
     }
 
+    //    @Disabled("OpenCL stopped working in Github actions")
     @Test
-//    @Disabled("OpenCL stopped working in Github actions")
     fun `should perform work with opencl`() {
         work(AttoWorker.opencl())
     }
