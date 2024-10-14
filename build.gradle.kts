@@ -57,12 +57,12 @@ publishing {
                     pom {
                         name.set("Atto ${subproject.name.uppercase()}")
                         description.set("This is the ${subproject.name} module of Atto.")
-                        url.set("https://github.com/attocash/${subproject.name}")
+                        url.set("https://github.com/attocash/commons")
 
                         licenses {
                             license {
                                 name.set("BSD 3-Clause License")
-                                url.set("https://github.com/attocash/${subproject.name}/blob/main/LICENSE")
+                                url.set("https://github.com/attocash/commons/LICENSE")
                             }
                         }
 
@@ -75,9 +75,9 @@ publishing {
                         }
 
                         scm {
-                            connection.set("scm:git:git://github.com/attocash/${subproject.name}.git")
-                            developerConnection.set("scm:git:ssh://github.com/attocash/${subproject.name}.git")
-                            url.set("https://github.com/attocash/${subproject.name}")
+                            connection.set("scm:git:git://github.com/attocash/commons.git")
+                            developerConnection.set("scm:git:ssh://github.com/attocash/commons.git")
+                            url.set("https://github.com/attocash/commons")
                         }
                     }
                 }
