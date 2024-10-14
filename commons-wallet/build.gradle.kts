@@ -4,6 +4,9 @@ plugins {
     kotlin("plugin.allopen") version kotlinVersion
 
     id("org.jetbrains.kotlinx.benchmark") version "0.4.12"
+
+    id("maven-publish")
+    signing
 }
 
 group = "cash.atto"
@@ -68,18 +71,60 @@ kotlin {
     }
 }
 
-benchmark {
-    targets {
-        register("jvm")
-    }
-}
+//benchmark {
+//    targets {
+//        register("jvm")
+//    }
+//}
 
 allOpen {
     annotation("org.openjdk.jmh.annotations.State")
 }
+//
+//benchmark {
+//    targets {
+//        register("benchmarks")
+//    }
+//}
 
-benchmark {
-    targets {
-        register("benchmarks")
+publishing {
+    publications.withType<MavenPublication> {
+        pom {
+            name.set("Atto Commons Wallet")
+            description.set(
+                "Atto Commons Wallet provides simple wallet implementation.",
+            )
+            url.set("https://atto.cash")
+
+            licenses {
+                license {
+                    name.set("BSD 3-Clause License")
+                    url.set("https://github.com/attocash/commons/blob/main/LICENSE")
+                }
+            }
+
+            developers {
+                developer {
+                    id.set("rotilho")
+                    name.set("Felipe Rotilho")
+                    email.set("felipe@atto.cash")
+                }
+            }
+
+            scm {
+                connection.set("scm:git:git://github.com/attocash/commons.git")
+                developerConnection.set("scm:git:ssh://github.com/attocash/commons.git")
+                url.set("https://github.com/attocash/commons")
+            }
+        }
+    }
+}
+
+signing {
+    val shouldSign = project.findProperty("signing.skip")?.toString()?.toBoolean() != true
+    if (shouldSign) {
+        val signingKey: String? by project
+        useInMemoryPgpKeys(signingKey, "")
+        sign(publishing.publications)
     }
 }
