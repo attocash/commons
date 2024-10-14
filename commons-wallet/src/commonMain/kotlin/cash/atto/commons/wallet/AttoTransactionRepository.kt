@@ -30,7 +30,7 @@ private class AttoInMemoryTransactionRepository : AttoTransactionRepository {
 
     override suspend fun list(publicKey: AttoPublicKey): List<AttoTransaction> {
         mutex.withLock {
-            return transactionMap[publicKey] ?: emptyList()
+            return transactionMap[publicKey]?.toList() ?: emptyList()
         }
     }
 
