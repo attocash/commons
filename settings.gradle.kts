@@ -3,5 +3,6 @@ plugins {
 }
 rootProject.name = "commons"
 include("commons-core")
+include("commons-wallet")
 include("commons-worker")
 include("commons-worker-opencl")

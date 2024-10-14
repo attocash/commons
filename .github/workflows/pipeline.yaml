@@ -1,0 +1,22 @@
+name: Test
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: ./.github/workflows/test.yaml
+  snapshot:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: release snapshot
+        run: |
+          VERSION=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/v//")
+          gradle publishToSonatype --stacktrace -P version=$VERSION-SNAPSHOT
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}

@@ -90,3 +90,7 @@ data class AttoAddress(
 }
 
 fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)
+
+fun AttoAccount.getAddress(): AttoAddress {
+    return AttoAddress(this.algorithm, this.publicKey)
+}

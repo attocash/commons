@@ -62,13 +62,13 @@ fun AttoWork.Companion.isValid(
 fun AttoWork.Companion.isValid(
     network: AttoNetwork,
     timestamp: Instant,
-    hash: ByteArray,
+    target: ByteArray,
     work: ByteArray,
 ): Boolean {
     if (timestamp < INITIAL_INSTANT) {
         return false
     }
-    return isValid(AttoWork.getThreshold(network, timestamp), hash, work)
+    return isValid(AttoWork.getThreshold(network, timestamp), target, work)
 }
 
 @Serializable(with = AttoWorkSerializer::class)

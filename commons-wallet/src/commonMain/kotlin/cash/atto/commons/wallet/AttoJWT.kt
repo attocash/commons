@@ -1,0 +1,15 @@
+package cash.atto.commons.wallet
+
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlin.time.Duration
+
+data class AttoJWT(val expiresAt: Instant, val encoded: String) {
+    companion object {}
+
+    fun isExpired(leeway: Duration): Boolean {
+        return expiresAt < Clock.System.now().minus(leeway)
+    }
+}
+
+expect fun AttoJWT.Companion.decode(encoded: String): AttoJWT

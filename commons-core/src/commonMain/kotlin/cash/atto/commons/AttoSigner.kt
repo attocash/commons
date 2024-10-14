@@ -1,10 +1,12 @@
 package cash.atto.commons
 
 interface AttoSigner {
+    val publicKey: AttoPublicKey
     fun sign(hash: AttoHash): AttoSignature
 }
 
 expect class InMemorySigner(privateKey: AttoPrivateKey) : AttoSigner {
+    override val publicKey: AttoPublicKey
     internal val privateKey: AttoPrivateKey
 }
 

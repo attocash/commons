@@ -46,13 +46,12 @@ interface HeightSupport {
 sealed interface AttoBlock :
     HeightSupport,
     AttoSerializable {
+    val hash: AttoHash
+
     val type: AttoBlockType
     val network: AttoNetwork
     val version: AttoVersion
     val algorithm: AttoAlgorithm
-
-    val hash: AttoHash
-
     val publicKey: AttoPublicKey
     override val height: AttoHeight
     val balance: AttoAmount

@@ -34,3 +34,14 @@ interface AttoWorker : AutoCloseable {
         return work(threshold, target)
     }
 }
+
+private object NoOpAttoWorker : AttoWorker {
+    override suspend fun work(threshold: ULong, target: ByteArray): AttoWork {
+        throw NotImplementedError()
+    }
+
+    override fun close() {
+    }
+}
+
+fun AttoWorker.Companion.noOp(): AttoWorker = NoOpAttoWorker
