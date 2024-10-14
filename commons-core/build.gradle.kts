@@ -96,9 +96,8 @@ publishing {
 
             developers {
                 developer {
-                    id.set("rotilho")
-                    name.set("Felipe Rotilho")
-                    email.set("felipe@atto.cash")
+                    id.set("atto")
+                    name.set("Atto Team")
                 }
             }
 
