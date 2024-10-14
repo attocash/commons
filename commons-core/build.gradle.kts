@@ -38,7 +38,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
                 api("org.jetbrains.kotlinx:kotlinx-io-core:0.5.4")
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.11")
+                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.12")
             }
         }
         val commonTest by getting {
