@@ -46,6 +46,7 @@ class AttoWalletManager(
 
     private val mutex = Mutex()
 
+    val publicKey = viewer.publicKey
     val account: AttoAccount? get() = viewer.account
 
     val accountFlow = viewer.accountFlow

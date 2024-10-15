@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 class AttoWalletViewer(
-    private val publicKey: AttoPublicKey,
+    val publicKey: AttoPublicKey,
     private val client: AttoClient,
     private val transactionRepository: AttoTransactionRepository = AttoTransactionRepository.inMemory(),
 ) : AutoCloseable {
