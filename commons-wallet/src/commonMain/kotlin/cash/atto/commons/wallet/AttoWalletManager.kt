@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -40,7 +41,8 @@ class AttoWalletManager(
 
     private val scope = CoroutineScope(Dispatchers.Default)
 
-    private val ready = MutableStateFlow(false)
+    private val _readyState = MutableStateFlow(false)
+    val readyState = _readyState.asStateFlow()
 
     private val mutex = Mutex()
 
@@ -102,12 +104,12 @@ class AttoWalletManager(
             startAutoReceiver()
         }
 
-        ready.value = true
+        _readyState.value = true
         logger.info { "Started wallet manager for ${signer.publicKey}" }
     }
 
     private fun requireReady() {
-        require(ready.value) { "Wallet is not ready yet" }
+        require(readyState.value) { "Wallet is not ready yet" }
     }
 
     private fun getAccountOrThrow(): AttoAccount {
