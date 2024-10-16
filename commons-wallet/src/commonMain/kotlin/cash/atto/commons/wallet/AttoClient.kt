@@ -134,7 +134,7 @@ internal class AttoAuthenticatorClient(val signer: AttoSigner, url: String) {
 internal class AttoSimpleClient(
     override val network: AttoNetwork,
     private val url: String,
-    private val headerProvider: suspend () -> Map<String, String>
+    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() }
 ) : AttoClient {
     private val logger = KotlinLogging.logger {}
 
