@@ -10,7 +10,7 @@ enum class AttoUnit(
     val prefix: String,
     internal val scale: UByte,
 ) {
-    ATTO("atto", 10U),
+    ATTO("atto", 9U),
     RAW("raw", 0U),
 }
 

@@ -71,4 +71,17 @@ internal class AttoAmountTest {
         assertEquals(expectedJson, json)
         assertEquals(AttoAmount.MAX, amount)
     }
+
+    @Test
+    fun `should convert to atto`() {
+        // given
+        val amount = AttoAmount.MAX
+
+        // when
+        val string = amount.toString(AttoUnit.ATTO)
+
+        // then
+        assertEquals("18000000000", string)
+
+    }
 }
