@@ -73,7 +73,7 @@ internal class AttoAmountTest {
     }
 
     @Test
-    fun `should convert to atto`() {
+    fun `should convert from atto unit to string`() {
         // given
         val amount = AttoAmount.MAX
 
@@ -82,6 +82,17 @@ internal class AttoAmountTest {
 
         // then
         assertEquals("18000000000", string)
+    }
 
+    @Test
+    fun `should convert from string to atto unit`() {
+        // given
+        val string = "1"
+
+        // when
+        val amount = AttoAmount.from(AttoUnit.ATTO, "1")
+
+        // then
+        assertEquals(AttoAmount(1_000_000_000UL), amount)
     }
 }
