@@ -12,6 +12,8 @@ import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoReceiveBlock
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.ReceiveSupport
+import cash.atto.commons.gatekeeper.AttoAuthenticator
+import cash.atto.commons.gatekeeper.custom
 import cash.atto.commons.sign
 import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toAttoHeight
@@ -20,6 +22,7 @@ import cash.atto.commons.toPublicKey
 import cash.atto.commons.toSigner
 import cash.atto.commons.work.AttoWorker
 import cash.atto.commons.work.cpu
+import cash.atto.commons.work.remote
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
@@ -41,11 +44,13 @@ class AttoWalletManagerTest {
         private val privateKey = AttoPrivateKey.generate()
         private val publicKey = privateKey.toPublicKey()
         private val signer = privateKey.toSigner()
-        private val client = AttoClient.createAtto(AttoNetwork.LOCAL, signer, "http://localhost:$port", "http://localhost:$port")
+        private val authenticator = AttoAuthenticator.custom("http://localhost:$port", signer)
+        private val client = AttoNodeClient.attoBackend(AttoNetwork.LOCAL, "http://localhost:$port", authenticator)
         private val transactionRepository = AttoTransactionRepository.inMemory()
         private val viewer = AttoWalletViewer(publicKey, client, transactionRepository)
+        private val worker = AttoWorker.remote("http://localhost:$port")
         private val workCache = AttoWorkCache.inMemory()
-        private val walletManager = AttoWalletManager(viewer, signer, client, workCache) {
+        private val walletManager = AttoWalletManager(viewer, signer, client, worker, workCache) {
             AttoAddress(AttoAlgorithm.V1, publicKey)
         }
 

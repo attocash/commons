@@ -1,25 +1,20 @@
 package cash.atto.commons.wallet
 
 import cash.atto.commons.AttoAccount
-import cash.atto.commons.AttoAlgorithm
-import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
-import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoTransaction
-import cash.atto.commons.AttoWork
-import cash.atto.commons.fromHexToByteArray
-import cash.atto.commons.toHex
+import cash.atto.commons.gatekeeper.AttoAuthenticator
+import cash.atto.commons.gatekeeper.attoBackend
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.timeout
-import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
@@ -33,12 +28,11 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readUTF8Line
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -49,7 +43,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-interface AttoClient {
+interface AttoNodeClient {
     companion object {}
 
     val network: AttoNetwork
@@ -58,9 +52,6 @@ interface AttoClient {
     fun transactions(publicKey: AttoPublicKey, fromHeight: AttoHeight = AttoHeight(1UL)): Flow<AttoTransaction>
     suspend fun now(): Instant
     suspend fun publish(transaction: AttoTransaction)
-    suspend fun work(timestamp: Instant, target: ByteArray): AttoWork {
-        throw NotImplementedError("Work is not implemented")
-    }
 }
 
 private val httpClient = HttpClient {
@@ -70,72 +61,11 @@ private val httpClient = HttpClient {
     install(HttpTimeout)
 }
 
-internal class AttoAuthenticatorClient(val signer: AttoSigner, url: String) {
-    private val leeway = 60.seconds
-    private val loginUri = "$url/login"
-    private val challengeUri = "$loginUri/challenges"
-    private var jwt: AttoJWT? = null
-
-    private val mutex = Mutex()
-
-    suspend fun getAuthorization(): String {
-        mutex.withLock {
-            val jwt = this.jwt
-            if (jwt == null || jwt.isExpired(leeway)) {
-                return login()
-            }
-            return jwt.encoded
-        }
-    }
-
-    private suspend fun login(): String {
-        val initRequest = TokenInitRequest(AttoAlgorithm.V1, signer.publicKey)
-        val initResponse = httpClient.post(loginUri) {
-            contentType(ContentType.Application.Json)
-            setBody(initRequest)
-        }.body<TokenInitResponse>()
-
-
-        val challenge = initResponse.challenge.fromHexToByteArray()
-        val hash = AttoHash.hash(64, signer.publicKey.value, challenge)
-
-        val signature = signer.sign(hash)
-        val answer = TokenInitAnswer(signature)
-
-        val challengeUrl = "$challengeUri/${initResponse.challenge}"
-        val jwtString = httpClient.post(challengeUrl) {
-            contentType(ContentType.Application.Json)
-            setBody(answer)
-        }.body<String>()
-
-        jwt = AttoJWT.decode(jwtString)
-        return jwtString
-    }
-
-
-    @Serializable
-    data class TokenInitRequest(
-        val algorithm: AttoAlgorithm,
-        val publicKey: AttoPublicKey,
-    )
-
-    @Serializable
-    data class TokenInitResponse(
-        val challenge: String,
-    )
-
-    @Serializable
-    data class TokenInitAnswer(
-        val signature: AttoSignature,
-    )
-
-}
-
-internal class AttoSimpleClient(
+private class NodeClient(
     override val network: AttoNetwork,
     private val url: String,
     private val headerProvider: suspend () -> Map<String, String> = { emptyMap() }
-) : AttoClient {
+) : AttoNodeClient {
     private val logger = KotlinLogging.logger {}
 
     private val retryDelay = 10.seconds
@@ -165,6 +95,8 @@ internal class AttoSimpleClient(
                                 }
                             }
                         }
+                } catch (e : CancellationException) {
+                    logger.debug (e) { "Cancelled to stream $urlPath." }
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to stream $urlPath. Retrying in $retryDelay..." }
                 }
@@ -211,49 +143,12 @@ internal class AttoSimpleClient(
         channel.cancel()
     }
 
-    override suspend fun work(timestamp: Instant, target: ByteArray): AttoWork {
-        val headers = headerProvider.invoke()
-
-        val uri = "$url/works"
-
-        val request = WorkRequest(
-            timestamp = timestamp,
-            target = target.toHex()
-        )
-
-        return httpClient.post(uri) {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
-            setBody(request)
-            headers {
-                headers.forEach { (key, value) -> append(key, value) }
-                append("Accept", "application/x-ndjson")
-            }
-            timeout {
-                socketTimeoutMillis = 5.minutes.inWholeMilliseconds
-            }
-        }
-            .body<WorkResponse>()
-            .work
-    }
-
     override suspend fun now(): Instant {
         val diff = httpClient.get("$url/instants/${Clock.System.now()}")
             .body<InstantResponse>()
             .differenceMillis
         return Clock.System.now().plus(diff.milliseconds)
     }
-
-    @Serializable
-    data class WorkRequest(
-        val timestamp: Instant,
-        val target: String,
-    )
-
-    @Serializable
-    data class WorkResponse(
-        val work: AttoWork,
-    )
 
     @Serializable
     data class InstantResponse(
@@ -263,23 +158,21 @@ internal class AttoSimpleClient(
     )
 }
 
-fun AttoClient.Companion.create(
+fun AttoNodeClient.Companion.custom(
     network: AttoNetwork,
     url: String,
     headerProvider: suspend () -> Map<String, String>
-): AttoClient {
-    return AttoSimpleClient(network, url, headerProvider)
+): AttoNodeClient {
+    return NodeClient(network, url, headerProvider)
 }
 
-internal fun AttoClient.Companion.createAtto(
+internal fun AttoNodeClient.Companion.attoBackend(
     network: AttoNetwork,
-    signer: AttoSigner,
     gatekeeperUrl: String,
-    walletGatekeeperUrl: String
-): AttoClient {
-    val authenticatorClient = AttoAuthenticatorClient(signer, walletGatekeeperUrl)
-    return AttoClient.create(network, gatekeeperUrl) {
-        val jwt = authenticatorClient.getAuthorization()
+    authenticator: AttoAuthenticator,
+): AttoNodeClient {
+    return AttoNodeClient.custom(network, gatekeeperUrl) {
+        val jwt = authenticator.getAuthorization()
         mapOf("Authorization" to "Bearer $jwt")
     }
 }
@@ -287,10 +180,10 @@ internal fun AttoClient.Companion.createAtto(
 /**
  * Creates a AttoClient using Atto backend
  */
-fun AttoClient.Companion.createAtto(network: AttoNetwork, signer: AttoSigner): AttoClient {
+fun AttoNodeClient.Companion.attoBackend(network: AttoNetwork, signer: AttoSigner): AttoNodeClient {
     val gatekeeperUrl = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"
-    val walletGatekeeperUrl = "https://wallet-gatekeeper.${network.name.lowercase()}.application.atto.cash"
-    return AttoClient.createAtto(network, signer, gatekeeperUrl, walletGatekeeperUrl)
+    val authenticator = AttoAuthenticator.attoBackend(network, signer)
+    return AttoNodeClient.attoBackend(network, gatekeeperUrl, authenticator)
 }
 
 

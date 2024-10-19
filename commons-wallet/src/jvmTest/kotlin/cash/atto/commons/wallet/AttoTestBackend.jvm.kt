@@ -1,5 +1,6 @@
 package cash.atto.commons.wallet
 
+import cash.atto.commons.gatekeeper.AttoJWT
 import cash.atto.commons.toHex
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm

@@ -12,6 +12,7 @@ import cash.atto.commons.AttoWork
 import cash.atto.commons.PreviousSupport
 import cash.atto.commons.isValid
 import cash.atto.commons.toHex
+import cash.atto.commons.work.AttoWorker
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +32,8 @@ import kotlin.time.Duration.Companion.seconds
 class AttoWalletManager(
     private val viewer: AttoWalletViewer,
     private val signer: AttoSigner,
-    private val client: AttoClient,
+    private val client: AttoNodeClient,
+    private val worker: AttoWorker,
     private val workCache: AttoWorkCache = AttoWorkCache.inMemory(),
     private val representativeProvider: () -> AttoAddress,
 ) : AutoCloseable {
@@ -60,7 +62,7 @@ class AttoWalletManager(
                 if (work?.isValid(timestamp, target) == true) {
                     return work
                 }
-                val newWork = client.work(timestamp, target)
+                val newWork = worker.work(client.network, timestamp, target)
                 workCache.save(newWork)
                 return newWork
             } catch (e: CancellationException) {

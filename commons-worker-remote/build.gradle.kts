@@ -34,14 +34,11 @@ kotlin {
 
     sourceSets {
         val ktorVersion = "3.0.0"
+
         val commonMain by getting {
             dependencies {
-                api(project(":commons-core"))
                 api(project(":commons-gatekeeper"))
-                api(project(":commons-worker-remote"))
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-
-                implementation("io.github.oshai:kotlin-logging:7.0.0")
+                api(project(":commons-worker"))
 
                 implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
@@ -53,22 +50,10 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("io.ktor:ktor-server-cio:$ktorVersion")
-                implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-
             }
         }
-        val jvmMain by getting {
-            dependencies {
-                runtimeOnly("io.ktor:ktor-client-okhttp-jvm:$ktorVersion")
-            }
-        }
-        val jvmTest by getting {
-            dependencies {
-                implementation("org.slf4j:slf4j-simple:2.0.16")
-                implementation("com.auth0:java-jwt:4.4.0")
-            }
-        }
+        val jvmMain by getting
+        val jvmTest by getting
     }
 }
 
@@ -81,7 +66,7 @@ kotlin {
 allOpen {
     annotation("org.openjdk.jmh.annotations.State")
 }
-//
+
 //benchmark {
 //    targets {
 //        register("benchmarks")
@@ -91,9 +76,9 @@ allOpen {
 publishing {
     publications.withType<MavenPublication> {
         pom {
-            name.set("Atto Commons Wallet")
+            name.set("Atto Commons Worker")
             description.set(
-                "Atto Commons Wallet provides simple wallet implementation.",
+                "Atto Commons Worker provides worker interface and CPU worker implementation.",
             )
             url.set("https://atto.cash")
 
@@ -128,3 +113,4 @@ signing {
         sign(publishing.publications)
     }
 }
+

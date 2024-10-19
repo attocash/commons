@@ -14,9 +14,9 @@ data class AttoEndpoint(
     val logger: Logger = Logger.SIMPLE,
 )
 
-private class AttoAuthenticator(network: AttoNetwork, signer: AttoSigner) {
-
-}
+//private class AttoAuthenticator(network: AttoNetwork, signer: AttoSigner) {
+//
+//}
 
 fun AttoEndpoint.gatekeeper(network: AttoNetwork, signer: AttoSigner) {
     val endpoint = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"

@@ -1,15 +1,17 @@
 package cash.atto.commons.wallet
 
 import cash.atto.commons.AttoAccount
+import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
+import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoWork
+import cash.atto.commons.gatekeeper.AttoJWT
 import cash.atto.commons.toHex
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
@@ -22,6 +24,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.utils.io.writeStringUtf8
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -32,6 +35,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 expect fun generateJwt(): AttoJWT
@@ -52,7 +56,7 @@ class AttoTestBackend(port: Int) {
 
         routing {
             post("/login") {
-                val response = AttoAuthenticatorClient.TokenInitResponse(ByteArray(60).toHex())
+                val response = TokenInitResponse(ByteArray(60).toHex())
                 call.respond(response)
             }
 
@@ -76,6 +80,8 @@ class AttoTestBackend(port: Int) {
                                 logger.info { "Emitted $it" }
                             }
                     }
+                } catch (e: CancellationException) {
+                    logger.debug(e) { "AccountFlow(publicKey=$publicKey) cancelled" }
                 } catch (e: Exception) {
                     logger.error(e) { "AccountFlow(publicKey=$publicKey) failed" }
                 }
@@ -97,6 +103,8 @@ class AttoTestBackend(port: Int) {
                                 logger.info { "Emitted $it" }
                             }
                     }
+                } catch (e: CancellationException) {
+                    logger.debug(e) { "TransactionFlow(publicKey=$publicKey) cancelled" }
                 } catch (e: Exception) {
                     logger.error(e) { "TransactionFlow(publicKey=$publicKey) failed" }
                 }
@@ -118,6 +126,8 @@ class AttoTestBackend(port: Int) {
 
                             }
                     }
+                } catch (e: CancellationException) {
+                    logger.debug(e) { "ReceivableFlow(publicKey=$publicKey) cancelled" }
                 } catch (e: Exception) {
                     logger.error(e) { "ReceivableFlow(publicKey=$publicKey) failed" }
                 }
@@ -140,13 +150,13 @@ class AttoTestBackend(port: Int) {
                 val serverInstant = Clock.System.now()
                 val differenceMillis = serverInstant.minus(clientInstant).inWholeMilliseconds
 
-                val response = AttoSimpleClient.InstantResponse(clientInstant, serverInstant, differenceMillis)
+                val response = InstantResponse(clientInstant, serverInstant, differenceMillis)
 
                 call.respond(response)
             }
 
             post("/works") {
-                val response = AttoSimpleClient.WorkResponse(AttoWork(ByteArray(8)))
+                val response = WorkResponse(AttoWork(ByteArray(8)))
                 call.respond(response)
             }
         }
@@ -160,4 +170,32 @@ class AttoTestBackend(port: Int) {
         server.stop()
         scope.cancel()
     }
+
+    @Serializable
+    data class InstantResponse(
+        val clientInstant: Instant,
+        val serverInstant: Instant,
+        val differenceMillis: Long,
+    )
+
+    @Serializable
+    data class TokenInitRequest(
+        val algorithm: AttoAlgorithm,
+        val publicKey: AttoPublicKey,
+    )
+
+    @Serializable
+    data class TokenInitResponse(
+        val challenge: String,
+    )
+
+    @Serializable
+    data class TokenInitAnswer(
+        val signature: AttoSignature,
+    )
+
+    @Serializable
+    private data class WorkResponse(
+        val work: AttoWork,
+    )
 }

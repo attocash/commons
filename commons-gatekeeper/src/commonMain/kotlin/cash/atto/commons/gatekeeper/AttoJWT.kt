@@ -1,4 +1,4 @@
-package cash.atto.commons.wallet
+package cash.atto.commons.gatekeeper
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant

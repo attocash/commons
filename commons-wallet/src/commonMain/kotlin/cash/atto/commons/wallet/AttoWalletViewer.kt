@@ -21,7 +21,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class AttoWalletViewer(
     val publicKey: AttoPublicKey,
-    private val client: AttoClient,
+    private val client: AttoNodeClient,
     private val transactionRepository: AttoTransactionRepository = AttoTransactionRepository.inMemory(),
 ) : AutoCloseable {
     private val logger = KotlinLogging.logger {}

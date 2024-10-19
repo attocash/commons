@@ -1,4 +1,4 @@
-package cash.atto.commons.wallet
+package cash.atto.commons.gatekeeper
 
 import com.auth0.jwt.JWT
 import kotlinx.datetime.toKotlinInstant
