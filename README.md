@@ -1,8 +1,10 @@
-# commons
+# Atto Commons
 
 ## Overview
 
 The `commons` project is a Kotlin library that provides utilities and common functionality for working cryptocurrency accounts, transactions, mnemonics, and more. It includes support for cryptographic operations, address generation, seed management, and proof-of-work computation, among other features.
+
+**NOTE: This library is in active development, and frequent major releases may introduce breaking changes. We appreciate your understanding and tolerance as the API evolves during this phase.**
 
 ## Features
 
