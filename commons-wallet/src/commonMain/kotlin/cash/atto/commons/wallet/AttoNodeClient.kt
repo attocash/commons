@@ -180,9 +180,8 @@ internal fun AttoNodeClient.Companion.attoBackend(
 /**
  * Creates a AttoClient using Atto backend
  */
-fun AttoNodeClient.Companion.attoBackend(network: AttoNetwork, signer: AttoSigner): AttoNodeClient {
+fun AttoNodeClient.Companion.attoBackend(network: AttoNetwork, authenticator: AttoAuthenticator): AttoNodeClient {
     val gatekeeperUrl = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"
-    val authenticator = AttoAuthenticator.attoBackend(network, signer)
     return AttoNodeClient.attoBackend(network, gatekeeperUrl, authenticator)
 }
 
