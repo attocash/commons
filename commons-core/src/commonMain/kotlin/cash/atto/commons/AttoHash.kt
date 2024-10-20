@@ -55,6 +55,10 @@ data class AttoHash(
     fun isValid(): Boolean = AttoAlgorithm.entries.any { it.hashSize == value.size }
 }
 
+interface AttoHashable {
+    val hash: AttoHash
+}
+
 object AttoHashSerializer : KSerializer<AttoHash> {
     override val descriptor = PrimitiveSerialDescriptor("AttoHash", PrimitiveKind.STRING)
 

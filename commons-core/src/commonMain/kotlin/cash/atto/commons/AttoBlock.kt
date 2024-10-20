@@ -45,8 +45,9 @@ interface HeightSupport {
 @Serializable
 sealed interface AttoBlock :
     HeightSupport,
+    AttoHashable,
     AttoSerializable {
-    val hash: AttoHash
+    override val hash: AttoHash
 
     val type: AttoBlockType
     val network: AttoNetwork
@@ -95,7 +96,6 @@ sealed interface AttoBlock :
             timestamp <= Clock.System.now() + 1.minutes
     }
 }
-
 interface PreviousSupport {
     val height: AttoHeight
     val previous: AttoHash
@@ -131,8 +131,7 @@ data class AttoSendBlock(
     @Transient
     override val type = AttoBlockType.SEND
 
-    @Transient
-    override val hash = toBuffer().hash()
+    override val hash by lazy { toBuffer().hash() }
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoSendBlock? {
@@ -207,8 +206,7 @@ data class AttoReceiveBlock(
     @Transient
     override val type = AttoBlockType.RECEIVE
 
-    @Transient
-    override val hash = toBuffer().hash()
+    override val hash by lazy { toBuffer().hash() }
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoReceiveBlock? {
@@ -280,8 +278,7 @@ data class AttoOpenBlock(
     @Transient
     override val type = AttoBlockType.OPEN
 
-    @Transient
-    override val hash = toBuffer().hash()
+    override val hash by lazy { toBuffer().hash() }
 
     @Transient
     override val height = AttoHeight(1UL)
@@ -355,8 +352,7 @@ data class AttoChangeBlock(
     @Transient
     override val type = AttoBlockType.CHANGE
 
-    @Transient
-    override val hash = toBuffer().hash()
+    override val hash by lazy { toBuffer().hash() }
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoChangeBlock? {

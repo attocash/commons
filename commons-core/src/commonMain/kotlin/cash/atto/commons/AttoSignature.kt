@@ -37,7 +37,7 @@ data class AttoSignature(
 }
 
 expect fun AttoSignature.isValid(
-     publicKey: AttoPublicKey,
+    publicKey: AttoPublicKey,
     hash: AttoHash,
 ): Boolean
 
