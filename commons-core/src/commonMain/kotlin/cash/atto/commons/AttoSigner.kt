@@ -2,7 +2,7 @@ package cash.atto.commons
 
 interface AttoSigner {
     val publicKey: AttoPublicKey
-    fun sign(hash: AttoHash): AttoSignature
+    suspend fun sign(hash: AttoHash): AttoSignature
 }
 
 expect class InMemorySigner(privateKey: AttoPrivateKey) : AttoSigner {
@@ -14,6 +14,6 @@ fun AttoPrivateKey.toSigner(): AttoSigner {
     return InMemorySigner(this)
 }
 
-fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature {
+suspend fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature {
     return this.toSigner().sign(hash)
 }

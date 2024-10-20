@@ -32,7 +32,7 @@ class AttoTransactionTest {
     val expectedTransaction =
         AttoTransaction(
             block = receiveBlock,
-            signature = privateKey.sign(receiveBlock.hash),
+            signature = runBlocking { privateKey.sign(receiveBlock.hash) },
             work = runBlocking { AttoWorker.cpu().work(receiveBlock) },
         )
 

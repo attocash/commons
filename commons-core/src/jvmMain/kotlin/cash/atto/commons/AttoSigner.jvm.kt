@@ -8,7 +8,7 @@ actual class InMemorySigner actual constructor(
 ) : AttoSigner {
     actual override val publicKey: AttoPublicKey = privateKey.toPublicKey()
 
-    override fun sign(hash: AttoHash): AttoSignature {
+    override suspend fun sign(hash: AttoHash): AttoSignature {
         val parameters = Ed25519PrivateKeyParameters(privateKey.value, 0)
         val signer = Ed25519Signer()
         signer.init(true, parameters)
