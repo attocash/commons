@@ -1,5 +1,13 @@
 package cash.atto.commons
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
+@Serializable(with = AttoChallengeSerializer::class)
 data class AttoChallenge(val value: ByteArray) {
     init {
         require(value.size >= 64) { "Challenge should have at least 64 bytes" }
@@ -18,4 +26,21 @@ data class AttoChallenge(val value: ByteArray) {
     override fun hashCode(): Int {
         return value.contentHashCode()
     }
+
+    override fun toString(): String {
+        return value.toHex()
+    }
+}
+
+object AttoChallengeSerializer : KSerializer<AttoChallenge> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoChallenge", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoChallenge,
+    ) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): AttoChallenge = AttoChallenge(decoder.decodeString().fromHexToByteArray())
 }
