@@ -1,7 +1,7 @@
 package cash.atto.commons.gatekeeper
 
 import cash.atto.commons.AttoAlgorithm
-import cash.atto.commons.AttoHash
+import cash.atto.commons.AttoChallenge
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
@@ -61,10 +61,10 @@ private class WalletGatekeeperClient(url: String, val signer: AttoSigner) : Atto
         }.body<TokenInitResponse>()
 
 
-        val challenge = initResponse.challenge.fromHexToByteArray()
-        val hash = AttoHash.hash(64, signer.publicKey.value, challenge)
+        val challenge = AttoChallenge(initResponse.challenge.fromHexToByteArray())
 
-        val signature = signer.sign(hash)
+        val signature = signer.sign(challenge)
+
         val answer = TokenInitAnswer(signature)
 
         val challengeUrl = "$challengeUri/${initResponse.challenge}"
