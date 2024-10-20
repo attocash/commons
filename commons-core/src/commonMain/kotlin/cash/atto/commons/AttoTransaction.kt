@@ -14,8 +14,7 @@ data class AttoTransaction(
     val work: AttoWork,
 ) : HeightSupport,
     AttoSerializable {
-    @Transient
-    val hash = block.hash
+    val hash by lazy { block.hash }
 
     @Transient
     override val height = block.height
