@@ -3,8 +3,9 @@ plugins {
 }
 rootProject.name = "commons"
 include("commons-core")
+include("commons-gatekeeper")
+include("commons-signer-remote")
 include("commons-wallet")
 include("commons-worker")
 include("commons-worker-opencl")
 include("commons-worker-remote")
-include("commons-gatekeeper")

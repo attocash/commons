@@ -47,8 +47,6 @@ class AttoTestBackend(port: Int) {
     val transactionFlow = MutableSharedFlow<AttoTransaction>(replay = 10)
     val receivableFlow = MutableSharedFlow<AttoReceivable>(replay = 10)
 
-    private val scope = CoroutineScope(Dispatchers.Default)
-
     val server = embeddedServer(CIO, port = port) {
         install(ContentNegotiation) {
             json()
@@ -56,7 +54,7 @@ class AttoTestBackend(port: Int) {
 
         routing {
             post("/login") {
-                val response = TokenInitResponse(ByteArray(60).toHex())
+                val response = TokenInitResponse(ByteArray(64).toHex())
                 call.respond(response)
             }
 
@@ -163,12 +161,11 @@ class AttoTestBackend(port: Int) {
     }
 
     fun start() {
-        scope.launch { server.start(wait = true) }
+        server.start()
     }
 
     fun stop() {
         server.stop()
-        scope.cancel()
     }
 
     @Serializable

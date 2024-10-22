@@ -20,9 +20,9 @@ import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoVersion
 import cash.atto.commons.toPublicKey
 import cash.atto.commons.toSigner
-import cash.atto.commons.work.AttoWorker
-import cash.atto.commons.work.cpu
-import cash.atto.commons.work.remote
+import cash.atto.commons.signer.AttoWorker
+import cash.atto.commons.signer.cpu
+import cash.atto.commons.signer.remote
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking

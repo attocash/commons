@@ -41,6 +41,14 @@ expect fun AttoSignature.isValid(
     hash: AttoHash,
 ): Boolean
 
+fun AttoSignature.isValid(
+    publicKey: AttoPublicKey,
+    challenge: AttoChallenge
+): Boolean {
+    val hash = AttoHash.hash(64, publicKey.value, challenge.value)
+    return isValid(publicKey, challenge)
+}
+
 object AttoSignatureSerializer : KSerializer<AttoSignature> {
     override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.STRING)
 

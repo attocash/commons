@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.SecureRandom
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -9,6 +10,8 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable(with = AttoChallengeSerializer::class)
 data class AttoChallenge(val value: ByteArray) {
+    companion object {}
+
     init {
         require(value.size >= 64) { "Challenge should have at least 64 bytes" }
 
@@ -30,6 +33,10 @@ data class AttoChallenge(val value: ByteArray) {
     override fun toString(): String {
         return value.toHex()
     }
+}
+
+fun AttoChallenge.Companion.generate(size: UInt = 64U): AttoChallenge {
+    return AttoChallenge(SecureRandom.randomByteArray(size))
 }
 
 object AttoChallengeSerializer : KSerializer<AttoChallenge> {

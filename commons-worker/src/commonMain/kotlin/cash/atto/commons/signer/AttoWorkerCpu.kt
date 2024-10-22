@@ -1,4 +1,4 @@
-package cash.atto.commons.work
+package cash.atto.commons.signer
 
 import cash.atto.commons.AttoWork
 import cash.atto.commons.isValid

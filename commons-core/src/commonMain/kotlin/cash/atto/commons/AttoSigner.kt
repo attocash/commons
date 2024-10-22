@@ -1,12 +1,18 @@
 package cash.atto.commons
 
 interface AttoSigner {
+    companion object {}
+
     val publicKey: AttoPublicKey
 
     suspend fun sign(hash: AttoHash): AttoSignature
 
-    suspend fun sign(hashable: AttoHashable): AttoSignature {
-        return sign(hashable.hash)
+    suspend fun sign(block: AttoBlock): AttoSignature {
+        return sign(block.hash)
+    }
+
+    suspend fun sign(vote: AttoVote): AttoSignature {
+        return sign(vote.hash)
     }
 
     suspend fun sign(challenge: AttoChallenge): AttoSignature {
