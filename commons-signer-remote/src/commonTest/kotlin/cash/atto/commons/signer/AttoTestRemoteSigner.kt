@@ -29,7 +29,7 @@ class AttoTestRemoteSigner(port: Int) {
         }
 
         routing {
-            get("/") {
+            get("/public-keys") {
                 val response = PublicKeyResponse(signer.publicKey)
                 call.respond(response)
             }

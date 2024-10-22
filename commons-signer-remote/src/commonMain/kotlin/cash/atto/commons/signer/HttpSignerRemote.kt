@@ -40,14 +40,14 @@ private class HttpSignerRemote(
         runBlocking {
             val headers = headerProvider.invoke()
 
-            httpClient.get(url) {
+            httpClient.get("$url/public-keys") {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Application.Json)
                 headers {
                     headers.forEach { (key, value) -> append(key, value) }
                 }
                 timeout {
-                    socketTimeoutMillis = 1.seconds.inWholeMilliseconds
+                    socketTimeoutMillis = 5.seconds.inWholeMilliseconds
                 }
             }
                 .body<PublicKeyResponse>()
@@ -164,7 +164,7 @@ private class HttpSignerRemote(
 
 fun AttoSigner.Companion.remote(
     url: String,
-    headerProvider: suspend () -> Map<String, String> = { emptyMap() }
+    headerProvider: suspend () -> Map<String, String>
 ): AttoSigner {
     return HttpSignerRemote(url, headerProvider)
 }
