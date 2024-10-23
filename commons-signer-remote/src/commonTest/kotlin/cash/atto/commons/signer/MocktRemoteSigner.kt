@@ -20,7 +20,7 @@ import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
 
 
-class AttoTestRemoteSigner(port: Int) {
+class MocktRemoteSigner(port: Int) {
     val signer = AttoPrivateKey.generate().toSigner()
 
     val server = embeddedServer(CIO, port = port) {

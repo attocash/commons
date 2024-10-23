@@ -24,10 +24,10 @@ import kotlin.test.assertTrue
 
 expect fun randomPort(): Int
 
-class AttoWalletManagerTest {
+class SignerRemoteTest {
     companion object {
         private val port = randomPort()
-        private val backend = AttoTestRemoteSigner(port)
+        private val backend = MocktRemoteSigner(port)
         private val signer = AttoSigner.remote("http://localhost:$port") {
             mapOf()
         }

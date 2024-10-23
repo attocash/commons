@@ -1,4 +1,4 @@
-package cash.atto.commons.signer
+package cash.atto.commons.worker
 
 fun AttoWorker.Companion.opencl(): AttoWorker = opencl(0U)
 

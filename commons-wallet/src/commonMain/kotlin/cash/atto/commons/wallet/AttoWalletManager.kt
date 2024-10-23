@@ -12,7 +12,7 @@ import cash.atto.commons.AttoWork
 import cash.atto.commons.PreviousSupport
 import cash.atto.commons.isValid
 import cash.atto.commons.toHex
-import cash.atto.commons.signer.AttoWorker
+import cash.atto.commons.worker.AttoWorker
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
