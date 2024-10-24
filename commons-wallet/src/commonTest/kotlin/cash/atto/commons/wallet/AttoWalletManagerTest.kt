@@ -24,6 +24,7 @@ import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.cpu
 import cash.atto.commons.worker.remote
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -66,10 +67,14 @@ class AttoWalletManagerTest {
         val expectedAccount = AttoAccount.sample()
 
         // when
-        backend.accountFlow.emit(expectedAccount)
+        backend.accountMap[expectedAccount.publicKey] = expectedAccount
 
         // then
-        val account = withTimeoutOrNull(5.seconds) { walletManager.accountFlow.first { it.publicKey == expectedAccount.publicKey } }
+        val account = withTimeoutOrNull(5.seconds) {
+            walletManager.accountFlow
+                .onStart { viewer.updateAccount() }
+                .first { it.publicKey == expectedAccount.publicKey }
+        }
         assertNotNull(account)
     }
 

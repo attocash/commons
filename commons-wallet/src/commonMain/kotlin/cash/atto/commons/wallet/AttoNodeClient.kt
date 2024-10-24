@@ -5,13 +5,12 @@ import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
-import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.gatekeeper.AttoAuthenticator
-import cash.atto.commons.gatekeeper.attoBackend
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.timeout
@@ -23,6 +22,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
@@ -47,9 +47,10 @@ interface AttoNodeClient {
     companion object {}
 
     val network: AttoNetwork
-    fun accounts(publicKey: AttoPublicKey): Flow<AttoAccount>
-    fun receivables(publicKey: AttoPublicKey): Flow<AttoReceivable>
-    fun transactions(publicKey: AttoPublicKey, fromHeight: AttoHeight = AttoHeight(1UL)): Flow<AttoTransaction>
+    suspend fun account(publicKey: AttoPublicKey): AttoAccount?
+    fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount>
+    fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable>
+    fun transactionStream(publicKey: AttoPublicKey, fromHeight: AttoHeight = AttoHeight(1UL)): Flow<AttoTransaction>
     suspend fun now(): Instant
     suspend fun publish(transaction: AttoTransaction)
 }
@@ -69,6 +70,31 @@ private class NodeClient(
     private val logger = KotlinLogging.logger {}
 
     private val retryDelay = 10.seconds
+
+    override suspend fun account(publicKey: AttoPublicKey): AttoAccount? {
+        val uri = "$url/accounts/$publicKey"
+        val headers = headerProvider.invoke()
+
+        return try {
+            httpClient.get(uri) {
+                contentType(ContentType.Application.Json)
+                headers {
+                    headers.forEach { (key, value) -> append(key, value) }
+                    append("Accept", "application/json")
+                }
+                timeout {
+                    socketTimeoutMillis = 1.seconds.inWholeMilliseconds
+                }
+            }.body<AttoAccount?>()
+        } catch (e: ClientRequestException) {
+            if (e.response.status == HttpStatusCode.NotFound) {
+                null
+            } else {
+                throw e
+            }
+        }
+    }
+
 
     private inline fun <reified T> fetchStream(urlPath: String): Flow<T> {
         return flow {
@@ -95,8 +121,8 @@ private class NodeClient(
                                 }
                             }
                         }
-                } catch (e : CancellationException) {
-                    logger.debug (e) { "Cancelled to stream $urlPath." }
+                } catch (e: CancellationException) {
+                    logger.debug(e) { "Cancelled to stream $urlPath." }
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to stream $urlPath. Retrying in $retryDelay..." }
                 }
@@ -108,16 +134,16 @@ private class NodeClient(
         }
     }
 
-    override fun accounts(publicKey: AttoPublicKey): Flow<AttoAccount> {
+    override fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount> {
         return fetchStream("accounts/$publicKey/stream")
     }
 
-    override fun receivables(publicKey: AttoPublicKey): Flow<AttoReceivable> {
+    override fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable> {
         return fetchStream("accounts/$publicKey/receivables/stream")
     }
 
 
-    override fun transactions(publicKey: AttoPublicKey, fromHeight: AttoHeight): Flow<AttoTransaction> {
+    override fun transactionStream(publicKey: AttoPublicKey, fromHeight: AttoHeight): Flow<AttoTransaction> {
         return fetchStream("accounts/$publicKey/transactions/stream?fromHeight=$fromHeight")
     }
 

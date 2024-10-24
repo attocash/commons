@@ -30,26 +30,35 @@ class AttoWalletViewer(
 
     private val scope = CoroutineScope(Dispatchers.Default)
 
-    private val _accountFlow = client.accounts(publicKey).shareIn(scope, SharingStarted.Eagerly)
     private val accountState = MutableStateFlow<AttoAccount?>(null)
     val accountFlow = accountState.asSharedFlow().filterNotNull()
     val account: AttoAccount? get() = accountState.value
 
-    val receivableFlow = client.receivables(publicKey).shareIn(scope, SharingStarted.Eagerly)
+    val receivableFlow = client.receivableStream(publicKey).shareIn(scope, SharingStarted.Eagerly)
 
     private val _transactionFlow = MutableSharedFlow<AttoTransaction>()
     val transactionFlow = _transactionFlow.asSharedFlow()
 
-    private fun startAccountStream() {
+    fun updateAccount() {
         scope.launch {
-            _accountFlow.collect { newAccount -> update(newAccount) }
+            while (true) {
+                try {
+                    val account = client.account(publicKey)
+                    account?.let {
+                        update(it)
+                    }
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
+                    delay(retryDelay)
+                }
+            }
         }
     }
 
     private fun startTransactionStream() {
         scope.launch {
             val fromHeight = transactionRepository.last(publicKey)?.height ?: AttoHeight(1U)
-            client.transactions(publicKey, fromHeight).collect {
+            client.transactionStream(publicKey, fromHeight).collect {
                 _transactionFlow.emit(it)
             }
         }
@@ -73,7 +82,7 @@ class AttoWalletViewer(
     }
 
     fun start() {
-        startAccountStream()
+        updateAccount()
         startTransactionStream()
         startTransactionSaver()
         logger.info { "Started wallet viewer for $publicKey" }

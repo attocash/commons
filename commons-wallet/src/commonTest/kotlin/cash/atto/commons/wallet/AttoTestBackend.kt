@@ -11,6 +11,7 @@ import cash.atto.commons.gatekeeper.AttoJWT
 import cash.atto.commons.toHex
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
@@ -25,14 +26,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -43,7 +40,7 @@ expect fun generateJwt(): AttoJWT
 class AttoTestBackend(port: Int) {
     private val logger = KotlinLogging.logger {}
 
-    val accountFlow = MutableSharedFlow<AttoAccount>(replay = 10)
+    val accountMap = mutableMapOf<AttoPublicKey, AttoAccount>()
     val transactionFlow = MutableSharedFlow<AttoTransaction>(replay = 10)
     val receivableFlow = MutableSharedFlow<AttoReceivable>(replay = 10)
 
@@ -62,26 +59,21 @@ class AttoTestBackend(port: Int) {
                 call.respond(generateJwt().encoded)
             }
 
-            get("/accounts/{publicKey}/stream") {
-                val publicKey = AttoPublicKey.parse(call.parameters["publicKey"]!!)
+            get("/accounts/{publicKey}") {
+                val publicKeyString = call.parameters["publicKey"]
 
-                try {
-                    call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
-                        accountFlow
-                            .onStart { logger.info { "AccountFlow(publicKey=$publicKey) started" } }
-                            .onEach { logger.info { "AccountFlow(publicKey=$publicKey) stopped" } }
-                            .filter { it.publicKey == publicKey }
-                            .collect {
-                                val ndjsonLine = Json.encodeToString(AttoAccount.serializer(), it) + "\n"
-                                writeStringUtf8(ndjsonLine)
-                                flush()
-                                logger.info { "Emitted $it" }
-                            }
+                if (publicKeyString != null) {
+                    val publicKey = AttoPublicKey.parse(publicKeyString)
+
+                    val account = accountMap[publicKey]
+
+                    if (account != null) {
+                        call.respond(account)  // Respond with the account if found
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Account not found")  // Respond with 404 if not found
                     }
-                } catch (e: CancellationException) {
-                    logger.debug(e) { "AccountFlow(publicKey=$publicKey) cancelled" }
-                } catch (e: Exception) {
-                    logger.error(e) { "AccountFlow(publicKey=$publicKey) failed" }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid or missing publicKey")
                 }
             }
 
