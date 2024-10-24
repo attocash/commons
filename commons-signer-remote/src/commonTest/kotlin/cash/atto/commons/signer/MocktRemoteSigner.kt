@@ -1,11 +1,11 @@
 package cash.atto.commons.signer
 
-import cash.atto.commons.AttoBlock
-import cash.atto.commons.AttoChallenge
 import cash.atto.commons.AttoPrivateKey
-import cash.atto.commons.AttoPublicKey
-import cash.atto.commons.AttoSignature
-import cash.atto.commons.AttoVote
+import cash.atto.commons.signer.HttpSignerRemote.BlockSignatureRequest
+import cash.atto.commons.signer.HttpSignerRemote.ChallengeSignatureRequest
+import cash.atto.commons.signer.HttpSignerRemote.PublicKeyResponse
+import cash.atto.commons.signer.HttpSignerRemote.SignatureResponse
+import cash.atto.commons.signer.HttpSignerRemote.VoteSignatureRequest
 import cash.atto.commons.toSigner
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
@@ -17,7 +17,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import kotlinx.serialization.Serializable
 
 
 class MocktRemoteSigner(port: Int) {
@@ -35,21 +34,21 @@ class MocktRemoteSigner(port: Int) {
             }
 
             post("/blocks") {
-                val request = call.request.call.receive<SignatureRequest<AttoBlock>>()
+                val request = call.request.call.receive<BlockSignatureRequest>()
                 val signature = signer.sign(request.target)
                 call.respond(SignatureResponse(signature))
             }
 
 
             post("/votes") {
-                val request = call.request.call.receive<SignatureRequest<AttoVote>>()
+                val request = call.request.call.receive<VoteSignatureRequest>()
                 val signature = signer.sign(request.target)
                 call.respond(SignatureResponse(signature))
             }
 
             post("/challenges") {
-                val request = call.request.call.receive<SignatureRequest<AttoChallenge>>()
-                val signature = signer.sign(request.target)
+                val request = call.request.call.receive<ChallengeSignatureRequest>()
+                val signature = signer.sign(request.target, request.timestamp)
                 call.respond(SignatureResponse(signature))
             }
         }
@@ -62,19 +61,4 @@ class MocktRemoteSigner(port: Int) {
     fun stop() {
         server.stop()
     }
-
-    @Serializable
-    data class PublicKeyResponse(
-        val publicKey: AttoPublicKey,
-    )
-
-    @Serializable
-    data class SignatureRequest<T>(
-        val target: T,
-    )
-
-    @Serializable
-    data class SignatureResponse(
-        val signature: AttoSignature,
-    )
 }

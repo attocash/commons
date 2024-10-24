@@ -18,6 +18,8 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.seconds
 
@@ -62,10 +64,11 @@ private class WalletGatekeeperClient(url: String, val signer: AttoSigner) : Atto
 
 
         val challenge = AttoChallenge(initResponse.challenge.fromHexToByteArray())
+        val timestamp = Clock.System.now()
 
-        val signature = signer.sign(challenge)
+        val signature = signer.sign(challenge, timestamp)
 
-        val answer = TokenInitAnswer(signature)
+        val answer = TokenInitAnswer(timestamp, signature)
 
         val challengeUrl = "$challengeUri/${initResponse.challenge}"
         val jwtString = httpClient.post(challengeUrl) {
@@ -91,6 +94,7 @@ private class WalletGatekeeperClient(url: String, val signer: AttoSigner) : Atto
 
     @Serializable
     data class TokenInitAnswer(
+        val timestamp: Instant,
         val signature: AttoSignature,
     )
 }

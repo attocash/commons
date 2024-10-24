@@ -15,6 +15,7 @@ import cash.atto.commons.isValid
 import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoVersion
+import cash.atto.commons.toByteArray
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -66,12 +67,13 @@ class SignerRemoteTest {
     fun `should sign challenge`(): Unit = runBlocking {
         // given
         val challenge = AttoChallenge.generate()
+        val timestamp = Clock.System.now()
 
         // when
-        val signature = signer.sign(challenge)
+        val signature = signer.sign(challenge, timestamp)
 
         // then
-        val hash = AttoHash.hash(64, signer.publicKey.value, challenge.value)
+        val hash = AttoHash.hash(64, signer.publicKey.value, challenge.value, timestamp.toByteArray())
         assertTrue { signature.isValid(signer.publicKey, hash) }
     }
 

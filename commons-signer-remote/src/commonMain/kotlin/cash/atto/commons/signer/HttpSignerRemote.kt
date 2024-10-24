@@ -21,6 +21,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.seconds
 
@@ -32,7 +33,7 @@ private val httpClient = HttpClient {
 }
 
 
-private class HttpSignerRemote(
+internal class HttpSignerRemote(
     private val url: String,
     private val headerProvider: suspend () -> Map<String, String> = { emptyMap() }
 ) : AttoSigner {
@@ -59,11 +60,12 @@ private class HttpSignerRemote(
         throw NotImplementedError("Remote signer doesn't accept direct hash signing")
     }
 
-    override suspend fun sign(challenge: AttoChallenge): AttoSignature {
+    override suspend fun sign(challenge: AttoChallenge, timestamp: Instant): AttoSignature {
         val uri = "$url/challenges"
 
         val request = ChallengeSignatureRequest(
-            target = challenge
+            target = challenge,
+            timestamp = timestamp
         )
 
         val headers = headerProvider.invoke()
@@ -154,6 +156,7 @@ private class HttpSignerRemote(
     @Serializable
     data class ChallengeSignatureRequest(
         override val target: AttoChallenge,
+        val timestamp: Instant,
     ) : SignatureRequest<AttoChallenge>
 
     @Serializable
