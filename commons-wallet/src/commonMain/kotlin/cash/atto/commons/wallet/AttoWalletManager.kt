@@ -27,9 +27,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.isActive
 import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 
 class AttoWalletManager(
@@ -62,16 +61,21 @@ class AttoWalletManager(
         viewer.updateAccount()
     }
 
-    private suspend fun getWork(timestamp: Instant, target: ByteArray): AttoWork {
+    private suspend fun getWorkOrCalculate(timestamp: Instant, target: ByteArray): AttoWork {
+        val work = workCache.get()
+        if (work?.isValid(timestamp, target) == true) {
+            return work
+        }
+
+        val newWork = worker.work(client.network, timestamp, target)
+        workCache.save(newWork)
+        return newWork
+    }
+
+    private suspend fun work(timestamp: Instant, target: ByteArray): AttoWork {
         while (coroutineContext.isActive) {
             try {
-                val work = workCache.get()
-                if (work?.isValid(timestamp, target) == true) {
-                    return work
-                }
-                val newWork = worker.work(client.network, timestamp, target)
-                workCache.save(newWork)
-                return newWork
+                return getWorkOrCalculate(timestamp, target)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -85,7 +89,7 @@ class AttoWalletManager(
     private fun startWorkCacher() {
         scope.launch {
             accountFlow.collect {
-                getWork(Clock.System.now(), it.lastTransactionHash.value)
+                work(Clock.System.now(), it.lastTransactionHash.value)
             }
         }
     }
@@ -139,7 +143,7 @@ class AttoWalletManager(
         val transaction = AttoTransaction(
             block = block,
             signature = signer.sign(block.hash),
-            work = getWork(block.timestamp, target)
+            work = work(block.timestamp, target)
         )
 
         client.publish(transaction)
