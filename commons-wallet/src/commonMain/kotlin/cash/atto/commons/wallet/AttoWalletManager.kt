@@ -55,6 +55,10 @@ class AttoWalletManager(
     val receivableFlow = viewer.receivableFlow
     val transactionFlow = viewer.transactionFlow
 
+    fun updateAccount() {
+        viewer.updateAccount()
+    }
+
     private suspend fun getWork(timestamp: Instant, target: ByteArray): AttoWork {
         while (true) {
             try {

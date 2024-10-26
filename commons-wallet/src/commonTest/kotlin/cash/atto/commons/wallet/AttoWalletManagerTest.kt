@@ -72,7 +72,7 @@ class AttoWalletManagerTest {
         // then
         val account = withTimeoutOrNull(5.seconds) {
             walletManager.accountFlow
-                .onStart { viewer.updateAccount() }
+                .onStart { walletManager.updateAccount() }
                 .first { it.publicKey == expectedAccount.publicKey }
         }
         assertNotNull(account)
