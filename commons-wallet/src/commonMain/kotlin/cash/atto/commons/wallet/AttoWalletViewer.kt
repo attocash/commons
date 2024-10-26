@@ -47,6 +47,7 @@ class AttoWalletViewer(
                     account?.let {
                         update(it)
                     }
+                    return@launch
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
                     delay(retryDelay)

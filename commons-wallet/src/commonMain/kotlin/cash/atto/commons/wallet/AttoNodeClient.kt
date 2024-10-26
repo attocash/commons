@@ -60,6 +60,7 @@ private val httpClient = HttpClient {
         json()
     }
     install(HttpTimeout)
+    expectSuccess = true
 }
 
 private class NodeClient(
