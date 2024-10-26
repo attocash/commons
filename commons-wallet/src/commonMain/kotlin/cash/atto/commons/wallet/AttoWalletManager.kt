@@ -28,6 +28,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.isActive
+import kotlin.coroutines.coroutineContext
+
 
 class AttoWalletManager(
     private val viewer: AttoWalletViewer,
@@ -60,7 +63,7 @@ class AttoWalletManager(
     }
 
     private suspend fun getWork(timestamp: Instant, target: ByteArray): AttoWork {
-        while (true) {
+        while (coroutineContext.isActive) {
             try {
                 val work = workCache.get()
                 if (work?.isValid(timestamp, target) == true) {
@@ -76,6 +79,7 @@ class AttoWalletManager(
                 delay(retryDelay)
             }
         }
+        throw CancellationException("Get work scope was cancelled.")
     }
 
     private fun startWorkCacher() {

@@ -21,10 +21,13 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.utils.io.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,7 +53,7 @@ internal class HttpSignerRemote(
     }
 
     private suspend fun getPublicKey(): AttoPublicKey {
-        while (true) {
+        while (coroutineContext.isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -66,11 +69,14 @@ internal class HttpSignerRemote(
                 }
                     .body<PublicKeyResponse>()
                     .publicKey
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to get publicKey. Retrying in $retryEvery" }
                 delay(retryEvery)
             }
         }
+        throw CancellationException("Getting public key cancelled.")
     }
 
     override suspend fun sign(hash: AttoHash): AttoSignature {
@@ -85,7 +91,7 @@ internal class HttpSignerRemote(
             timestamp = timestamp
         )
 
-        while (true) {
+        while (coroutineContext.isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -102,11 +108,14 @@ internal class HttpSignerRemote(
                 }
                     .body<SignatureResponse>()
                     .signature
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to sign $challenge. Retrying in $retryEvery" }
                 delay(retryEvery)
             }
         }
+        throw CancellationException("Signing cancelled.")
     }
 
     override suspend fun sign(block: AttoBlock): AttoSignature {
@@ -116,7 +125,7 @@ internal class HttpSignerRemote(
             target = block
         )
 
-        while (true) {
+        while (coroutineContext.isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -133,11 +142,14 @@ internal class HttpSignerRemote(
                 }
                     .body<SignatureResponse>()
                     .signature
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to sign $block. Retrying in $retryEvery" }
                 delay(retryEvery)
             }
         }
+        throw CancellationException("Signing cancelled.")
     }
 
     override suspend fun sign(vote: AttoVote): AttoSignature {
@@ -147,7 +159,7 @@ internal class HttpSignerRemote(
             target = vote
         )
 
-        while (true) {
+        while (coroutineContext.isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -164,11 +176,14 @@ internal class HttpSignerRemote(
                 }
                     .body<SignatureResponse>()
                     .signature
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to sign $vote. Retrying in $retryEvery" }
                 delay(retryEvery)
             }
         }
+        throw CancellationException("Signing cancelled.")
     }
 
 

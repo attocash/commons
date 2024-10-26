@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 class AttoWalletViewer(
@@ -41,17 +43,20 @@ class AttoWalletViewer(
 
     fun updateAccount() {
         scope.launch {
-            while (true) {
+            while (isActive) {
                 try {
                     val account = client.account(publicKey)
                     account?.let {
                         update(it)
                     }
                     return@launch
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
                     delay(retryDelay)
                 }
+                throw CancellationException("Transaction saving cancelled.")
             }
         }
     }
@@ -68,16 +73,18 @@ class AttoWalletViewer(
     private fun startTransactionSaver() {
         scope.launch {
             transactionFlow.collect {
-                while (true) {
+                while (isActive) {
                     try {
                         transactionRepository.save(it)
                         return@collect
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         logger.warn(e) { "Failed to save $it. Retrying in $retryDelay..." }
                         delay(retryDelay)
                     }
                 }
-
+                throw CancellationException("Transaction saving cancelled.")
             }
         }
     }
