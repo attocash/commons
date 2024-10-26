@@ -32,6 +32,17 @@ internal class AttoAmountTest {
     }
 
     @Test
+    fun parseDecimal() {
+        listOf("1.0321", "0.01", "1", "1.23").forEach { stringAmount ->
+            // when
+            val amount = AttoAmount.from(AttoUnit.ATTO, stringAmount)
+
+            // then
+            assertEquals(stringAmount, amount.toString(AttoUnit.ATTO))
+        }
+    }
+
+    @Test
     fun overflow() {
         try {
             AttoAmount.MAX + AttoAmount.MAX

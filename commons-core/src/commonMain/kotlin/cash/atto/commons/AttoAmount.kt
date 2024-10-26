@@ -46,15 +46,17 @@ data class AttoAmount(
             unit: AttoUnit,
             string: String,
         ): AttoAmount {
-            val value = string.toULong()
+            val parts = string.split('.')
+            val wholePart = parts[0].toULong()
             val factor = scaleFactor(unit.scale)
 
-            // Check for overflow before performing multiplication
-            if (factor != 0UL && value > ULong.MAX_VALUE / factor) {
-                throw IllegalStateException("Multiplication overflow: $value * $factor exceeds ULong capacity")
-            }
+            var scaledValue = wholePart * factor
 
-            val scaledValue = value * factor
+            if (parts.size > 1) {
+                val fractionalPart = parts[1].toULong()
+                scaledValue += fractionalPart * factor / scaleFactor(parts[1].length.toUByte())
+
+            }
             return AttoAmount(scaledValue)
         }
     }
@@ -62,11 +64,14 @@ data class AttoAmount(
     fun toString(unit: AttoUnit): String {
         val factor = scaleFactor(unit.scale)
         val wholePart = raw / factor
+
         val fractionalPart = raw % factor
 
-        return when (fractionalPart) {
-            0UL -> wholePart.toString()
-            else -> "$wholePart.$fractionalPart"
+        return if (fractionalPart == 0UL) {
+            wholePart.toString()
+        } else {
+            val fractionalStr = fractionalPart.toString().padStart(unit.scale.toInt(), '0').trimEnd('0')
+            "$wholePart.$fractionalStr"
         }
     }
 
