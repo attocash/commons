@@ -61,23 +61,17 @@ class AttoWalletManager(
         viewer.updateAccount()
     }
 
-    private suspend fun getWorkOrCalculate(timestamp: Instant, target: ByteArray): AttoWork {
-        val work = workCache.get()
-        if (work?.isValid(timestamp, target) == true) {
-            return work
-        }
-
-        val newWork = worker.work(client.network, timestamp, target)
-        workCache.save(newWork)
-        return newWork
-    }
-
     private suspend fun work(timestamp: Instant, target: ByteArray): AttoWork {
         while (coroutineContext.isActive) {
             try {
-                return getWorkOrCalculate(timestamp, target)
-            } catch (e: CancellationException) {
-                throw e
+                val work = workCache.get()
+                if (work?.isValid(timestamp, target) == true) {
+                    return work
+                }
+
+                val newWork = worker.work(client.network, timestamp, target)
+                workCache.save(newWork)
+                return newWork
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to get work for $timestamp target ${target.toHex()}. Retrying in $retryDelay..." }
                 delay(retryDelay)

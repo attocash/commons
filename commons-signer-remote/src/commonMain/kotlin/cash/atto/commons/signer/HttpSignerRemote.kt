@@ -69,8 +69,6 @@ internal class HttpSignerRemote(
                 }
                     .body<PublicKeyResponse>()
                     .publicKey
-            } catch (e: CancellationException) {
-                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to get publicKey. Retrying in $retryEvery" }
                 delay(retryEvery)
@@ -108,8 +106,6 @@ internal class HttpSignerRemote(
                 }
                     .body<SignatureResponse>()
                     .signature
-            } catch (e: CancellationException) {
-                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to sign $challenge. Retrying in $retryEvery" }
                 delay(retryEvery)
@@ -142,8 +138,6 @@ internal class HttpSignerRemote(
                 }
                     .body<SignatureResponse>()
                     .signature
-            } catch (e: CancellationException) {
-                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to sign $block. Retrying in $retryEvery" }
                 delay(retryEvery)
@@ -176,8 +170,6 @@ internal class HttpSignerRemote(
                 }
                     .body<SignatureResponse>()
                     .signature
-            } catch (e: CancellationException) {
-                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to sign $vote. Retrying in $retryEvery" }
                 delay(retryEvery)

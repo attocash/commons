@@ -122,8 +122,6 @@ private class NodeClient(
                                 }
                             }
                         }
-                } catch (e: CancellationException) {
-                    logger.debug(e) { "Cancelled to stream $urlPath." }
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to stream $urlPath. Retrying in $retryDelay..." }
                 }

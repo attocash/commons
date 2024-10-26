@@ -25,7 +25,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.utils.io.writeStringUtf8
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
@@ -93,8 +92,6 @@ class AttoTestBackend(port: Int) {
                                 logger.info { "Emitted $it" }
                             }
                     }
-                } catch (e: CancellationException) {
-                    logger.debug(e) { "TransactionFlow(publicKey=$publicKey) cancelled" }
                 } catch (e: Exception) {
                     logger.error(e) { "TransactionFlow(publicKey=$publicKey) failed" }
                 }
@@ -116,8 +113,6 @@ class AttoTestBackend(port: Int) {
 
                             }
                     }
-                } catch (e: CancellationException) {
-                    logger.debug(e) { "ReceivableFlow(publicKey=$publicKey) cancelled" }
                 } catch (e: Exception) {
                     logger.error(e) { "ReceivableFlow(publicKey=$publicKey) failed" }
                 }

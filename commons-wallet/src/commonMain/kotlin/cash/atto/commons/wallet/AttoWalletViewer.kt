@@ -50,8 +50,6 @@ class AttoWalletViewer(
                         update(it)
                     }
                     return@launch
-                } catch (e: CancellationException) {
-                    throw e
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
                     delay(retryDelay)
@@ -77,8 +75,6 @@ class AttoWalletViewer(
                     try {
                         transactionRepository.save(it)
                         return@collect
-                    } catch (e: CancellationException) {
-                        throw e
                     } catch (e: Exception) {
                         logger.warn(e) { "Failed to save $it. Retrying in $retryDelay..." }
                         delay(retryDelay)
