@@ -24,7 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 class AttoWalletViewer(
     val publicKey: AttoPublicKey,
     private val client: AttoNodeClient,
-    private val transactionRepository: AttoTransactionRepository = AttoTransactionRepository.inMemory(),
+    private val transactionRepository: AttoTransactionRepository? = null,
 ) : AutoCloseable {
     private val logger = KotlinLogging.logger {}
 
@@ -60,6 +60,10 @@ class AttoWalletViewer(
     }
 
     private fun startTransactionStream() {
+        if (transactionRepository == null) {
+            logger.info { "No transaction repository defined. Transaction stream won't start" }
+            return
+        }
         scope.launch {
             val fromHeight = transactionRepository.last(publicKey)?.height ?: AttoHeight(1U)
             client.transactionStream(publicKey, fromHeight).collect {
@@ -69,6 +73,9 @@ class AttoWalletViewer(
     }
 
     private fun startTransactionSaver() {
+        if (transactionRepository == null) {
+            return
+        }
         scope.launch {
             transactionFlow.collect {
                 while (isActive) {
