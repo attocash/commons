@@ -173,6 +173,11 @@ class AttoWalletManager(
 
         mutex.withLock {
             val account = getAccountOrThrow()
+
+            if (amount > account.balance) {
+                throw IllegalStateException("${account.balance} is not enough to send $amount")
+            }
+
             val (block, newAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount)
 
             publish(block, newAccount)
