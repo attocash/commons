@@ -83,7 +83,9 @@ class AttoWalletManager(
     private fun startWorkCacher() {
         scope.launch {
             accountFlow.collect {
-                work(Clock.System.now(), it.lastTransactionHash.value)
+                mutex.withLock {
+                    work(Clock.System.now(), it.lastTransactionHash.value)
+                }
             }
         }
     }
