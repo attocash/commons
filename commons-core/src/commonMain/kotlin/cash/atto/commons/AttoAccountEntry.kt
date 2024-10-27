@@ -1,0 +1,19 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
+package cash.atto.commons
+
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class AttoAccountEntry(
+    val hash: AttoHash,
+    val algorithm: AttoAlgorithm,
+    val publicKey: AttoPublicKey,
+    val height: AttoHeight,
+    val blockType: AttoBlockType,
+    val subjectAlgorithm: AttoAlgorithm,
+    val subjectPublicKey: AttoPublicKey,
+    val previousBalance: AttoAmount,
+    val balance: AttoAmount
+)
