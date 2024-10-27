@@ -17,6 +17,7 @@ class AttoAccountTest {
         val receivable = AttoReceivable(
             version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
+            publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
             receiverAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
             amount = 1000UL.toAttoAmount(),
@@ -77,13 +78,14 @@ class AttoAccountTest {
         // given
         val account = AttoAccount.sample()
         val receivable = AttoReceivable(
+            hash = AttoHash(Random.Default.nextBytes(32)),
             version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
+            publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+            timestamp = account.lastTransactionTimestamp.minus(5.seconds),
             receiverAlgorithm = account.algorithm,
             receiverPublicKey = account.publicKey,
-            amount = 200UL.toAttoAmount(),
-            timestamp = account.lastTransactionTimestamp.minus(5.seconds),
-            hash = AttoHash(Random.Default.nextBytes(32))
+            amount = 200UL.toAttoAmount()
         )
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
@@ -106,13 +108,14 @@ class AttoAccountTest {
         val account = AttoAccount.sample()
         val receivableTimestamp = account.lastTransactionTimestamp.plus(5.seconds)
         val receivable = AttoReceivable(
+            hash = AttoHash(Random.Default.nextBytes(32)),
             version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
+            algorithm = account.algorithm,
+            publicKey = account.publicKey,
+            timestamp = receivableTimestamp,
             receiverAlgorithm = account.algorithm,
             receiverPublicKey = account.publicKey,
-            amount = 200UL.toAttoAmount(),
-            timestamp = receivableTimestamp,
-            hash = AttoHash(Random.Default.nextBytes(32))
+            amount = 200UL.toAttoAmount()
         )
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 

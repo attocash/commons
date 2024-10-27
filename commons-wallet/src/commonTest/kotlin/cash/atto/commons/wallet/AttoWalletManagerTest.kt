@@ -185,13 +185,14 @@ class AttoWalletManagerTest {
 
     private fun AttoReceivable.Companion.sample(): AttoReceivable {
         return AttoReceivable(
+            hash = AttoHash(Random.Default.nextBytes(32)),
             version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
+            publicKey = AttoPublicKey(Random.nextBytes(32)),
+            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             receiverAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = publicKey,
-            amount = 1000UL.toAttoAmount(),
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
-            hash = AttoHash(Random.Default.nextBytes(32))
+            amount = 1000UL.toAttoAmount()
         )
     }
 }

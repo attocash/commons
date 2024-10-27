@@ -6,6 +6,7 @@ import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChallenge
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoNetwork
+import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoReceiveBlock
 import cash.atto.commons.AttoSigner
@@ -103,13 +104,14 @@ class SignerRemoteTest {
 
     private fun AttoReceivable.Companion.sample(): AttoReceivable {
         return AttoReceivable(
+            hash = AttoHash(Random.Default.nextBytes(32)),
             version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
+            publicKey = AttoPublicKey(Random.nextBytes(32)),
+            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             receiverAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = signer.publicKey,
-            amount = 1000UL.toAttoAmount(),
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
-            hash = AttoHash(Random.Default.nextBytes(32))
+            amount = 1000UL.toAttoAmount()
         )
     }
 }
