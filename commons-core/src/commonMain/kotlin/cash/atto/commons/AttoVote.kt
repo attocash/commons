@@ -40,6 +40,8 @@ data class AttoSignedVote(
 
     companion object {}
 
+    fun isFinal() = vote.isFinal()
+
     fun isValid(): Boolean {
         return signature.isValid(publicKey, hash)
     }
