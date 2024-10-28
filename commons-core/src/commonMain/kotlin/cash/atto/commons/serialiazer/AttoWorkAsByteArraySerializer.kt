@@ -1,4 +1,4 @@
-package cash.atto.commons.serialiazers
+package cash.atto.commons.serialiazer
 
 import cash.atto.commons.AttoWork
 import kotlinx.serialization.KSerializer

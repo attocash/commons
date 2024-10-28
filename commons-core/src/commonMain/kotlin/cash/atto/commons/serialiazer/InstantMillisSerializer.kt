@@ -1,4 +1,4 @@
-package cash.atto.commons.serialiazers
+package cash.atto.commons.serialiazer
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer

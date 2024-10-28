@@ -35,7 +35,7 @@ data class AttoSignedVote(
     val algorithm: AttoAlgorithm,
     val publicKey: AttoPublicKey,
     val signature: AttoSignature
-) : AttoHashable {
+) : AttoHashable, AttoSerializable {
     override val hash by lazy { vote.hash }
 
     companion object {}
@@ -43,4 +43,32 @@ data class AttoSignedVote(
     fun isValid(): Boolean {
         return signature.isValid(publicKey, hash)
     }
+
+    override fun toBuffer(): Buffer {
+        return Buffer().apply {
+            val serializedVote = vote.toBuffer()
+            this.write(serializedVote, serializedVote.size)
+            this.writeAttoAlgorithm(algorithm)
+            this.writeAttoPublicKey(publicKey)
+            this.writeAttoSignature(signature)
+        }
+    }
+}
+
+fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote {
+    return AttoVote(
+        buffer.readAttoAlgorithm(),
+        buffer.readAttoHash(),
+        buffer.readInstant()
+    )
+}
+
+fun AttoSignedVote.Companion.fromBuffer(buffer: Buffer): AttoSignedVote {
+    val vote = AttoVote.fromBuffer(buffer)
+    return AttoSignedVote(
+        vote,
+        buffer.readAttoAlgorithm(),
+        buffer.readAttoPublicKey(),
+        buffer.readAttoSignature(),
+    )
 }

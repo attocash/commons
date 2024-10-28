@@ -1,6 +1,6 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazers.InstantMillisSerializer
+import cash.atto.commons.serialiazer.InstantMillisSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
