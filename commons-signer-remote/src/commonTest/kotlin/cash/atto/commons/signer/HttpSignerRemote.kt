@@ -10,6 +10,7 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoReceiveBlock
 import cash.atto.commons.AttoSigner
+import cash.atto.commons.AttoVersion
 import cash.atto.commons.AttoVote
 import cash.atto.commons.generate
 import cash.atto.commons.isValid
@@ -81,7 +82,10 @@ class SignerRemoteTest {
 
     private fun AttoVote.Companion.sample(): AttoVote {
         return AttoVote(
-            AttoAlgorithm.V1,
+            version = AttoVersion(0U),
+            algorithm = AttoAlgorithm.V1,
+            publicKey = signer.publicKey,
+            blockAlgorithm = AttoAlgorithm.V1,
             blockHash = AttoHash(Random.nextBytes(ByteArray(32))),
             timestamp = Clock.System.now(),
         )

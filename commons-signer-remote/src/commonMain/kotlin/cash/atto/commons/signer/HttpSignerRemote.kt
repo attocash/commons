@@ -10,6 +10,7 @@ import cash.atto.commons.AttoVote
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.timeout
@@ -19,6 +20,7 @@ import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.CancellationException
@@ -36,6 +38,8 @@ private val httpClient = HttpClient {
         json()
     }
     install(HttpTimeout)
+
+    expectSuccess = true
 }
 
 
@@ -115,6 +119,8 @@ internal class HttpSignerRemote(
     }
 
     override suspend fun sign(block: AttoBlock): AttoSignature {
+        checkPublicKey(block.publicKey)
+
         val uri = "$url/blocks"
 
         val request = BlockSignatureRequest(
@@ -147,6 +153,8 @@ internal class HttpSignerRemote(
     }
 
     override suspend fun sign(vote: AttoVote): AttoSignature {
+        checkPublicKey(vote.publicKey)
+
         val uri = "$url/votes"
 
         val request = VoteSignatureRequest(
@@ -171,6 +179,9 @@ internal class HttpSignerRemote(
                     .body<SignatureResponse>()
                     .signature
             } catch (e: Exception) {
+                if (e is ClientRequestException && e.response.status == HttpStatusCode.BadRequest) {
+                    throw e
+                }
                 logger.warn(e) { "Failed to sign $vote. Retrying in $retryEvery" }
                 delay(retryEvery)
             }
