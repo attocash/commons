@@ -138,7 +138,7 @@ class AttoWalletManager(
 
         val transaction = AttoTransaction(
             block = block,
-            signature = signer.sign(block.hash),
+            signature = signer.sign(block),
             work = work(block.timestamp, target)
         )
 
