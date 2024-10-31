@@ -179,7 +179,8 @@ class AttoWalletManager(
                 throw IllegalStateException("${account.balance} balance is not enough to send $amount")
             }
 
-            val (block, newAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount)
+            val now = client.now()
+            val (block, newAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, now)
 
             publish(block, newAccount)
         }
@@ -193,7 +194,9 @@ class AttoWalletManager(
 
         mutex.withLock {
             val account = getAccountOrThrow()
-            val (block, newAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey)
+
+            val now = client.now()
+            val (block, newAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey, now)
 
             publish(block, newAccount)
         }
