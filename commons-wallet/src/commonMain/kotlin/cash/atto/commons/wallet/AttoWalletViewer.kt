@@ -1,6 +1,7 @@
 package cash.atto.commons.wallet
 
 import cash.atto.commons.AttoAccount
+import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoTransaction
@@ -24,6 +25,7 @@ import kotlin.time.Duration.Companion.seconds
 class AttoWalletViewer(
     val publicKey: AttoPublicKey,
     private val client: AttoNodeClient,
+    private val accountEntryRepository: AttoAccountEntryRepository? = null,
     private val transactionRepository: AttoTransactionRepository? = null,
 ) : AutoCloseable {
     private val logger = KotlinLogging.logger {}
@@ -37,6 +39,9 @@ class AttoWalletViewer(
     val account: AttoAccount? get() = accountState.value
 
     val receivableFlow = client.receivableStream(publicKey).shareIn(scope, SharingStarted.Eagerly)
+
+    private val _accountEntryFlow = MutableSharedFlow<AttoAccountEntry>()
+    val accountEntryFlow = _accountEntryFlow.asSharedFlow()
 
     private val _transactionFlow = MutableSharedFlow<AttoTransaction>()
     val transactionFlow = _transactionFlow.asSharedFlow()
@@ -53,6 +58,39 @@ class AttoWalletViewer(
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
                     delay(retryDelay)
+                }
+                throw CancellationException("Transaction saving cancelled.")
+            }
+        }
+    }
+
+    private fun startAccountEntryStream() {
+        if (accountEntryRepository == null) {
+            logger.info { "No account entry repository defined. Account Entry stream won't start" }
+            return
+        }
+        scope.launch {
+            val fromHeight = accountEntryRepository.last(publicKey)?.height ?: AttoHeight(1U)
+            client.accountEntryStream(publicKey, fromHeight).collect {
+                _accountEntryFlow.emit(it)
+            }
+        }
+    }
+
+    private fun startAccountEntrySaver() {
+        if (accountEntryRepository == null) {
+            return
+        }
+        scope.launch {
+            accountEntryFlow.collect {
+                while (isActive) {
+                    try {
+                        accountEntryRepository.save(it)
+                        return@collect
+                    } catch (e: Exception) {
+                        logger.warn(e) { "Failed to save $it. Retrying in $retryDelay..." }
+                        delay(retryDelay)
+                    }
                 }
                 throw CancellationException("Transaction saving cancelled.")
             }
@@ -94,6 +132,8 @@ class AttoWalletViewer(
 
     fun start() {
         updateAccount()
+        startAccountEntryStream()
+        startAccountEntrySaver()
         startTransactionStream()
         startTransactionSaver()
         logger.info { "Started wallet viewer for $publicKey" }

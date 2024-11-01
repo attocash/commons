@@ -1,6 +1,7 @@
 package cash.atto.commons.wallet
 
 import cash.atto.commons.AttoAccount
+import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
@@ -41,6 +42,7 @@ class AttoTestBackend(port: Int) {
 
     val accountMap = mutableMapOf<AttoPublicKey, AttoAccount>()
     val transactionFlow = MutableSharedFlow<AttoTransaction>(replay = 10)
+    val accountEntryFlow = MutableSharedFlow<AttoAccountEntry>(replay = 10)
     val receivableFlow = MutableSharedFlow<AttoReceivable>(replay = 10)
 
     val server = embeddedServer(CIO, port = port) {
@@ -94,6 +96,27 @@ class AttoTestBackend(port: Int) {
                     }
                 } catch (e: Exception) {
                     logger.error(e) { "TransactionFlow(publicKey=$publicKey) failed" }
+                }
+            }
+
+            get("/accounts/{publicKey}/entries/stream") {
+                val publicKey = AttoPublicKey.parse(call.parameters["publicKey"]!!)
+
+                try {
+                    call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
+                        accountEntryFlow
+                            .onStart { logger.info { "AccountEntryFlow(publicKey=$publicKey) started" } }
+                            .onEach { logger.info { "AccountEntryFlow(publicKey=$publicKey) stopped" } }
+                            .filter { it.publicKey == publicKey }
+                            .collect {
+                                val ndjsonLine = Json.encodeToString(AttoAccountEntry.serializer(), it) + "\n"
+                                writeStringUtf8(ndjsonLine)
+                                flush()
+                                logger.info { "Emitted $it" }
+                            }
+                    }
+                } catch (e: Exception) {
+                    logger.error(e) { "AccountEntryFlow(publicKey=$publicKey) failed" }
                 }
             }
 

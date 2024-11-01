@@ -54,6 +54,7 @@ class AttoWalletManager(
     val account: AttoAccount? get() = viewer.account
 
     val accountFlow = viewer.accountFlow
+    val accountEntryFlow = viewer.accountEntryFlow
     val receivableFlow = viewer.receivableFlow
     val transactionFlow = viewer.transactionFlow
 

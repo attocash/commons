@@ -1,6 +1,7 @@
 package cash.atto.commons.wallet
 
 import cash.atto.commons.AttoAccount
+import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
@@ -28,7 +29,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readUTF8Line
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -49,6 +49,7 @@ interface AttoNodeClient {
     val network: AttoNetwork
     suspend fun account(publicKey: AttoPublicKey): AttoAccount?
     fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount>
+    fun accountEntryStream(publicKey: AttoPublicKey, fromHeight: AttoHeight = AttoHeight(1UL)): Flow<AttoAccountEntry>
     fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable>
     fun transactionStream(publicKey: AttoPublicKey, fromHeight: AttoHeight = AttoHeight(1UL)): Flow<AttoTransaction>
     suspend fun now(): Instant
@@ -57,9 +58,12 @@ interface AttoNodeClient {
 
 private val httpClient = HttpClient {
     install(ContentNegotiation) {
-        json()
+        json(Json {
+            ignoreUnknownKeys = true
+        })
     }
     install(HttpTimeout)
+
     expectSuccess = true
 }
 
@@ -139,6 +143,10 @@ private class NodeClient(
 
     override fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable> {
         return fetchStream("accounts/$publicKey/receivables/stream")
+    }
+
+    override fun accountEntryStream(publicKey: AttoPublicKey, fromHeight: AttoHeight): Flow<AttoAccountEntry> {
+        return fetchStream("accounts/$publicKey/entries/stream?fromHeight=$fromHeight")
     }
 
 

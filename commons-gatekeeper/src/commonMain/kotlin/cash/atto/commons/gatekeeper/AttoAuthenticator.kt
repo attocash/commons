@@ -21,6 +21,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
 interface AttoAuthenticator {
@@ -31,9 +32,13 @@ interface AttoAuthenticator {
 
 private val httpClient = HttpClient {
     install(ContentNegotiation) {
-        json()
+        json(Json {
+            ignoreUnknownKeys = true
+        })
     }
     install(HttpTimeout)
+
+    expectSuccess = true
 }
 
 
