@@ -1,7 +1,6 @@
 package cash.atto.commons
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 
 @Serializable
 data class AttoAccountEntry(
@@ -14,7 +13,4 @@ data class AttoAccountEntry(
     val subjectPublicKey: AttoPublicKey,
     val previousBalance: AttoAmount,
     val balance: AttoAmount
-) : HeightSupport {
-    @Transient
-    val amount = balance - previousBalance
-}
+) : HeightSupport
