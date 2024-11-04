@@ -66,6 +66,8 @@ allOpen {
 
 publishing {
     publications.withType<MavenPublication> {
+        artifact("javadocJar")
+
         pom {
             name.set("Atto Commons Worker")
             description.set(

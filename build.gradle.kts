@@ -20,6 +20,11 @@ subprojects {
         plugin("org.jetbrains.kotlin.multiplatform")
         plugin("org.jetbrains.dokka")
     }
+
+    val javadocJar by tasks.creating(Jar::class) {
+        archiveClassifier.set("javadoc")
+        from(tasks.named("dokkaJavadoc"))
+    }
 }
 
 nexusPublishing {

@@ -90,6 +90,8 @@ allOpen {
 
 publishing {
     publications.withType<MavenPublication> {
+        artifact("javadocJar")
+
         pom {
             name.set("Atto Commons Wallet")
             description.set(

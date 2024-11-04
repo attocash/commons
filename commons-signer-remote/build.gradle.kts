@@ -84,6 +84,8 @@ allOpen {
 
 publishing {
     publications.withType<MavenPublication> {
+        artifact("javadocJar")
+
         pom {
             name.set("Atto Commons Signer Remote")
             description.set(
