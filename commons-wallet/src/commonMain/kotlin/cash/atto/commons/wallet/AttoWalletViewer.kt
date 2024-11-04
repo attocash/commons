@@ -59,8 +59,8 @@ class AttoWalletViewer(
                 logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
                 delay(retryDelay)
             }
-            throw CancellationException("Transaction saving cancelled.")
         }
+        throw CancellationException("Transaction saving cancelled.")
     }
 
     private fun startAccountEntryStream() {
