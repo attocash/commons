@@ -60,7 +60,9 @@ class AttoWalletManagerTest {
 
         init {
             backend.start()
-            walletManager.start()
+            runBlocking {
+                walletManager.start()
+            }
         }
     }
 

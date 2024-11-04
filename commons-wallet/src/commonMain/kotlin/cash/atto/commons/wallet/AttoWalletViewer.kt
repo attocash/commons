@@ -129,15 +129,13 @@ class AttoWalletViewer(
         }
     }
 
-    fun start() {
-        scope.launch {
-            updateAccount()
-            startAccountEntryStream()
-            startAccountEntrySaver()
-            startTransactionStream()
-            startTransactionSaver()
-            logger.info { "Started wallet viewer for $publicKey" }
-        }
+    suspend fun start() {
+        updateAccount()
+        startAccountEntryStream()
+        startAccountEntrySaver()
+        startTransactionStream()
+        startTransactionSaver()
+        logger.info { "Started wallet viewer for $publicKey" }
     }
 
     internal fun update(newAccount: AttoAccount) {

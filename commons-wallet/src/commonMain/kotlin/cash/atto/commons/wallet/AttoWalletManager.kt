@@ -107,7 +107,7 @@ class AttoWalletManager(
         }
     }
 
-    fun start(autoReceive: Boolean = true) {
+    suspend fun start(autoReceive: Boolean = true) {
         viewer.start()
 
         startWorkCacher()
