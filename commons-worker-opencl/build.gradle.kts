@@ -72,10 +72,14 @@ allOpen {
 //    }
 //}
 
+val javadocJar by tasks.creating(Jar::class) {
+    archiveClassifier.set("javadoc")
+    from(tasks.named("dokkaJavadoc"))
+}
 
 publishing {
     publications.withType<MavenPublication> {
-        artifact("javadocJar")
+        artifact(javadocJar)
 
         pom {
             name.set("Atto Commons Worker OpenCL")
