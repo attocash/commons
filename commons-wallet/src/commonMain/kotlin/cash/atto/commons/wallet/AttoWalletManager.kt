@@ -58,7 +58,7 @@ class AttoWalletManager(
     val receivableFlow = viewer.receivableFlow
     val transactionFlow = viewer.transactionFlow
 
-    fun updateAccount() {
+    suspend fun updateAccount() {
         viewer.updateAccount()
     }
 

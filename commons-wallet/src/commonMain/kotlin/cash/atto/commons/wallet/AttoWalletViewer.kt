@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 class AttoWalletViewer(
@@ -46,21 +47,19 @@ class AttoWalletViewer(
     private val _transactionFlow = MutableSharedFlow<AttoTransaction>()
     val transactionFlow = _transactionFlow.asSharedFlow()
 
-    fun updateAccount() {
-        scope.launch {
-            while (isActive) {
-                try {
-                    val account = client.account(publicKey)
-                    account?.let {
-                        update(it)
-                    }
-                    return@launch
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
-                    delay(retryDelay)
+    suspend fun updateAccount() {
+        while (coroutineContext.isActive) {
+            try {
+                val account = client.account(publicKey)
+                account?.let {
+                    update(it)
                 }
-                throw CancellationException("Transaction saving cancelled.")
+                return
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
+                delay(retryDelay)
             }
+            throw CancellationException("Transaction saving cancelled.")
         }
     }
 
@@ -131,12 +130,14 @@ class AttoWalletViewer(
     }
 
     fun start() {
-        updateAccount()
-        startAccountEntryStream()
-        startAccountEntrySaver()
-        startTransactionStream()
-        startTransactionSaver()
-        logger.info { "Started wallet viewer for $publicKey" }
+        scope.launch {
+            updateAccount()
+            startAccountEntryStream()
+            startAccountEntrySaver()
+            startTransactionStream()
+            startTransactionSaver()
+            logger.info { "Started wallet viewer for $publicKey" }
+        }
     }
 
     internal fun update(newAccount: AttoAccount) {
