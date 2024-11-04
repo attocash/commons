@@ -20,6 +20,10 @@ subprojects {
         plugin("org.jetbrains.kotlin.multiplatform")
         plugin("org.jetbrains.dokka")
     }
+
+    tasks.matching { it.name == "publishJvmPublicationToSonatypeRepository" }.configureEach {
+        dependsOn(tasks.named("signKotlinMultiplatformPublication"))
+    }
 }
 
 nexusPublishing {
