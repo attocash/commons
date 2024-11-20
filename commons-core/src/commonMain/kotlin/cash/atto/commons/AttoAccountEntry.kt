@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,5 +13,6 @@ data class AttoAccountEntry(
     val subjectAlgorithm: AttoAlgorithm,
     val subjectPublicKey: AttoPublicKey,
     val previousBalance: AttoAmount,
-    val balance: AttoAmount
+    val balance: AttoAmount,
+    val timestamp: Instant,
 ) : HeightSupport

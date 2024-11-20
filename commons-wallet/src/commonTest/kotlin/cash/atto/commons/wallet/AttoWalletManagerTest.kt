@@ -209,6 +209,7 @@ class AttoWalletManagerTest {
             subjectPublicKey = publicKey,
             previousBalance = AttoAmount.MIN,
             balance = AttoAmount.MAX,
+            timestamp = Clock.System.now(),
         )
     }
 
