@@ -4,8 +4,10 @@ import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoChangeBlock
 import cash.atto.commons.AttoOpenBlock
 import cash.atto.commons.AttoReceivable
+import cash.atto.commons.AttoSendBlock
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoWork
@@ -149,7 +151,7 @@ class AttoWalletManager(
         return transaction
     }
 
-    suspend fun receive(receivable: AttoReceivable) {
+    suspend fun receive(receivable: AttoReceivable): AttoBlock {
         requireReady()
 
         mutex.withLock {
@@ -163,13 +165,15 @@ class AttoWalletManager(
             }
 
             publish(block, newAccount)
+
+            return block
         }
     }
 
     suspend fun send(
         receiverAddress: AttoAddress,
         amount: AttoAmount
-    ) {
+    ): AttoSendBlock {
         requireReady()
         require(receiverAddress.publicKey != publicKey) { "You can't send $amount to yourself" }
 
@@ -184,13 +188,15 @@ class AttoWalletManager(
             val (block, newAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, now)
 
             publish(block, newAccount)
+
+            return block
         }
 
     }
 
     suspend fun change(
         representativeAddress: AttoAddress,
-    ) {
+    ): AttoChangeBlock {
         requireReady()
 
         mutex.withLock {
@@ -200,6 +206,8 @@ class AttoWalletManager(
             val (block, newAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey, now)
 
             publish(block, newAccount)
+
+            return block
         }
     }
 
