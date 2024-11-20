@@ -150,6 +150,8 @@ class AttoWalletManagerTest {
 
         walletManager.send(AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))), AttoAmount(1UL))
         walletManager.change(AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))))
+
+        println()
     }
 
     private suspend fun AttoTransactionRepository.filterOrNullWhenTimeout(filter: (AttoTransaction) -> Boolean): AttoTransaction? {
