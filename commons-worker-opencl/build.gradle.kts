@@ -35,7 +35,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":commons-worker"))
-                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.12")
+                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.13")
             }
         }
         val commonTest by getting {
