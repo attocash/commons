@@ -2,7 +2,7 @@ plugins {
     val kotlinVersion = "2.0.21"
     kotlin("plugin.allopen") version kotlinVersion
 
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.12"
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.13"
 
     id("maven-publish")
     signing
