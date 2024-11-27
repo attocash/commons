@@ -1,5 +1,5 @@
 plugins {
-    val kotlinVersion = "2.0.21"
+    val kotlinVersion = "2.1.0"
     id("org.jetbrains.kotlin.multiplatform") version kotlinVersion apply false
     id("org.jetbrains.kotlin.native.cocoapods") version kotlinVersion apply false
 
