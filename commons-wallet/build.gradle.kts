@@ -41,7 +41,7 @@ kotlin {
                 api(project(":commons-worker-remote"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
-                implementation("io.github.oshai:kotlin-logging:7.0.0")
+                implementation("io.github.oshai:kotlin-logging:7.0.3")
 
                 implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
