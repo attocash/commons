@@ -39,7 +39,7 @@ kotlin {
                 api(project(":commons-core"))
                 api(project(":commons-gatekeeper"))
                 api(project(":commons-worker-remote"))
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
                 implementation("io.github.oshai:kotlin-logging:7.0.3")
 
