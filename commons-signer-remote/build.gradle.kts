@@ -59,7 +59,6 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                runtimeOnly("io.ktor:ktor-client-okhttp-jvm:$ktorVersion")
             }
         }
         val jvmTest by getting
