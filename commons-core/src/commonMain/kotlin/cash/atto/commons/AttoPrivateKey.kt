@@ -1,8 +1,8 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.SecureRandom
-
-expect fun ed25519BIP44(seed: AttoSeed, path: String): ByteArray
+import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 
 class AttoPrivateKey(
     val value: ByteArray,
@@ -57,4 +57,68 @@ class AttoAlgorithmPrivateKey(
     override fun toString(): String {
         return "${value.size} bytes"
     }
+}
+
+expect class HmacSha512(secretKey: ByteArray, algorithm: String) {
+    fun update(data: ByteArray, offset: Int = 0, len: Int = data.size)
+    fun doFinal(output: ByteArray, offset: Int = 0)
+}
+
+
+private class BIP44(
+    val key: ByteArray,
+    val hmacHelper: HmacSha512,
+) {
+    private constructor(derived: ByteArray) : this(
+        derived.copyOfRange(0, 32),
+        HmacSha512(derived.copyOfRange(32, 64), "HmacSHA512"),
+    )
+
+    fun derive(value: Int): BIP44 {
+        hmacHelper.update(byteArrayOf(0))
+        hmacHelper.update(key, 0, 32)
+
+        val buffer = Buffer()
+        buffer.writeInt(value)
+        val indexBytes = buffer.readByteArray()
+        indexBytes[0] = (indexBytes[0].toInt() or 128.toByte().toInt()).toByte() // hardened
+
+        hmacHelper.update(indexBytes, 0, indexBytes.size)
+
+        val derived = ByteArray(64)
+        hmacHelper.doFinal(derived, 0)
+
+        return BIP44(derived)
+    }
+
+    companion object {
+        fun ed25519(
+            seed: AttoSeed,
+            path: String,
+        ): ByteArray {
+            val hmacHelper = HmacSha512("ed25519 seed".encodeToByteArray(), "HmacSHA512")
+            hmacHelper.update(seed.value)
+
+            val values =
+                path
+                    .split("/")
+                    .asSequence()
+                    .map { it.trim() }
+                    .filter { !"M".equals(it, ignoreCase = true) }
+                    .map { it.replace("'", "").toInt() }
+                    .toList()
+
+            var bip44 = BIP44(ByteArray(64).also { hmacHelper.doFinal(it, 0) })
+            for (v in values) {
+                bip44 = bip44.derive(v)
+            }
+
+            return bip44.key
+        }
+    }
+}
+
+
+private fun ed25519BIP44(seed: AttoSeed, path: String): ByteArray {
+    return BIP44.ed25519(seed, path)
 }
