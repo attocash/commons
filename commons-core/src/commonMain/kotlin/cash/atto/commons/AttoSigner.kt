@@ -33,6 +33,8 @@ interface AttoSigner {
 expect class InMemorySigner(privateKey: AttoPrivateKey) : AttoSigner {
     override val publicKey: AttoPublicKey
     internal val privateKey: AttoPrivateKey
+
+    override suspend fun sign(hash: AttoHash): AttoSignature
 }
 
 fun AttoPrivateKey.toSigner(): AttoSigner {

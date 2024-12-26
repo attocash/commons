@@ -12,7 +12,7 @@ enum class AttoNetwork(
     LIVE(0U, 1u),
     BETA(1U, 10u),
     DEV(2U, 100u),
-    LOCAL(3U, 1_000u),
+    LOCAL(3U, 100_000u),
 
     UNKNOWN(9U, ULong.MAX_VALUE),
     ;

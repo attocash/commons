@@ -59,7 +59,7 @@ class AttoAlgorithmPrivateKey(
     }
 }
 
-expect class HmacSha512(secretKey: ByteArray, algorithm: String) {
+expect class HmacSha512(secretKey: ByteArray) {
     fun update(data: ByteArray, offset: Int = 0, len: Int = data.size)
     fun doFinal(output: ByteArray, offset: Int = 0)
 }
@@ -71,7 +71,7 @@ private class BIP44(
 ) {
     private constructor(derived: ByteArray) : this(
         derived.copyOfRange(0, 32),
-        HmacSha512(derived.copyOfRange(32, 64), "HmacSHA512"),
+        HmacSha512(derived.copyOfRange(32, 64)),
     )
 
     fun derive(value: Int): BIP44 {
@@ -96,7 +96,7 @@ private class BIP44(
             seed: AttoSeed,
             path: String,
         ): ByteArray {
-            val hmacHelper = HmacSha512("ed25519 seed".encodeToByteArray(), "HmacSHA512")
+            val hmacHelper = HmacSha512("ed25519 seed".encodeToByteArray())
             hmacHelper.update(seed.value)
 
             val values =

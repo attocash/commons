@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -7,7 +8,7 @@ import kotlin.test.assertEquals
 internal class AttoKeyTest {
     @Test
     @Suppress("ktlint:standard:max-line-length")
-    fun `should create private key`() {
+    fun `should create private key`() = runTest {
         // given
         val mnemonic =
             AttoMnemonic(
@@ -25,7 +26,7 @@ internal class AttoKeyTest {
 
     @Test
     @Suppress("ktlint:standard:max-line-length")
-    fun `should create public key`() {
+    fun `should create public key`() = runTest {
         // given
         val mnemonic =
             AttoMnemonic(

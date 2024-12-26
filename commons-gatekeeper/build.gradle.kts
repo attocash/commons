@@ -30,6 +30,18 @@ kotlin {
 
     jvm()
 
+    js(IR) {
+        browser {
+            testTask {
+                useKarma {
+                    useChromiumHeadless()
+                }
+            }
+        }
+
+        nodejs()
+    }
+
     applyDefaultHierarchyTemplate()
 
     sourceSets {
@@ -39,7 +51,6 @@ kotlin {
             dependencies {
                 api(project(":commons-worker"))
 
-                implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
@@ -53,10 +64,23 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
+                implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("com.auth0:java-jwt:4.4.0")
             }
         }
+
         val jvmTest by getting
+
+        val jsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
+            }
+        }
+
+        val jsTest by getting {
+            dependencies {
+            }
+        }
     }
 }
 

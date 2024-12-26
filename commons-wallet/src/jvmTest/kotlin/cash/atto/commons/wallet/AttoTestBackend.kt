@@ -10,6 +10,8 @@ import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoWork
 import cash.atto.commons.gatekeeper.AttoJWT
 import cash.atto.commons.toHex
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -32,10 +34,36 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.security.KeyPairGenerator
+import java.security.interfaces.ECPrivateKey
+import kotlin.time.Duration.Companion.days
 
-expect fun generateJwt(): AttoJWT
+
+private val jwtAlgorithm by lazy {
+    val keyPairGenerator = KeyPairGenerator.getInstance("EC")
+    keyPairGenerator.initialize(521)
+    val keyPair = keyPairGenerator.generateKeyPair()
+    val privateKey = keyPair.private as ECPrivateKey
+    Algorithm.ECDSA512(null, privateKey)
+}
+
+fun generateJwt(): AttoJWT {
+    val jwt = JWT
+        .create()
+        .withIssuer("test")
+        .withAudience("http://localhost")
+        .withIssuedAt(java.time.Instant.now())
+        .withExpiresAt(java.time.Instant.now().plusSeconds(1.days.inWholeSeconds))
+        .withSubject(ByteArray(32).toHex())
+        .sign(jwtAlgorithm)
+
+    val decodedJWT = JWT.decode(jwt)
+
+    return AttoJWT(decodedJWT.expiresAtAsInstant.toKotlinInstant(), jwt)
+}
 
 class AttoTestBackend(port: Int) {
     private val logger = KotlinLogging.logger {}

@@ -1,6 +1,6 @@
 package cash.atto.commons
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
@@ -21,7 +21,7 @@ internal class AttoSignatureTest {
         )
 
     @Test
-    fun `should sign`() = runBlocking {
+    fun `should sign`() = runTest {
         // when
         val signature = privateKey.sign(hash)
 
@@ -40,7 +40,7 @@ internal class AttoSignatureTest {
     }
 
     @Test
-    fun `should sign 16 bytes`() = runBlocking {
+    fun `should sign 16 bytes`() = runTest {
         // given
         val hash16 = AttoHash(Random.nextBytes(ByteArray(16)))
 

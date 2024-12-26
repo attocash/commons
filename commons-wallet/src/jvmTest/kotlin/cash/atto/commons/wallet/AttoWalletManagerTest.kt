@@ -32,13 +32,18 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import java.net.ServerSocket
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.seconds
 
-expect fun randomPort(): Int
+fun randomPort(): Int {
+    ServerSocket(0).use { socket ->
+        return socket.localPort
+    }
+}
 
 class AttoWalletManagerTest {
     companion object {

@@ -3,7 +3,7 @@ package cash.atto.commons
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
-actual fun generateSecretWithPBKDF2WithHmacSHA512(
+actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     mnemonic: CharArray,
     salt: ByteArray,
     iterations: Int,
