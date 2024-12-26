@@ -22,7 +22,8 @@ subprojects {
         plugin("org.jlleitschuh.gradle.ktlint")
     }
 
-    tasks.matching { it.name == "publishJvmPublicationToSonatypeRepository" || it.name == "publishJsPublicationToSonatypeRepository" }
+    tasks
+        .matching { it.name == "publishJvmPublicationToSonatypeRepository" || it.name == "publishJsPublicationToSonatypeRepository" }
         .configureEach {
             dependsOn(tasks.named("signKotlinMultiplatformPublication"))
             dependsOn(tasks.named("signJvmPublication"))
