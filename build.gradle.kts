@@ -22,14 +22,12 @@ subprojects {
         plugin("org.jlleitschuh.gradle.ktlint")
     }
 
-    tasks.matching { it.name == "publishJvmPublicationToSonatypeRepository" }.configureEach {
-        dependsOn(tasks.named("signKotlinMultiplatformPublication"))
-    }
-
-    tasks.matching { it.name == "publishJsPublicationToSonatypeRepository" }.configureEach {
-        dependsOn(tasks.named("signKotlinMultiplatformPublication"))
-        dependsOn(tasks.named("signJvmPublication"))
-    }
+    tasks.matching { it.name == "publishJvmPublicationToSonatypeRepository" || it.name == "publishJsPublicationToSonatypeRepository" }
+        .configureEach {
+            dependsOn(tasks.named("signKotlinMultiplatformPublication"))
+            dependsOn(tasks.named("signJvmPublication"))
+            dependsOn(tasks.named("signJsPublication"))
+        }
 
     tasks.matching { it.name == "publishKotlinMultiplatformPublicationToSonatypeRepository" }.configureEach {
         dependsOn(tasks.named("signJvmPublication"))
