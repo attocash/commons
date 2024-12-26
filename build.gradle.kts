@@ -32,6 +32,7 @@ subprojects {
 
     tasks.matching { it.name == "publishKotlinMultiplatformPublicationToSonatypeRepository" }.configureEach {
         dependsOn(tasks.named("signJvmPublication"))
+        dependsOn(tasks.named("signJsPublication"))
     }
 }
 
