@@ -27,11 +27,16 @@ subprojects {
         .configureEach {
             dependsOn(tasks.named("signKotlinMultiplatformPublication"))
             dependsOn(tasks.named("signJvmPublication"))
-            dependsOn(tasks.named("signJsPublication"))
+            if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl") {
+                dependsOn(tasks.named("signJsPublication"))
+            }
         }
 
     tasks.matching { it.name == "publishKotlinMultiplatformPublicationToSonatypeRepository" }.configureEach {
         dependsOn(tasks.named("signJvmPublication"))
+        if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl") {
+            dependsOn(tasks.named("signJsPublication"))
+        }
     }
 }
 
