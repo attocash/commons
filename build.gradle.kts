@@ -25,9 +25,14 @@ subprojects {
         dependsOn(tasks.named("signKotlinMultiplatformPublication"))
     }
 
+    tasks.matching { it.name == "publishJsPublicationToSonatypeRepository" }.configureEach {
+        dependsOn(tasks.named("signKotlinMultiplatformPublication"))
+    }
+
     tasks.matching { it.name == "publishKotlinMultiplatformPublicationToSonatypeRepository" }.configureEach {
         dependsOn(tasks.named("signJvmPublication"))
     }
+
 }
 
 nexusPublishing {
