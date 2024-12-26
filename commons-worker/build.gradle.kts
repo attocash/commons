@@ -29,6 +29,18 @@ kotlin {
 
     jvm()
 
+    js(IR) {
+        browser {
+            testTask {
+                useKarma {
+                    useChromiumHeadless()
+                }
+            }
+        }
+
+        nodejs()
+    }
+
     applyDefaultHierarchyTemplate()
 
     sourceSets {
@@ -41,10 +53,14 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
             }
         }
         val jvmMain by getting
         val jvmTest by getting
+
+        val jsMain by getting
+        val jsTest by getting
     }
 }
 

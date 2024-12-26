@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -9,7 +10,7 @@ import kotlin.test.assertTrue
 internal class AttoSeedTest {
     @Test
     @Suppress("ktlint:standard:max-line-length")
-    fun `should crete seed from mnemonic`() {
+    fun `should crete seed from mnemonic`() = runTest {
         // given
         val mnemonic =
             AttoMnemonic(

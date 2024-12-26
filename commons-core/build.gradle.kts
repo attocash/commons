@@ -30,6 +30,19 @@ kotlin {
 
     jvm()
 
+    js(IR) {
+        browser {
+            testTask {
+                useKarma {
+                    useChromiumHeadless()
+                }
+            }
+        }
+
+        nodejs()
+    }
+
+
     applyDefaultHierarchyTemplate()
 
     sourceSets {
@@ -44,8 +57,9 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(project(":commons-worker"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
                 implementation(kotlin("test"))
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
             }
         }
         val jvmMain by getting {
@@ -56,6 +70,21 @@ kotlin {
         val jvmTest by getting {
             dependencies {
 
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                implementation(npm("@stablelib/sha256", "1.0.1"))
+                implementation(npm("@stablelib/sha512", "1.0.1"))
+                implementation(npm("@stablelib/blake2b", "1.0.1"))
+                implementation(npm("@stablelib/hmac", "1.0.1"))
+                implementation(npm("@stablelib/ed25519", "1.0.1"))
+            }
+        }
+
+        val jsTest by getting {
+            dependencies {
             }
         }
     }

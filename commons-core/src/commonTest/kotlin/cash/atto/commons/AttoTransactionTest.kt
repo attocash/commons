@@ -2,7 +2,7 @@ package cash.atto.commons
 
 import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.cpu
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.encodeToString
@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
 
 class AttoTransactionTest {
     val privateKey = AttoPrivateKey.generate()
@@ -29,15 +30,16 @@ class AttoTransactionTest {
             sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
         )
 
-    val expectedTransaction =
-        AttoTransaction(
-            block = receiveBlock,
-            signature = runBlocking { privateKey.sign(receiveBlock.hash) },
-            work = runBlocking { AttoWorker.cpu().work(receiveBlock) },
-        )
-
     @Test
-    fun `should serialize buffer`() {
+    fun `should serialize buffer`() = runTest {
+        // given
+        val expectedTransaction =
+            AttoTransaction(
+                block = receiveBlock,
+                signature = privateKey.sign(receiveBlock.hash),
+                work = AttoWorker.cpu().work(receiveBlock),
+            )
+
         // when
         val buffer = expectedTransaction.toBuffer()
         val transaction = AttoTransaction.fromBuffer(buffer)
@@ -47,7 +49,15 @@ class AttoTransactionTest {
     }
 
     @Test
-    fun `should serialize json`() {
+    fun `should serialize json`() = runTest {
+        // given
+        val expectedTransaction =
+            AttoTransaction(
+                block = receiveBlock,
+                signature = privateKey.sign(receiveBlock.hash),
+                work = AttoWorker.cpu().work(receiveBlock),
+            )
+
         // when
         val json = Json.encodeToString(expectedTransaction)
         val transaction = Json.decodeFromString<AttoTransaction>(json)
@@ -55,4 +65,5 @@ class AttoTransactionTest {
         // then
         assertEquals(expectedTransaction, transaction)
     }
+
 }

@@ -3,8 +3,8 @@ package cash.atto.commons
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-actual class HmacSha512 actual constructor(secretKey: ByteArray, algorithm: String) {
-    private val mac: Mac = Mac.getInstance(algorithm).apply {
+actual class HmacSha512 actual constructor(secretKey: ByteArray) {
+    private val mac: Mac = Mac.getInstance("HmacSHA512").apply {
         init(SecretKeySpec(secretKey, algorithm))
     }
 

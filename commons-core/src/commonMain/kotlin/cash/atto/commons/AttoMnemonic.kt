@@ -48,7 +48,7 @@ class AttoMnemonic {
         val checksum = checksum(entropyWithChecksum)
 
         if (entropyWithChecksum[32] != checksum) {
-            throw AttoMnemonicException("Invalid mnemonic.")
+            throw AttoMnemonicException("Invalid mnemonic")
         }
 
         this.words = words.toList()

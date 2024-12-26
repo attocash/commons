@@ -30,6 +30,18 @@ kotlin {
 
     jvm()
 
+    js(IR) {
+        browser {
+            testTask {
+                useKarma {
+                    useChromiumHeadless()
+                }
+            }
+        }
+
+        nodejs()
+    }
+
     applyDefaultHierarchyTemplate()
 
     sourceSets {
@@ -43,7 +55,6 @@ kotlin {
 
                 implementation("io.github.oshai:kotlin-logging:7.0.3")
 
-                implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
@@ -53,19 +64,34 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("io.ktor:ktor-server-cio:$ktorVersion")
                 implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
 
             }
         }
         val jvmMain by getting {
             dependencies {
+                implementation("io.ktor:ktor-client-cio:$ktorVersion")
             }
         }
+
         val jvmTest by getting {
             dependencies {
+                implementation("io.ktor:ktor-server-cio:$ktorVersion")
                 implementation("org.slf4j:slf4j-simple:2.0.16")
                 implementation("com.auth0:java-jwt:4.4.0")
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
+            }
+        }
+
+        val jsTest by getting {
+            dependencies {
+                implementation("io.ktor:ktor-server-js:$ktorVersion")
+                implementation(npm("jsonwebtoken", "9.0.2"))
             }
         }
     }

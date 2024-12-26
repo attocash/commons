@@ -30,6 +30,19 @@ kotlin {
 
     jvm()
 
+    js(IR) {
+        browser {
+            testTask {
+                useKarma {
+                    useChromiumHeadless()
+                }
+            }
+        }
+
+        nodejs()
+    }
+
+
     applyDefaultHierarchyTemplate()
 
     sourceSets {
@@ -40,7 +53,6 @@ kotlin {
                 api(project(":commons-gatekeeper"))
                 api(project(":commons-worker"))
 
-                implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
@@ -52,8 +64,19 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val jvmMain by getting
+        val jvmMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-cio:$ktorVersion")
+            }
+        }
         val jvmTest by getting
+
+        val jsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
+            }
+        }
+        val jsTest by getting
     }
 }
 

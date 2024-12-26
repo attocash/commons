@@ -11,8 +11,11 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.Volatile
 
 fun AttoWorker.Companion.cpu(count: UShort): AttoWorker = AttoWorkerCpu(count)
+
+expect fun AttoWorker.Companion.cpu(): AttoWorker
 
 internal class AttoWorkerCpu(
     val count: UShort,
