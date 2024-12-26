@@ -3,9 +3,7 @@ package cash.atto.commons
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-
 
 internal class AttoAddressTest {
     private val expectedAddress =

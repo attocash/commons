@@ -12,7 +12,13 @@ external interface KeyPair {
 
 external fun generateKeyPairFromSeed(seed: Uint8Array): KeyPair
 
-external fun sign(secretKey: Uint8Array, message: Uint8Array): Uint8Array
+external fun sign(
+    secretKey: Uint8Array,
+    message: Uint8Array,
+): Uint8Array
 
-external fun verify(publicKey: Uint8Array, message: Uint8Array, signature: Uint8Array): Boolean
-
+external fun verify(
+    publicKey: Uint8Array,
+    message: Uint8Array,
+    signature: Uint8Array,
+): Boolean

@@ -4,7 +4,6 @@ data class AttoSocketAddress(
     val address: ByteArray,
     val port: UShort,
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false
@@ -16,7 +15,6 @@ data class AttoSocketAddress(
 
         return true
     }
-
 
     override fun hashCode(): Int {
         var result = address.contentHashCode()

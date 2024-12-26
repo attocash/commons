@@ -5,7 +5,7 @@ import org.bouncycastle.crypto.signers.Ed25519Signer
 
 actual fun AttoSignature.isValid(
     publicKey: AttoPublicKey,
-    hash: AttoHash
+    hash: AttoHash,
 ): Boolean {
     val parameters = Ed25519PublicKeyParameters(publicKey.value, 0)
     val signer = Ed25519Signer()

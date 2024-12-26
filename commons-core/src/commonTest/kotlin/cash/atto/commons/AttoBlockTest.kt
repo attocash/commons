@@ -65,9 +65,7 @@ class AttoBlockTest {
         }
     }
 
-
     companion object {
-
         val openBlock =
             AttoOpenBlock(
                 version = 0U.toAttoVersion(),
@@ -125,44 +123,47 @@ class AttoBlockTest {
                 representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
             )
 
-        val validBlocks = arrayOf(
-            sendBlock,
-            receiveBlock,
-            receiveBlock.copy(
-                timestamp =
-                Instant.fromEpochMilliseconds(
-                    Clock
-                        .System
-                        .now()
-                        .plus(1.minutes)
-                        .toEpochMilliseconds(),
+        val validBlocks =
+            arrayOf(
+                sendBlock,
+                receiveBlock,
+                receiveBlock.copy(
+                    timestamp =
+                        Instant.fromEpochMilliseconds(
+                            Clock
+                                .System
+                                .now()
+                                .plus(1.minutes)
+                                .toEpochMilliseconds(),
+                        ),
                 ),
-            ),
-            openBlock,
-            changeBlock,
-        )
+                openBlock,
+                changeBlock,
+            )
 
-        val invalidBlocks = arrayOf(
-            // unknown version
-            sendBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock,
-            // future timestamp
-            receiveBlock.copy(timestamp = Clock.System.now().plus(1.days)) as AttoBlock,
-            // invalid height
-            sendBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
-            // invalid height
-            receiveBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
-            // invalid height
-            changeBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
-            // zero amount
-            sendBlock.copy(amount = AttoAmount.MIN) as AttoBlock,
-            // self send
-            sendBlock.copy(receiverPublicKey = sendBlock.publicKey) as AttoBlock,
-            // zero balance
-            receiveBlock.copy(balance = AttoAmount.MIN) as AttoBlock,
-        )
+        val invalidBlocks =
+            arrayOf(
+                // unknown version
+                sendBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock,
+                // future timestamp
+                receiveBlock.copy(timestamp = Clock.System.now().plus(1.days)) as AttoBlock,
+                // invalid height
+                sendBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
+                // invalid height
+                receiveBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
+                // invalid height
+                changeBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
+                // zero amount
+                sendBlock.copy(amount = AttoAmount.MIN) as AttoBlock,
+                // self send
+                sendBlock.copy(receiverPublicKey = sendBlock.publicKey) as AttoBlock,
+                // zero balance
+                receiveBlock.copy(balance = AttoAmount.MIN) as AttoBlock,
+            )
 
-        val validJsonBlocks = arrayOf(
-            """
+        val validJsonBlocks =
+            arrayOf(
+                """
             {
                "type":"SEND",
                "network":"LOCAL",
@@ -178,8 +179,7 @@ class AttoBlockTest {
                "amount":1
             }
             """,
-
-            """
+                """
             {
                "type":"RECEIVE",
                "network":"LOCAL",
@@ -194,7 +194,7 @@ class AttoBlockTest {
                "sendHash":"EE5FDA9A1ACEC7A09231792C345CDF5CD29F1059E5C413535D9FCA66A1FB2F49"
             }
             """,
-            """
+                """
            {
                "type":"OPEN",
                "network":"LOCAL",
@@ -209,7 +209,7 @@ class AttoBlockTest {
                "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105"
             }
             """,
-            """
+                """
             {
                "type":"CHANGE",
                "network":"LOCAL",
@@ -224,6 +224,6 @@ class AttoBlockTest {
                "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105"
             }
             """,
-        )
+            )
     }
 }

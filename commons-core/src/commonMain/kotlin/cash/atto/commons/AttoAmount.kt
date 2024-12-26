@@ -55,7 +55,6 @@ data class AttoAmount(
             if (parts.size > 1) {
                 val fractionalPart = parts[1].toULong()
                 scaledValue += fractionalPart * factor / scaleFactor(parts[1].length.toUByte())
-
             }
             return AttoAmount(scaledValue)
         }

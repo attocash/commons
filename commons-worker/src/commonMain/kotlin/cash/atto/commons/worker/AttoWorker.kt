@@ -8,7 +8,6 @@ import cash.atto.commons.PreviousSupport
 import cash.atto.commons.getThreshold
 import kotlinx.datetime.Instant
 
-
 interface AttoWorker : AutoCloseable {
     companion object {}
 
@@ -36,9 +35,10 @@ interface AttoWorker : AutoCloseable {
 }
 
 private object NoOpAttoWorker : AttoWorker {
-    override suspend fun work(threshold: ULong, target: ByteArray): AttoWork {
-        throw NotImplementedError()
-    }
+    override suspend fun work(
+        threshold: ULong,
+        target: ByteArray,
+    ): AttoWork = throw NotImplementedError()
 
     override fun close() {
     }

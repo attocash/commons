@@ -47,30 +47,46 @@ interface AttoNodeClient {
     companion object {}
 
     val network: AttoNetwork
+
     suspend fun account(publicKey: AttoPublicKey): AttoAccount?
+
     fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount>
-    fun accountEntryStream(publicKey: AttoPublicKey, fromHeight: AttoHeight = AttoHeight(1UL)): Flow<AttoAccountEntry>
+
+    fun accountEntryStream(
+        publicKey: AttoPublicKey,
+        fromHeight: AttoHeight = AttoHeight(1UL),
+    ): Flow<AttoAccountEntry>
+
     fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable>
-    fun transactionStream(publicKey: AttoPublicKey, fromHeight: AttoHeight = AttoHeight(1UL)): Flow<AttoTransaction>
+
+    fun transactionStream(
+        publicKey: AttoPublicKey,
+        fromHeight: AttoHeight = AttoHeight(1UL),
+    ): Flow<AttoTransaction>
+
     suspend fun now(): Instant
+
     suspend fun publish(transaction: AttoTransaction)
 }
 
-private val httpClient = HttpClient {
-    install(ContentNegotiation) {
-        json(Json {
-            ignoreUnknownKeys = true
-        })
-    }
-    install(HttpTimeout)
+private val httpClient =
+    HttpClient {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                },
+            )
+        }
+        install(HttpTimeout)
 
-    expectSuccess = true
-}
+        expectSuccess = true
+    }
 
 private class NodeClient(
     override val network: AttoNetwork,
     private val url: String,
-    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() }
+    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
 ) : AttoNodeClient {
     private val logger = KotlinLogging.logger {}
 
@@ -81,16 +97,17 @@ private class NodeClient(
         val headers = headerProvider.invoke()
 
         return try {
-            httpClient.get(uri) {
-                contentType(ContentType.Application.Json)
-                headers {
-                    headers.forEach { (key, value) -> append(key, value) }
-                    append("Accept", "application/json")
-                }
-                timeout {
-                    socketTimeoutMillis = 1.seconds.inWholeMilliseconds
-                }
-            }.body<AttoAccount?>()
+            httpClient
+                .get(uri) {
+                    contentType(ContentType.Application.Json)
+                    headers {
+                        headers.forEach { (key, value) -> append(key, value) }
+                        append("Accept", "application/json")
+                    }
+                    timeout {
+                        socketTimeoutMillis = 1.seconds.inWholeMilliseconds
+                    }
+                }.body<AttoAccount?>()
         } catch (e: ClientRequestException) {
             if (e.response.status == HttpStatusCode.NotFound) {
                 null
@@ -100,23 +117,22 @@ private class NodeClient(
         }
     }
 
-
     private inline fun <reified T> fetchStream(urlPath: String): Flow<T> {
         return flow {
             while (coroutineContext.isActive) {
                 try {
                     val headers = headerProvider.invoke()
 
-                    httpClient.prepareGet("$url/$urlPath") {
-                        timeout {
-                            socketTimeoutMillis = Long.MAX_VALUE
-                        }
-                        headers {
-                            headers.forEach { (key, value) -> append(key, value) }
-                            append("Accept", "application/x-ndjson")
-                        }
-                    }
-                        .execute { response ->
+                    httpClient
+                        .prepareGet("$url/$urlPath") {
+                            timeout {
+                                socketTimeoutMillis = Long.MAX_VALUE
+                            }
+                            headers {
+                                headers.forEach { (key, value) -> append(key, value) }
+                                append("Accept", "application/x-ndjson")
+                            }
+                        }.execute { response ->
                             val channel: ByteReadChannel = response.body()
                             while (!channel.isClosedForRead) {
                                 val json = channel.readUTF8Line()
@@ -145,12 +161,17 @@ private class NodeClient(
         return fetchStream("accounts/$publicKey/receivables/stream")
     }
 
-    override fun accountEntryStream(publicKey: AttoPublicKey, fromHeight: AttoHeight): Flow<AttoAccountEntry> {
+    override fun accountEntryStream(
+        publicKey: AttoPublicKey,
+        fromHeight: AttoHeight,
+    ): Flow<AttoAccountEntry> {
         return fetchStream("accounts/$publicKey/entries/stream?fromHeight=$fromHeight")
     }
 
-
-    override fun transactionStream(publicKey: AttoPublicKey, fromHeight: AttoHeight): Flow<AttoTransaction> {
+    override fun transactionStream(
+        publicKey: AttoPublicKey,
+        fromHeight: AttoHeight,
+    ): Flow<AttoTransaction> {
         return fetchStream("accounts/$publicKey/transactions/stream?fromHeight=$fromHeight")
     }
 
@@ -159,17 +180,18 @@ private class NodeClient(
         val json = Json.encodeToString(transaction)
         val headers = headerProvider.invoke()
 
-        val response: HttpResponse = httpClient.post(uri) {
-            contentType(ContentType.Application.Json)
-            setBody(json)
-            headers {
-                headers.forEach { (key, value) -> append(key, value) }
-                append("Accept", "application/x-ndjson")
+        val response: HttpResponse =
+            httpClient.post(uri) {
+                contentType(ContentType.Application.Json)
+                setBody(json)
+                headers {
+                    headers.forEach { (key, value) -> append(key, value) }
+                    append("Accept", "application/x-ndjson")
+                }
+                timeout {
+                    socketTimeoutMillis = 5.minutes.inWholeMilliseconds
+                }
             }
-            timeout {
-                socketTimeoutMillis = 5.minutes.inWholeMilliseconds
-            }
-        }
 
         val channel: ByteReadChannel = response.bodyAsChannel()
         channel.readUTF8Line()
@@ -177,9 +199,11 @@ private class NodeClient(
     }
 
     override suspend fun now(): Instant {
-        val diff = httpClient.get("$url/instants/${Clock.System.now()}")
-            .body<InstantResponse>()
-            .differenceMillis
+        val diff =
+            httpClient
+                .get("$url/instants/${Clock.System.now()}")
+                .body<InstantResponse>()
+                .differenceMillis
         return Clock.System.now().plus(diff.milliseconds)
     }
 
@@ -194,7 +218,7 @@ private class NodeClient(
 fun AttoNodeClient.Companion.custom(
     network: AttoNetwork,
     url: String,
-    headerProvider: suspend () -> Map<String, String>
+    headerProvider: suspend () -> Map<String, String>,
 ): AttoNodeClient {
     return NodeClient(network, url, headerProvider)
 }
@@ -213,9 +237,10 @@ internal fun AttoNodeClient.Companion.attoBackend(
 /**
  * Creates a AttoClient using Atto backend
  */
-fun AttoNodeClient.Companion.attoBackend(network: AttoNetwork, authenticator: AttoAuthenticator): AttoNodeClient {
+fun AttoNodeClient.Companion.attoBackend(
+    network: AttoNetwork,
+    authenticator: AttoAuthenticator,
+): AttoNodeClient {
     val gatekeeperUrl = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"
     return AttoNodeClient.attoBackend(network, gatekeeperUrl, authenticator)
 }
-
-

@@ -17,7 +17,6 @@ data class AttoSignature(
         fun parse(value: String): AttoSignature {
             return AttoSignature(value.fromHexToByteArray())
         }
-
     }
 
     init {
@@ -43,7 +42,7 @@ expect fun AttoSignature.isValid(
 
 fun AttoSignature.isValid(
     publicKey: AttoPublicKey,
-    challenge: AttoChallenge
+    challenge: AttoChallenge,
 ): Boolean {
     val hash = AttoHash.hash(64, publicKey.value, challenge.value)
     return isValid(publicKey, challenge)

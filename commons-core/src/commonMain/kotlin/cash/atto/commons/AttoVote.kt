@@ -12,7 +12,8 @@ data class AttoVote(
     val blockAlgorithm: AttoAlgorithm,
     val blockHash: AttoHash,
     val timestamp: Instant,
-) : AttoHashable, AttoSerializable {
+) : AttoHashable,
+    AttoSerializable {
     override val hash by lazy { toBuffer().hash() }
 
     companion object {
@@ -39,11 +40,11 @@ data class AttoVote(
     }
 }
 
-
 data class AttoSignedVote(
     val vote: AttoVote,
-    val signature: AttoSignature
-) : AttoHashable, AttoSerializable {
+    val signature: AttoSignature,
+) : AttoHashable,
+    AttoSerializable {
     override val hash by lazy { vote.hash }
 
     companion object {}
@@ -70,7 +71,7 @@ fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote {
         publicKey = buffer.readAttoPublicKey(),
         blockAlgorithm = buffer.readAttoAlgorithm(),
         blockHash = buffer.readAttoHash(),
-        timestamp = buffer.readInstant()
+        timestamp = buffer.readInstant(),
     )
 }
 

@@ -30,19 +30,24 @@ interface AttoAuthenticator {
     suspend fun getAuthorization(): String
 }
 
-private val httpClient = HttpClient {
-    install(ContentNegotiation) {
-        json(Json {
-            ignoreUnknownKeys = true
-        })
+private val httpClient =
+    HttpClient {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                },
+            )
+        }
+        install(HttpTimeout)
+
+        expectSuccess = true
     }
-    install(HttpTimeout)
 
-    expectSuccess = true
-}
-
-
-private class WalletGatekeeperClient(url: String, val signer: AttoSigner) : AttoAuthenticator {
+private class WalletGatekeeperClient(
+    url: String,
+    val signer: AttoSigner,
+) : AttoAuthenticator {
     private val leeway = 60.seconds
     private val loginUri = "$url/login"
     private val challengeUri = "$loginUri/challenges"
@@ -62,11 +67,12 @@ private class WalletGatekeeperClient(url: String, val signer: AttoSigner) : Atto
 
     private suspend fun login(): String {
         val initRequest = TokenInitRequest(AttoAlgorithm.V1, signer.publicKey)
-        val initResponse = httpClient.post(loginUri) {
-            contentType(ContentType.Application.Json)
-            setBody(initRequest)
-        }.body<TokenInitResponse>()
-
+        val initResponse =
+            httpClient
+                .post(loginUri) {
+                    contentType(ContentType.Application.Json)
+                    setBody(initRequest)
+                }.body<TokenInitResponse>()
 
         val challenge = AttoChallenge(initResponse.challenge.fromHexToByteArray())
         val timestamp = Clock.System.now()
@@ -76,15 +82,16 @@ private class WalletGatekeeperClient(url: String, val signer: AttoSigner) : Atto
         val answer = TokenInitAnswer(timestamp, signature)
 
         val challengeUrl = "$challengeUri/${initResponse.challenge}"
-        val jwtString = httpClient.post(challengeUrl) {
-            contentType(ContentType.Application.Json)
-            setBody(answer)
-        }.body<String>()
+        val jwtString =
+            httpClient
+                .post(challengeUrl) {
+                    contentType(ContentType.Application.Json)
+                    setBody(answer)
+                }.body<String>()
 
         jwt = AttoJWT.decode(jwtString)
         return jwtString
     }
-
 
     @Serializable
     data class TokenInitRequest(
@@ -104,12 +111,17 @@ private class WalletGatekeeperClient(url: String, val signer: AttoSigner) : Atto
     )
 }
 
-fun AttoAuthenticator.Companion.custom(url: String, signer: AttoSigner): AttoAuthenticator {
+fun AttoAuthenticator.Companion.custom(
+    url: String,
+    signer: AttoSigner,
+): AttoAuthenticator {
     return WalletGatekeeperClient(url, signer)
 }
 
-
-fun AttoAuthenticator.Companion.attoBackend(network: AttoNetwork, signer: AttoSigner): AttoAuthenticator {
+fun AttoAuthenticator.Companion.attoBackend(
+    network: AttoNetwork,
+    signer: AttoSigner,
+): AttoAuthenticator {
     val url = "https://wallet-gatekeeper.${network.name.lowercase()}.application.atto.cash"
     return WalletGatekeeperClient(url, signer)
 }

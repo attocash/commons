@@ -19,6 +19,7 @@ subprojects {
     apply {
         plugin("org.jetbrains.kotlin.multiplatform")
         plugin("org.jetbrains.dokka")
+        plugin("org.jlleitschuh.gradle.ktlint")
     }
 
     tasks.matching { it.name == "publishJvmPublicationToSonatypeRepository" }.configureEach {
@@ -32,7 +33,6 @@ subprojects {
     tasks.matching { it.name == "publishKotlinMultiplatformPublicationToSonatypeRepository" }.configureEach {
         dependsOn(tasks.named("signJvmPublication"))
     }
-
 }
 
 nexusPublishing {

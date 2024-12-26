@@ -15,7 +15,6 @@ repositories {
     mavenLocal()
 }
 
-
 kotlin {
     targets.configureEach {
         compilations.configureEach {
@@ -64,21 +63,21 @@ kotlin {
     }
 }
 
-//benchmark {
+// benchmark {
 //    targets {
 //        register("jvm")
 //    }
-//}
+// }
 
 allOpen {
     annotation("org.openjdk.jmh.annotations.State")
 }
 
-//benchmark {
+// benchmark {
 //    targets {
 //        register("benchmarks")
 //    }
-//}
+// }
 
 val javadocJar by tasks.creating(Jar::class) {
     archiveClassifier.set("javadoc")
@@ -127,4 +126,3 @@ signing {
         sign(publishing.publications)
     }
 }
-

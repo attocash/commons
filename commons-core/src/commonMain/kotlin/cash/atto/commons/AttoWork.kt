@@ -26,7 +26,7 @@ private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
                 .now()
                 .toLocalDateTime(TimeZone.UTC)
                 .year + 10
-            )) {
+        )) {
             val decreaseFactor = (2.0).pow((year - INITIAL_DATE.year) / DOUBLING_PERIOD).toULong()
             val initialThreshold = INITIAL_LIVE_THRESHOLD * network.thresholdIncreaseFactor
 

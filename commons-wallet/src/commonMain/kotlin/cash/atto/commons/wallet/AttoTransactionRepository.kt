@@ -9,7 +9,9 @@ interface AttoTransactionRepository : AutoCloseable {
     companion object {}
 
     suspend fun save(transaction: AttoTransaction)
+
     suspend fun list(publicKey: AttoPublicKey): List<AttoTransaction>
+
     suspend fun last(publicKey: AttoPublicKey): AttoTransaction?
 
     override fun close() {}
@@ -34,10 +36,7 @@ private class AttoInMemoryTransactionRepository : AttoTransactionRepository {
         }
     }
 
-    override suspend fun last(publicKey: AttoPublicKey): AttoTransaction? {
-        return list(publicKey).lastOrNull()
-    }
-
+    override suspend fun last(publicKey: AttoPublicKey): AttoTransaction? = list(publicKey).lastOrNull()
 }
 
 fun AttoTransactionRepository.Companion.inMemory(): AttoTransactionRepository = AttoInMemoryTransactionRepository()

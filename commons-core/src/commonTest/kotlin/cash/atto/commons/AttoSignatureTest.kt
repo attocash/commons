@@ -21,14 +21,15 @@ internal class AttoSignatureTest {
         )
 
     @Test
-    fun `should sign`() = runTest {
-        // when
-        val signature = privateKey.sign(hash)
+    fun `should sign`() =
+        runTest {
+            // when
+            val signature = privateKey.sign(hash)
 
-        // then
-        assertEquals(expectedSignature, signature)
-        assertTrue(expectedSignature.isValid(publicKey, hash))
-    }
+            // then
+            assertEquals(expectedSignature, signature)
+            assertTrue(expectedSignature.isValid(publicKey, hash))
+        }
 
     @Test
     fun `should not validate wrong signature`() {
@@ -40,16 +41,17 @@ internal class AttoSignatureTest {
     }
 
     @Test
-    fun `should sign 16 bytes`() = runTest {
-        // given
-        val hash16 = AttoHash(Random.nextBytes(ByteArray(16)))
+    fun `should sign 16 bytes`() =
+        runTest {
+            // given
+            val hash16 = AttoHash(Random.nextBytes(ByteArray(16)))
 
-        // when
-        val signature = privateKey.sign(hash16)
+            // when
+            val signature = privateKey.sign(hash16)
 
-        // then
-        assertTrue(signature.isValid(publicKey, hash16))
-    }
+            // then
+            assertTrue(signature.isValid(publicKey, hash16))
+        }
 
     @Test
     @Suppress("ktlint:standard:max-line-length")

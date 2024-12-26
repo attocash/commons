@@ -20,47 +20,48 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 
-
-class MocktRemoteSigner(port: Int) {
+class MocktRemoteSigner(
+    port: Int,
+) {
     val signer = AttoPrivateKey.generate().toSigner()
 
-    val server = embeddedServer(CIO, port = port) {
-        install(ContentNegotiation) {
-            json()
-        }
+    val server =
+        embeddedServer(CIO, port = port) {
+            install(ContentNegotiation) {
+                json()
+            }
 
-        install(StatusPages) {
-            exception<IllegalArgumentException> { call, cause ->
-                call.respond(HttpStatusCode.BadRequest, cause.localizedMessage)
+            install(StatusPages) {
+                exception<IllegalArgumentException> { call, cause ->
+                    call.respond(HttpStatusCode.BadRequest, cause.localizedMessage)
+                }
+            }
+
+            routing {
+                get("/public-keys") {
+                    val response = PublicKeyResponse(signer.publicKey)
+                    call.respond(response)
+                }
+
+                post("/blocks") {
+                    val request = call.request.call.receive<BlockSignatureRequest>()
+                    val signature = signer.sign(request.target)
+                    call.respond(SignatureResponse(signature))
+                }
+
+                post("/votes") {
+                    val request = call.request.call.receive<VoteSignatureRequest>()
+                    val signature = signer.sign(request.target)
+                    call.respond(SignatureResponse(signature))
+                }
+
+                post("/challenges") {
+                    val request = call.request.call.receive<ChallengeSignatureRequest>()
+                    val signature = signer.sign(request.target, request.timestamp)
+                    call.respond(SignatureResponse(signature))
+                }
             }
         }
-
-        routing {
-            get("/public-keys") {
-                val response = PublicKeyResponse(signer.publicKey)
-                call.respond(response)
-            }
-
-            post("/blocks") {
-                val request = call.request.call.receive<BlockSignatureRequest>()
-                val signature = signer.sign(request.target)
-                call.respond(SignatureResponse(signature))
-            }
-
-
-            post("/votes") {
-                val request = call.request.call.receive<VoteSignatureRequest>()
-                val signature = signer.sign(request.target)
-                call.respond(SignatureResponse(signature))
-            }
-
-            post("/challenges") {
-                val request = call.request.call.receive<ChallengeSignatureRequest>()
-                val signature = signer.sign(request.target, request.timestamp)
-                call.respond(SignatureResponse(signature))
-            }
-        }
-    }
 
     fun start() {
         server.start()

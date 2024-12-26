@@ -13,10 +13,11 @@ class AttoWorkerCpuTest {
     }
 
     @Test
-    fun `should perform work with cpu`() = runTest {
-        val network = AttoNetwork.LOCAL
-        val timestamp = AttoNetwork.INITIAL_INSTANT
-        val work = worker.work(network, timestamp, hash.value)
-        assertTrue(AttoWork.isValid(network, timestamp, hash.value, work.value))
-    }
+    fun `should perform work with cpu`() =
+        runTest {
+            val network = AttoNetwork.LOCAL
+            val timestamp = AttoNetwork.INITIAL_INSTANT
+            val work = worker.work(network, timestamp, hash.value)
+            assertTrue(AttoWork.isValid(network, timestamp, hash.value, work.value))
+        }
 }

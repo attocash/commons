@@ -13,6 +13,6 @@ actual fun AttoJWT.Companion.decode(encoded: String): AttoJWT {
 
     return AttoJWT(
         expiresAt = expiresAtMillis.let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) },
-        encoded = encoded
+        encoded = encoded,
     )
 }

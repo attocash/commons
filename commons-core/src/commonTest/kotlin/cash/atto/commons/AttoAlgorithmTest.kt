@@ -8,7 +8,6 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
 class AttoAlgorithmTest {
     @Test
     fun `should serialize json`() {

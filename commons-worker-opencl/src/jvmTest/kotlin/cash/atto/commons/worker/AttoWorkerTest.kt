@@ -19,10 +19,11 @@ class AttoWorkerTest {
 
     @Ignore("OpenCL stopped working in Github actions")
     @Test
-    fun `should perform work with opencl`() = runBlocking {
-        val network = AttoNetwork.LOCAL
-        val timestamp = AttoNetwork.INITIAL_INSTANT
-        val work = worker.work(network, timestamp, hash.value)
-        assertTrue(AttoWork.isValid(network, timestamp, hash.value, work.value))
-    }
+    fun `should perform work with opencl`() =
+        runBlocking {
+            val network = AttoNetwork.LOCAL
+            val timestamp = AttoNetwork.INITIAL_INSTANT
+            val work = worker.work(network, timestamp, hash.value)
+            assertTrue(AttoWork.isValid(network, timestamp, hash.value, work.value))
+        }
 }

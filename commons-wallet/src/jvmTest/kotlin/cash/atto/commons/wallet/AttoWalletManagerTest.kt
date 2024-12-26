@@ -59,9 +59,10 @@ class AttoWalletManagerTest {
         private val viewer = AttoWalletViewer(publicKey, client, accountEntryRepository, transactionRepository)
         private val worker = AttoWorker.remote("http://localhost:$port")
         private val workCache = AttoWorkCache.inMemory()
-        private val walletManager = AttoWalletManager(viewer, signer, client, worker, workCache) {
-            AttoAddress(AttoAlgorithm.V1, publicKey)
-        }
+        private val walletManager =
+            AttoWalletManager(viewer, signer, client, worker, workCache) {
+                AttoAddress(AttoAlgorithm.V1, publicKey)
+            }
 
         init {
             backend.start()
@@ -72,100 +73,112 @@ class AttoWalletManagerTest {
     }
 
     @Test
-    fun `should stream account`(): Unit = runBlocking {
-        // given
-        val expectedAccount = AttoAccount.sample()
+    fun `should stream account`(): Unit =
+        runBlocking {
+            // given
+            val expectedAccount = AttoAccount.sample()
 
-        // when
-        backend.accountMap[expectedAccount.publicKey] = expectedAccount
+            // when
+            backend.accountMap[expectedAccount.publicKey] = expectedAccount
 
-        // then
-        val account = withTimeoutOrNull(5.seconds) {
-            walletManager.accountFlow
-                .onStart { walletManager.updateAccount() }
-                .first { it.publicKey == expectedAccount.publicKey }
+            // then
+            val account =
+                withTimeoutOrNull(5.seconds) {
+                    walletManager
+                        .accountFlow
+                        .onStart { walletManager.updateAccount() }
+                        .first { it.publicKey == expectedAccount.publicKey }
+                }
+            assertNotNull(account)
         }
-        assertNotNull(account)
-    }
 
     @Test
-    fun `should stream account entry`() = runBlocking {
-        // given
-        val expectedEntry = AttoAccountEntry.sample()
+    fun `should stream account entry`() =
+        runBlocking {
+            // given
+            val expectedEntry = AttoAccountEntry.sample()
 
-        // when
-        backend.accountEntryFlow.emit(expectedEntry)
+            // when
+            backend.accountEntryFlow.emit(expectedEntry)
 
-        // then
-        val streamedEntry = withTimeoutOrNull(5.seconds) { walletManager.accountEntryFlow.first() }
-        assertEquals(expectedEntry, streamedEntry)
-        val repositoryEntry = accountEntryRepository.filterOrNullWhenTimeout {
-            it == expectedEntry
+            // then
+            val streamedEntry = withTimeoutOrNull(5.seconds) { walletManager.accountEntryFlow.first() }
+            assertEquals(expectedEntry, streamedEntry)
+            val repositoryEntry =
+                accountEntryRepository.filterOrNullWhenTimeout {
+                    it == expectedEntry
+                }
+            assertEquals(expectedEntry, repositoryEntry)
         }
-        assertEquals(expectedEntry, repositoryEntry)
-    }
 
     @Test
-    fun `should stream transaction`() = runBlocking {
-        // given
-        val expectedTransaction = AttoTransaction.sample()
+    fun `should stream transaction`() =
+        runBlocking {
+            // given
+            val expectedTransaction = AttoTransaction.sample()
 
-        // when
-        backend.transactionFlow.emit(expectedTransaction)
+            // when
+            backend.transactionFlow.emit(expectedTransaction)
 
-        // then
-        val streamedTransaction = withTimeoutOrNull(5.seconds) { walletManager.transactionFlow.first() }
-        assertEquals(expectedTransaction, streamedTransaction)
-        val repositoryTransaction = transactionRepository.filterOrNullWhenTimeout {
-            it == expectedTransaction
+            // then
+            val streamedTransaction = withTimeoutOrNull(5.seconds) { walletManager.transactionFlow.first() }
+            assertEquals(expectedTransaction, streamedTransaction)
+            val repositoryTransaction =
+                transactionRepository.filterOrNullWhenTimeout {
+                    it == expectedTransaction
+                }
+            assertEquals(expectedTransaction, repositoryTransaction)
         }
-        assertEquals(expectedTransaction, repositoryTransaction)
-    }
 
     @Test
-    fun `should stream receivable`() = runBlocking {
-        // given
-        val expectedReceivable = AttoReceivable.sample()
+    fun `should stream receivable`() =
+        runBlocking {
+            // given
+            val expectedReceivable = AttoReceivable.sample()
 
-        // when
-        backend.receivableFlow.emit(expectedReceivable)
+            // when
+            backend.receivableFlow.emit(expectedReceivable)
 
-        // then
-        val transaction = withTimeoutOrNull(5.seconds) { walletManager.receivableFlow.first { expectedReceivable == it } }
-        assertEquals(expectedReceivable, transaction)
-    }
+            // then
+            val transaction = withTimeoutOrNull(5.seconds) { walletManager.receivableFlow.first { expectedReceivable == it } }
+            assertEquals(expectedReceivable, transaction)
+        }
 
     @Test
-    fun `should send blocks`() = runBlocking {
-        val firstReceivable = AttoReceivable.sample() // open
-        backend.receivableFlow.emit(firstReceivable)
-        val firstTransaction = transactionRepository.filterOrNullWhenTimeout {
-            val block = it.block
-            block is ReceiveSupport && block.sendHash == firstReceivable.hash
+    fun `should send blocks`() =
+        runBlocking {
+            val firstReceivable = AttoReceivable.sample() // open
+            backend.receivableFlow.emit(firstReceivable)
+            val firstTransaction =
+                transactionRepository.filterOrNullWhenTimeout {
+                    val block = it.block
+                    block is ReceiveSupport && block.sendHash == firstReceivable.hash
+                }
+            assertNotNull(firstTransaction)
+
+            val secondReceivable = AttoReceivable.sample() // receive
+            backend.receivableFlow.emit(secondReceivable)
+            val secondTransaction =
+                transactionRepository.filterOrNullWhenTimeout {
+                    val block = it.block
+                    block is ReceiveSupport && block.sendHash == secondReceivable.hash
+                }
+            assertNotNull(secondTransaction)
+
+            walletManager.send(AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))), AttoAmount(1UL))
+            walletManager.change(AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))))
+
+            println()
         }
-        assertNotNull(firstTransaction)
-
-        val secondReceivable = AttoReceivable.sample() // receive
-        backend.receivableFlow.emit(secondReceivable)
-        val secondTransaction = transactionRepository.filterOrNullWhenTimeout {
-            val block = it.block
-            block is ReceiveSupport && block.sendHash == secondReceivable.hash
-        }
-        assertNotNull(secondTransaction)
-
-        walletManager.send(AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))), AttoAmount(1UL))
-        walletManager.change(AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))))
-
-        println()
-    }
 
     private suspend fun AttoTransactionRepository.filterOrNullWhenTimeout(filter: (AttoTransaction) -> Boolean): AttoTransaction? {
         return withTimeoutOrNull(5.seconds) {
             do {
-                val transaction = list(publicKey)
-                    .firstOrNull {
-                        filter.invoke(it)
-                    }
+                val transaction =
+                    list(publicKey)
+                        .firstOrNull {
+                            filter.invoke(it)
+                        }
                 if (transaction != null) {
                     return@withTimeoutOrNull transaction
                 }
@@ -177,10 +190,11 @@ class AttoWalletManagerTest {
     private suspend fun AttoAccountEntryRepository.filterOrNullWhenTimeout(filter: (AttoAccountEntry) -> Boolean): AttoAccountEntry? {
         return withTimeoutOrNull(5.seconds) {
             do {
-                val entry = list(publicKey)
-                    .firstOrNull {
-                        filter.invoke(it)
-                    }
+                val entry =
+                    list(publicKey)
+                        .firstOrNull {
+                            filter.invoke(it)
+                        }
                 if (entry != null) {
                     return@withTimeoutOrNull entry
                 }
@@ -188,7 +202,6 @@ class AttoWalletManagerTest {
             null
         }
     }
-
 
     private fun AttoAccount.Companion.sample(): AttoAccount {
         return AttoAccount(
@@ -242,8 +255,8 @@ class AttoWalletManagerTest {
         )
     }
 
-    private fun AttoReceivable.Companion.sample(): AttoReceivable {
-        return AttoReceivable(
+    private fun AttoReceivable.Companion.sample(): AttoReceivable =
+        AttoReceivable(
             hash = AttoHash(Random.Default.nextBytes(32)),
             version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
@@ -251,7 +264,6 @@ class AttoWalletManagerTest {
             timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             receiverAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = publicKey,
-            amount = 1000UL.toAttoAmount()
+            amount = 1000UL.toAttoAmount(),
         )
-    }
 }

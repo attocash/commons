@@ -27,30 +27,32 @@ data class AttoAccount(
             network: AttoNetwork,
             timestamp: Instant = Clock.System.now(),
         ): Pair<AttoOpenBlock, AttoAccount> {
-            val block = AttoOpenBlock(
-                network = network,
-                version = receivable.version,
-                algorithm = receivable.receiverAlgorithm,
-                publicKey = receivable.receiverPublicKey,
-                balance = receivable.amount,
-                timestamp = timestamp,
-                sendHashAlgorithm = receivable.algorithm,
-                sendHash = receivable.hash,
-                representativeAlgorithm = representativeAlgorithm,
-                representativePublicKey = representativePublicKey,
-            )
-            val account = AttoAccount(
-                publicKey = receivable.receiverPublicKey,
-                network = network,
-                version = receivable.version,
-                algorithm = receivable.receiverAlgorithm,
-                height = block.height,
-                balance = receivable.amount,
-                lastTransactionHash = block.hash,
-                lastTransactionTimestamp = timestamp,
-                representativeAlgorithm = representativeAlgorithm,
-                representativePublicKey = representativePublicKey
-            )
+            val block =
+                AttoOpenBlock(
+                    network = network,
+                    version = receivable.version,
+                    algorithm = receivable.receiverAlgorithm,
+                    publicKey = receivable.receiverPublicKey,
+                    balance = receivable.amount,
+                    timestamp = timestamp,
+                    sendHashAlgorithm = receivable.algorithm,
+                    sendHash = receivable.hash,
+                    representativeAlgorithm = representativeAlgorithm,
+                    representativePublicKey = representativePublicKey,
+                )
+            val account =
+                AttoAccount(
+                    publicKey = receivable.receiverPublicKey,
+                    network = network,
+                    version = receivable.version,
+                    algorithm = receivable.receiverAlgorithm,
+                    height = block.height,
+                    balance = receivable.amount,
+                    lastTransactionHash = block.hash,
+                    lastTransactionTimestamp = timestamp,
+                    representativeAlgorithm = representativeAlgorithm,
+                    representativePublicKey = representativePublicKey,
+                )
             return Pair(block, account)
         }
     }
@@ -66,25 +68,27 @@ data class AttoAccount(
         }
         val newBalance = balance.minus(amount)
         val newHeight = height + 1U
-        val block = AttoSendBlock(
-            network = network,
-            version = version,
-            algorithm = algorithm,
-            publicKey = publicKey,
-            height = newHeight,
-            balance = newBalance,
-            timestamp = timestamp,
-            previous = lastTransactionHash,
-            receiverAlgorithm = receiverAlgorithm,
-            receiverPublicKey = receiverPublicKey,
-            amount = amount,
-        )
-        val updatedAccount = copy(
-            height = newHeight,
-            balance = newBalance,
-            lastTransactionHash = block.hash,
-            lastTransactionTimestamp = timestamp
-        )
+        val block =
+            AttoSendBlock(
+                network = network,
+                version = version,
+                algorithm = algorithm,
+                publicKey = publicKey,
+                height = newHeight,
+                balance = newBalance,
+                timestamp = timestamp,
+                previous = lastTransactionHash,
+                receiverAlgorithm = receiverAlgorithm,
+                receiverPublicKey = receiverPublicKey,
+                amount = amount,
+            )
+        val updatedAccount =
+            copy(
+                height = newHeight,
+                balance = newBalance,
+                lastTransactionHash = block.hash,
+                lastTransactionTimestamp = timestamp,
+            )
         return Pair(block, updatedAccount)
     }
 
@@ -97,25 +101,27 @@ data class AttoAccount(
         val newBalance = balance.plus(receivable.amount)
         val newHeight = height + 1U
         val newVersion = version.max(receivable.version)
-        val block = AttoReceiveBlock(
-            network = network,
-            version = newVersion,
-            algorithm = algorithm,
-            publicKey = publicKey,
-            height = newHeight,
-            balance = newBalance,
-            timestamp = timestamp,
-            previous = lastTransactionHash,
-            sendHashAlgorithm = receivable.algorithm,
-            sendHash = receivable.hash,
-        )
-        val updatedAccount = copy(
-            version = newVersion,
-            height = newHeight,
-            balance = newBalance,
-            lastTransactionHash = block.hash,
-            lastTransactionTimestamp = timestamp
-        )
+        val block =
+            AttoReceiveBlock(
+                network = network,
+                version = newVersion,
+                algorithm = algorithm,
+                publicKey = publicKey,
+                height = newHeight,
+                balance = newBalance,
+                timestamp = timestamp,
+                previous = lastTransactionHash,
+                sendHashAlgorithm = receivable.algorithm,
+                sendHash = receivable.hash,
+            )
+        val updatedAccount =
+            copy(
+                version = newVersion,
+                height = newHeight,
+                balance = newBalance,
+                lastTransactionHash = block.hash,
+                lastTransactionTimestamp = timestamp,
+            )
         return Pair(block, updatedAccount)
     }
 
@@ -125,26 +131,27 @@ data class AttoAccount(
         timestamp: Instant = Clock.System.now(),
     ): Pair<AttoChangeBlock, AttoAccount> {
         val newHeight = height + 1U
-        val block = AttoChangeBlock(
-            network = network,
-            version = version,
-            algorithm = algorithm,
-            publicKey = publicKey,
-            height = newHeight,
-            balance = balance,
-            timestamp = timestamp,
-            previous = lastTransactionHash,
-            representativeAlgorithm = representativeAlgorithm,
-            representativePublicKey = representativePublicKey,
-        )
-        val updatedAccount = copy(
-            height = newHeight,
-            lastTransactionHash = block.hash,
-            lastTransactionTimestamp = timestamp,
-            representativeAlgorithm = representativeAlgorithm,
-            representativePublicKey = representativePublicKey
-        )
+        val block =
+            AttoChangeBlock(
+                network = network,
+                version = version,
+                algorithm = algorithm,
+                publicKey = publicKey,
+                height = newHeight,
+                balance = balance,
+                timestamp = timestamp,
+                previous = lastTransactionHash,
+                representativeAlgorithm = representativeAlgorithm,
+                representativePublicKey = representativePublicKey,
+            )
+        val updatedAccount =
+            copy(
+                height = newHeight,
+                lastTransactionHash = block.hash,
+                lastTransactionTimestamp = timestamp,
+                representativeAlgorithm = representativeAlgorithm,
+                representativePublicKey = representativePublicKey,
+            )
         return Pair(block, updatedAccount)
-
     }
 }

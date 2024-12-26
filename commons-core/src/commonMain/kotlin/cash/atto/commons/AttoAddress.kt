@@ -91,6 +91,4 @@ data class AttoAddress(
 
 fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)
 
-fun AttoAccount.getAddress(): AttoAddress {
-    return AttoAddress(this.algorithm, this.publicKey)
-}
+fun AttoAccount.getAddress(): AttoAddress = AttoAddress(this.algorithm, this.publicKey)

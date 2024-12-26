@@ -25,27 +25,30 @@ internal class AttoWorkerCpu(
     override suspend fun work(
         threshold: ULong,
         target: ByteArray,
-    ): AttoWork = coroutineScope {
-        val controller = WorkerController()
-        val rangeSize = ULong.MAX_VALUE / count
+    ): AttoWork =
+        coroutineScope {
+            val controller = WorkerController()
+            val rangeSize = ULong.MAX_VALUE / count
 
-        val jobs = (0U until count.toUInt()).map { i ->
-            launch(dispatcher) {
-                val worker = Worker(
-                    controller,
-                    threshold,
-                    target,
-                    i * rangeSize,
-                    rangeSize
-                )
-                worker.work()
-            }
+            val jobs =
+                (0U until count.toUInt()).map { i ->
+                    launch(dispatcher) {
+                        val worker =
+                            Worker(
+                                controller,
+                                threshold,
+                                target,
+                                i * rangeSize,
+                                rangeSize,
+                            )
+                        worker.work()
+                    }
+                }
+
+            jobs.joinAll()
+
+            controller.get()
         }
-
-        jobs.joinAll()
-
-        controller.get()
-    }
 
     override fun close() {
         dispatcher.cancel()
@@ -57,9 +60,10 @@ private class WorkerController {
     private var work: AttoWork? = null
     private val mutex = Mutex()
 
-    suspend fun isEmpty(): Boolean = mutex.withLock {
-        work == null
-    }
+    suspend fun isEmpty(): Boolean =
+        mutex.withLock {
+            work == null
+        }
 
     suspend fun add(work: ByteArray) {
         mutex.withLock {
@@ -69,14 +73,15 @@ private class WorkerController {
         }
     }
 
-    suspend fun get(): AttoWork = mutex.withLock {
-        while (work == null) {
-            mutex.unlock()
-            delay(10)
-            mutex.lock()
+    suspend fun get(): AttoWork =
+        mutex.withLock {
+            while (work == null) {
+                mutex.unlock()
+                delay(10)
+                mutex.lock()
+            }
+            return work!!
         }
-        return work!!
-    }
 }
 
 private class Worker(

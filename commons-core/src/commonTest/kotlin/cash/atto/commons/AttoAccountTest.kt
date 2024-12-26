@@ -14,16 +14,17 @@ class AttoAccountTest {
     @Test
     fun `should open account`() {
         // given
-        val receivable = AttoReceivable(
-            version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
-            publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
-            receiverAlgorithm = AttoAlgorithm.V1,
-            receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
-            amount = 1000UL.toAttoAmount(),
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds() - 10000L),
-            hash = AttoHash(Random.Default.nextBytes(32))
-        )
+        val receivable =
+            AttoReceivable(
+                version = 0U.toAttoVersion(),
+                algorithm = AttoAlgorithm.V1,
+                publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                receiverAlgorithm = AttoAlgorithm.V1,
+                receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                amount = 1000UL.toAttoAmount(),
+                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds() - 10000L),
+                hash = AttoHash(Random.Default.nextBytes(32)),
+            )
 
         val representativeAlgorithm = AttoAlgorithm.V1
         val representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32))
@@ -31,13 +32,14 @@ class AttoAccountTest {
         val timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
 
         // when
-        val (openBlock, newAccount) = AttoAccount.open(
-            representativeAlgorithm = representativeAlgorithm,
-            representativePublicKey = representativePublicKey,
-            receivable = receivable,
-            network = network,
-            timestamp = timestamp
-        )
+        val (openBlock, newAccount) =
+            AttoAccount.open(
+                representativeAlgorithm = representativeAlgorithm,
+                representativePublicKey = representativePublicKey,
+                receivable = receivable,
+                network = network,
+                timestamp = timestamp,
+            )
 
         // then
         assertEquals(receivable.receiverPublicKey, newAccount.publicKey)
@@ -59,12 +61,13 @@ class AttoAccountTest {
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
         // when
-        val (sendBlock, updatedAccount) = account.send(
-            receiverAlgorithm = receiverAlgorithm,
-            receiverPublicKey = receiverPublicKey,
-            amount = amount,
-            timestamp = timestamp
-        )
+        val (sendBlock, updatedAccount) =
+            account.send(
+                receiverAlgorithm = receiverAlgorithm,
+                receiverPublicKey = receiverPublicKey,
+                amount = amount,
+                timestamp = timestamp,
+            )
 
         // then
         assertEquals(account.balance - amount, updatedAccount.balance)
@@ -77,23 +80,25 @@ class AttoAccountTest {
     fun `should receive amount`() {
         // given
         val account = AttoAccount.sample()
-        val receivable = AttoReceivable(
-            hash = AttoHash(Random.Default.nextBytes(32)),
-            version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
-            publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
-            timestamp = account.lastTransactionTimestamp.minus(5.seconds),
-            receiverAlgorithm = account.algorithm,
-            receiverPublicKey = account.publicKey,
-            amount = 200UL.toAttoAmount()
-        )
+        val receivable =
+            AttoReceivable(
+                hash = AttoHash(Random.Default.nextBytes(32)),
+                version = 0U.toAttoVersion(),
+                algorithm = AttoAlgorithm.V1,
+                publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                timestamp = account.lastTransactionTimestamp.minus(5.seconds),
+                receiverAlgorithm = account.algorithm,
+                receiverPublicKey = account.publicKey,
+                amount = 200UL.toAttoAmount(),
+            )
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
         // when
-        val (receiveBlock, updatedAccount) = account.receive(
-            receivable = receivable,
-            timestamp = timestamp
-        )
+        val (receiveBlock, updatedAccount) =
+            account.receive(
+                receivable = receivable,
+                timestamp = timestamp,
+            )
 
         // then
         assertEquals(account.balance + receivable.amount, updatedAccount.balance)
@@ -107,25 +112,27 @@ class AttoAccountTest {
         // given
         val account = AttoAccount.sample()
         val receivableTimestamp = account.lastTransactionTimestamp.plus(5.seconds)
-        val receivable = AttoReceivable(
-            hash = AttoHash(Random.Default.nextBytes(32)),
-            version = 0U.toAttoVersion(),
-            algorithm = account.algorithm,
-            publicKey = account.publicKey,
-            timestamp = receivableTimestamp,
-            receiverAlgorithm = account.algorithm,
-            receiverPublicKey = account.publicKey,
-            amount = 200UL.toAttoAmount()
-        )
+        val receivable =
+            AttoReceivable(
+                hash = AttoHash(Random.Default.nextBytes(32)),
+                version = 0U.toAttoVersion(),
+                algorithm = account.algorithm,
+                publicKey = account.publicKey,
+                timestamp = receivableTimestamp,
+                receiverAlgorithm = account.algorithm,
+                receiverPublicKey = account.publicKey,
+                amount = 200UL.toAttoAmount(),
+            )
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
         // when
-        val exception = assertFailsWith<IllegalArgumentException> {
-            account.receive(
-                receivable = receivable,
-                timestamp = timestamp
-            )
-        }
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                account.receive(
+                    receivable = receivable,
+                    timestamp = timestamp,
+                )
+            }
 
         // then
         assertEquals("Timestamp can't be before receivable timestamp", exception.message)
@@ -140,11 +147,12 @@ class AttoAccountTest {
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
         // when
-        val (changeBlock, updatedAccount) = account.change(
-            representativeAlgorithm = newRepresentativeAlgorithm,
-            representativePublicKey = newRepresentativePublicKey,
-            timestamp = timestamp
-        )
+        val (changeBlock, updatedAccount) =
+            account.change(
+                representativeAlgorithm = newRepresentativeAlgorithm,
+                representativePublicKey = newRepresentativePublicKey,
+                timestamp = timestamp,
+            )
 
         // then
         assertEquals(account.balance, updatedAccount.balance)
@@ -162,14 +170,15 @@ class AttoAccountTest {
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
         // when
-        val exception = assertFailsWith<IllegalArgumentException> {
-            account.send(
-                receiverAlgorithm = account.algorithm,
-                receiverPublicKey = account.publicKey,
-                amount = 100UL.toAttoAmount(),
-                timestamp = timestamp
-            )
-        }
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                account.send(
+                    receiverAlgorithm = account.algorithm,
+                    receiverPublicKey = account.publicKey,
+                    amount = 100UL.toAttoAmount(),
+                    timestamp = timestamp,
+                )
+            }
 
         // then
         assertEquals("You can't send money to yourself", exception.message)
@@ -227,8 +236,8 @@ class AttoAccountTest {
         assertEquals(expectedJson.compactJson(), json)
     }
 
-    private fun AttoAccount.Companion.sample(): AttoAccount {
-        return AttoAccount(
+    private fun AttoAccount.Companion.sample(): AttoAccount =
+        AttoAccount(
             publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
             network = AttoNetwork.LOCAL,
             version = 0U.toAttoVersion(),
@@ -240,5 +249,4 @@ class AttoAccountTest {
             representativeAlgorithm = AttoAlgorithm.V1,
             representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
         )
-    }
 }

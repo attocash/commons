@@ -10,7 +10,6 @@ import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.time.Duration.Companion.seconds
 
 class AttoTransactionTest {
     val privateKey = AttoPrivateKey.generate()
@@ -31,39 +30,40 @@ class AttoTransactionTest {
         )
 
     @Test
-    fun `should serialize buffer`() = runTest {
-        // given
-        val expectedTransaction =
-            AttoTransaction(
-                block = receiveBlock,
-                signature = privateKey.sign(receiveBlock.hash),
-                work = AttoWorker.cpu().work(receiveBlock),
-            )
+    fun `should serialize buffer`() =
+        runTest {
+            // given
+            val expectedTransaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = privateKey.sign(receiveBlock.hash),
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
 
-        // when
-        val buffer = expectedTransaction.toBuffer()
-        val transaction = AttoTransaction.fromBuffer(buffer)
+            // when
+            val buffer = expectedTransaction.toBuffer()
+            val transaction = AttoTransaction.fromBuffer(buffer)
 
-        // then
-        assertEquals(expectedTransaction, transaction)
-    }
+            // then
+            assertEquals(expectedTransaction, transaction)
+        }
 
     @Test
-    fun `should serialize json`() = runTest {
-        // given
-        val expectedTransaction =
-            AttoTransaction(
-                block = receiveBlock,
-                signature = privateKey.sign(receiveBlock.hash),
-                work = AttoWorker.cpu().work(receiveBlock),
-            )
+    fun `should serialize json`() =
+        runTest {
+            // given
+            val expectedTransaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = privateKey.sign(receiveBlock.hash),
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
 
-        // when
-        val json = Json.encodeToString(expectedTransaction)
-        val transaction = Json.decodeFromString<AttoTransaction>(json)
+            // when
+            val json = Json.encodeToString(expectedTransaction)
+            val transaction = Json.decodeFromString<AttoTransaction>(json)
 
-        // then
-        assertEquals(expectedTransaction, transaction)
-    }
-
+            // then
+            assertEquals(expectedTransaction, transaction)
+        }
 }

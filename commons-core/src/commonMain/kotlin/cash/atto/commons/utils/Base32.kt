@@ -2,10 +2,11 @@ package cash.atto.commons.utils
 
 object Base32 {
     private val ALPHABET = "abcdefghijklmnopqrstuvwxyz234567"
-    private val DECODE_MAP = IntArray(128) { -1 }.apply {
-        ALPHABET.forEachIndexed { index, char -> this[char.code] = index }
-        ALPHABET.uppercase().forEachIndexed { index, char -> this[char.code] = index }
-    }
+    private val DECODE_MAP =
+        IntArray(128) { -1 }.apply {
+            ALPHABET.forEachIndexed { index, char -> this[char.code] = index }
+            ALPHABET.uppercase().forEachIndexed { index, char -> this[char.code] = index }
+        }
 
     fun encode(data: ByteArray): String {
         val result = StringBuilder()

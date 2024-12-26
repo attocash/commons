@@ -96,6 +96,7 @@ sealed interface AttoBlock :
             timestamp <= Clock.System.now() + 1.minutes
     }
 }
+
 interface PreviousSupport {
     val height: AttoHeight
     val previous: AttoHash

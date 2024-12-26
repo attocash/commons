@@ -19,9 +19,10 @@ interface AttoSigner {
         return sign(vote.hash)
     }
 
-    suspend fun sign(challenge: AttoChallenge, timestamp: Instant): AttoSignature {
-        return sign(AttoHash.hash(64, publicKey.value, challenge.value, timestamp.toByteArray()))
-    }
+    suspend fun sign(
+        challenge: AttoChallenge,
+        timestamp: Instant,
+    ): AttoSignature = sign(AttoHash.hash(64, publicKey.value, challenge.value, timestamp.toByteArray()))
 
     suspend fun checkPublicKey(publicKey: AttoPublicKey) {
         if (this.publicKey != publicKey) {
@@ -30,17 +31,15 @@ interface AttoSigner {
     }
 }
 
-expect class InMemorySigner(privateKey: AttoPrivateKey) : AttoSigner {
+expect class InMemorySigner(
+    privateKey: AttoPrivateKey,
+) : AttoSigner {
     override val publicKey: AttoPublicKey
     internal val privateKey: AttoPrivateKey
 
     override suspend fun sign(hash: AttoHash): AttoSignature
 }
 
-fun AttoPrivateKey.toSigner(): AttoSigner {
-    return InMemorySigner(this)
-}
+fun AttoPrivateKey.toSigner(): AttoSigner = InMemorySigner(this)
 
-suspend fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature {
-    return this.toSigner().sign(hash)
-}
+suspend fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature = this.toSigner().sign(hash)

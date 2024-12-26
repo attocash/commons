@@ -21,48 +21,57 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.minutes
 
-private val httpClient = HttpClient {
-    install(ContentNegotiation) {
-        json(Json {
-            ignoreUnknownKeys = true
-        })
-    }
-    install(HttpTimeout)
+private val httpClient =
+    HttpClient {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                },
+            )
+        }
+        install(HttpTimeout)
 
-    expectSuccess = true
-}
+        expectSuccess = true
+    }
 
 private class WorkerRemote(
     private val url: String,
-    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() }
+    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
 ) : AttoWorker {
-    override suspend fun work(threshold: ULong, target: ByteArray): AttoWork {
-        throw NotImplementedError()
-    }
+    override suspend fun work(
+        threshold: ULong,
+        target: ByteArray,
+    ): AttoWork = throw NotImplementedError()
 
-    override suspend fun work(network: AttoNetwork, timestamp: Instant, target: ByteArray): AttoWork {
+    override suspend fun work(
+        network: AttoNetwork,
+        timestamp: Instant,
+        target: ByteArray,
+    ): AttoWork {
         val headers = headerProvider.invoke()
 
         val uri = "$url/works"
 
-        val request = Request(
-            network = network,
-            timestamp = timestamp,
-            target = target.toHex()
-        )
+        val request =
+            Request(
+                network = network,
+                timestamp = timestamp,
+                target = target.toHex(),
+            )
 
-        return httpClient.post(uri) {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
-            setBody(request)
-            headers {
-                headers.forEach { (key, value) -> append(key, value) }
-            }
-            timeout {
-                socketTimeoutMillis = 5.minutes.inWholeMilliseconds
-            }
-        }
-            .body<Response>()
+        return httpClient
+            .post(uri) {
+                contentType(ContentType.Application.Json)
+                accept(ContentType.Application.Json)
+                setBody(request)
+                headers {
+                    headers.forEach { (key, value) -> append(key, value) }
+                }
+                timeout {
+                    socketTimeoutMillis = 5.minutes.inWholeMilliseconds
+                }
+            }.body<Response>()
             .work
     }
 
@@ -82,38 +91,43 @@ private class WorkerRemote(
     )
 }
 
-
 private class WorkerGatekeeper(
     private val urlProvider: (AttoNetwork) -> String = { "https://gatekeeper.${it.name.lowercase()}.application.atto.cash" },
-    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() }
+    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
 ) : AttoWorker {
-    override suspend fun work(threshold: ULong, target: ByteArray): AttoWork {
-        throw NotImplementedError()
-    }
+    override suspend fun work(
+        threshold: ULong,
+        target: ByteArray,
+    ): AttoWork = throw NotImplementedError()
 
-    override suspend fun work(network: AttoNetwork, timestamp: Instant, target: ByteArray): AttoWork {
+    override suspend fun work(
+        network: AttoNetwork,
+        timestamp: Instant,
+        target: ByteArray,
+    ): AttoWork {
         val headers = headerProvider.invoke()
 
         val url = urlProvider(network)
         val uri = "$url/works"
 
-        val request = Request(
-            timestamp = timestamp,
-            target = target.toHex()
-        )
+        val request =
+            Request(
+                timestamp = timestamp,
+                target = target.toHex(),
+            )
 
-        return httpClient.post(uri) {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
-            setBody(request)
-            headers {
-                headers.forEach { (key, value) -> append(key, value) }
-            }
-            timeout {
-                socketTimeoutMillis = 5.minutes.inWholeMilliseconds
-            }
-        }
-            .body<Response>()
+        return httpClient
+            .post(uri) {
+                contentType(ContentType.Application.Json)
+                accept(ContentType.Application.Json)
+                setBody(request)
+                headers {
+                    headers.forEach { (key, value) -> append(key, value) }
+                }
+                timeout {
+                    socketTimeoutMillis = 5.minutes.inWholeMilliseconds
+                }
+            }.body<Response>()
             .work
     }
 
@@ -134,25 +148,18 @@ private class WorkerGatekeeper(
 
 fun AttoWorker.Companion.remote(
     url: String,
-    headerProvider: suspend () -> Map<String, String> = { emptyMap() }
-): AttoWorker {
-    return WorkerRemote(url, headerProvider)
-}
+    headerProvider: suspend () -> Map<String, String> = { emptyMap() },
+): AttoWorker = WorkerRemote(url, headerProvider)
 
 internal fun AttoWorker.Companion.attoBackend(
     urlProvider: (AttoNetwork) -> String = { "https://gatekeeper.${it.name.lowercase()}.application.atto.cash" },
-    headerProvider: suspend () -> Map<String, String> = { emptyMap() }
-): AttoWorker {
-    return WorkerGatekeeper(urlProvider, headerProvider)
-}
+    headerProvider: suspend () -> Map<String, String> = { emptyMap() },
+): AttoWorker = WorkerGatekeeper(urlProvider, headerProvider)
 
-fun AttoWorker.Companion.attoBackend(
-    authenticator: AttoAuthenticator,
-): AttoWorker {
-    return AttoWorker.attoBackend(
+fun AttoWorker.Companion.attoBackend(authenticator: AttoAuthenticator): AttoWorker =
+    AttoWorker.attoBackend(
         headerProvider = {
             val jwt = authenticator.getAuthorization()
             mapOf("Authorization" to "Bearer $jwt")
-        }
+        },
     )
-}

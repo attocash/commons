@@ -43,7 +43,9 @@ import org.jocl.cl_platform_id
 import org.jocl.cl_program
 import org.jocl.cl_queue_properties
 
-actual class AttoWorkerOpenCL actual constructor(deviceNumber: UByte) : AttoWorker {
+actual class AttoWorkerOpenCL actual constructor(
+    deviceNumber: UByte,
+) : AttoWorker {
     private val kernelSource: String by lazy {
         val fileLocation = AttoWorkerOpenCL::class.java.classLoader.getResource("kernels/work.cl")!!
         fileLocation.openStream().bufferedReader().use { it.readText() }

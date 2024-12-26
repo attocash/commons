@@ -7,6 +7,7 @@ interface AttoWorkCache : AutoCloseable {
     companion object {}
 
     suspend fun save(work: AttoWork)
+
     suspend fun get(): AttoWork?
 
     override fun close() {}
@@ -19,10 +20,7 @@ private class AttoInMemoryWorkCache : AttoWorkCache {
         workState.value = work
     }
 
-    override suspend fun get(): AttoWork? {
-        return workState.value
-    }
+    override suspend fun get(): AttoWork? = workState.value
 }
 
 fun AttoWorkCache.Companion.inMemory(): AttoWorkCache = AttoInMemoryWorkCache()
-

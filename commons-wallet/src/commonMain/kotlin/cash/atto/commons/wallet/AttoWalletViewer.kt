@@ -148,10 +148,7 @@ class AttoWalletViewer(
         }
     }
 
-
     override fun close() {
         scope.cancel()
     }
 }
-
-

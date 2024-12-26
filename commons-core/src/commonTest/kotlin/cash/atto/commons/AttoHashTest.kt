@@ -1,10 +1,8 @@
 package cash.atto.commons
 
 import kotlinx.serialization.json.Json
-
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
 
 internal class AttoHashTest {
     @Test

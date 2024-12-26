@@ -5,7 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertTrue
 
-
 internal class AttoMnemonicTest {
     @Test
     @Suppress("ktlint:standard:max-line-length")
@@ -57,7 +56,6 @@ internal class AttoMnemonicTest {
         // given
         val words =
             "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly truly"
-
 
         // when
         val exception = assertFails { AttoMnemonic(words) }

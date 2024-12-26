@@ -25,4 +25,3 @@ fun InetSocketAddress.toAttoSocketAddress(): AttoSocketAddress {
 
     return AttoSocketAddress(address, port)
 }
-

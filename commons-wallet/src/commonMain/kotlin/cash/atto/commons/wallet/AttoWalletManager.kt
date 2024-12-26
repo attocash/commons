@@ -32,7 +32,6 @@ import kotlinx.datetime.Instant
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
-
 class AttoWalletManager(
     private val viewer: AttoWalletViewer,
     private val signer: AttoSigner,
@@ -64,7 +63,10 @@ class AttoWalletManager(
         viewer.updateAccount()
     }
 
-    private suspend fun work(timestamp: Instant, target: ByteArray): AttoWork {
+    private suspend fun work(
+        timestamp: Instant,
+        target: ByteArray,
+    ): AttoWork {
         while (coroutineContext.isActive) {
             try {
                 val work = workCache.get()
@@ -132,18 +134,23 @@ class AttoWalletManager(
         return account
     }
 
-    private suspend fun publish(block: AttoBlock, newAccount: AttoAccount): AttoTransaction {
-        val target = when (block) {
-            is AttoOpenBlock -> block.publicKey.value
-            is PreviousSupport -> block.previous.value
-            else -> throw IllegalArgumentException("$block unsupported")
-        }
+    private suspend fun publish(
+        block: AttoBlock,
+        newAccount: AttoAccount,
+    ): AttoTransaction {
+        val target =
+            when (block) {
+                is AttoOpenBlock -> block.publicKey.value
+                is PreviousSupport -> block.previous.value
+                else -> throw IllegalArgumentException("$block unsupported")
+            }
 
-        val transaction = AttoTransaction(
-            block = block,
-            signature = signer.sign(block),
-            work = work(block.timestamp, target)
-        )
+        val transaction =
+            AttoTransaction(
+                block = block,
+                signature = signer.sign(block),
+                work = work(block.timestamp, target),
+            )
 
         client.publish(transaction)
         viewer.update(newAccount)
@@ -157,12 +164,13 @@ class AttoWalletManager(
         mutex.withLock {
             val now = client.now()
             val account = this.account
-            val (block, newAccount) = if (account == null) {
-                val algorithmPublicKey = representativeProvider.invoke()
-                AttoAccount.open(algorithmPublicKey.algorithm, algorithmPublicKey.publicKey, receivable, client.network, now)
-            } else {
-                account.receive(receivable, now)
-            }
+            val (block, newAccount) =
+                if (account == null) {
+                    val algorithmPublicKey = representativeProvider.invoke()
+                    AttoAccount.open(algorithmPublicKey.algorithm, algorithmPublicKey.publicKey, receivable, client.network, now)
+                } else {
+                    account.receive(receivable, now)
+                }
 
             publish(block, newAccount)
 
@@ -172,7 +180,7 @@ class AttoWalletManager(
 
     suspend fun send(
         receiverAddress: AttoAddress,
-        amount: AttoAmount
+        amount: AttoAmount,
     ): AttoSendBlock {
         requireReady()
         require(receiverAddress.publicKey != publicKey) { "You can't send $amount to yourself" }
@@ -191,12 +199,9 @@ class AttoWalletManager(
 
             return block
         }
-
     }
 
-    suspend fun change(
-        representativeAddress: AttoAddress,
-    ): AttoChangeBlock {
+    suspend fun change(representativeAddress: AttoAddress): AttoChangeBlock {
         requireReady()
 
         mutex.withLock {
@@ -211,16 +216,19 @@ class AttoWalletManager(
         }
     }
 
-
     override fun close() {
         scope.cancel()
         viewer.close()
     }
 
-    private fun AttoWork.isValid(timestamp: Instant, target: ByteArray): Boolean {
-        return AttoWork.isValid(client.network, timestamp, target, this.value)
-    }
-
+    private fun AttoWork.isValid(
+        timestamp: Instant,
+        target: ByteArray,
+    ): Boolean =
+        AttoWork.isValid(
+            client.network,
+            timestamp,
+            target,
+            this.value,
+        )
 }
-
-

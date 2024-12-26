@@ -4,7 +4,6 @@ import cash.atto.commons.utils.SecureRandom
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 
-
 private fun toEntropyWithChecksum(words: List<String>): ByteArray {
     val buffer = Buffer()
 

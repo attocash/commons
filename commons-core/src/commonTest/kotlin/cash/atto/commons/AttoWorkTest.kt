@@ -28,22 +28,19 @@ internal class AttoWorkTest {
     }
 
     companion object {
-        val thresholdMap = HashMap<Instant, Long>().apply {
-            val calculateTimestamp = fun(years: Long): Instant {
-                return INITIAL_INSTANT.plus(years, DateTimeUnit.YEAR, TimeZone.UTC)
-            }
-            val calculateThreshold = fun(decreaseFactor: UInt): Long {
-                return (INITIAL_LIVE_THRESHOLD / decreaseFactor).toLong()
-            }
+        val thresholdMap =
+            HashMap<Instant, Long>().apply {
+                val calculateTimestamp = fun(years: Long): Instant = INITIAL_INSTANT.plus(years, DateTimeUnit.YEAR, TimeZone.UTC)
+                val calculateThreshold = fun(decreaseFactor: UInt): Long = (INITIAL_LIVE_THRESHOLD / decreaseFactor).toLong()
 
-            put(calculateTimestamp.invoke(0), calculateThreshold(1U))
-            put(calculateTimestamp.invoke(1), calculateThreshold(1U))
-            put(calculateTimestamp.invoke(2), calculateThreshold(2U))
-            put(calculateTimestamp.invoke(3), calculateThreshold(2U))
-            put(calculateTimestamp.invoke(4), calculateThreshold(4U))
-            put(calculateTimestamp.invoke(5), calculateThreshold(5U))
-            put(calculateTimestamp.invoke(6), calculateThreshold(8U))
-        }
+                put(calculateTimestamp.invoke(0), calculateThreshold(1U))
+                put(calculateTimestamp.invoke(1), calculateThreshold(1U))
+                put(calculateTimestamp.invoke(2), calculateThreshold(2U))
+                put(calculateTimestamp.invoke(3), calculateThreshold(2U))
+                put(calculateTimestamp.invoke(4), calculateThreshold(4U))
+                put(calculateTimestamp.invoke(5), calculateThreshold(5U))
+                put(calculateTimestamp.invoke(6), calculateThreshold(8U))
+            }
     }
 
     @Test

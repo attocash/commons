@@ -59,11 +59,20 @@ class AttoAlgorithmPrivateKey(
     }
 }
 
-expect class HmacSha512(secretKey: ByteArray) {
-    fun update(data: ByteArray, offset: Int = 0, len: Int = data.size)
-    fun doFinal(output: ByteArray, offset: Int = 0)
-}
+expect class HmacSha512(
+    secretKey: ByteArray,
+) {
+    fun update(
+        data: ByteArray,
+        offset: Int = 0,
+        len: Int = data.size,
+    )
 
+    fun doFinal(
+        output: ByteArray,
+        offset: Int = 0,
+    )
+}
 
 private class BIP44(
     val key: ByteArray,
@@ -118,7 +127,7 @@ private class BIP44(
     }
 }
 
-
-private fun ed25519BIP44(seed: AttoSeed, path: String): ByteArray {
-    return BIP44.ed25519(seed, path)
-}
+private fun ed25519BIP44(
+    seed: AttoSeed,
+    path: String,
+): ByteArray = BIP44.ed25519(seed, path)

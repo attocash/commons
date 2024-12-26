@@ -25,8 +25,12 @@ data class AttoSeed(
     }
 }
 
-expect suspend fun generateSecretWithPBKDF2WithHmacSHA512(mnemonic: CharArray, salt: ByteArray, iterations: Int, keyLength: Int): ByteArray
-
+expect suspend fun generateSecretWithPBKDF2WithHmacSHA512(
+    mnemonic: CharArray,
+    salt: ByteArray,
+    iterations: Int,
+    keyLength: Int,
+): ByteArray
 
 suspend fun AttoMnemonic.toSeed(passphrase: String = ""): AttoSeed {
     val mnemonic = words.joinToString(" ")

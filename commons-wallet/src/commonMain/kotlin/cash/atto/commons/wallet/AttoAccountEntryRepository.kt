@@ -9,7 +9,9 @@ interface AttoAccountEntryRepository : AutoCloseable {
     companion object {}
 
     suspend fun save(entry: AttoAccountEntry)
+
     suspend fun list(publicKey: AttoPublicKey): List<AttoAccountEntry>
+
     suspend fun last(publicKey: AttoPublicKey): AttoAccountEntry?
 
     override fun close() {}
@@ -34,10 +36,7 @@ private class AttoInMemoryAccountEntryRepository : AttoAccountEntryRepository {
         }
     }
 
-    override suspend fun last(publicKey: AttoPublicKey): AttoAccountEntry? {
-        return list(publicKey).lastOrNull()
-    }
-
+    override suspend fun last(publicKey: AttoPublicKey): AttoAccountEntry? = list(publicKey).lastOrNull()
 }
 
 fun AttoAccountEntryRepository.Companion.inMemory(): AttoAccountEntryRepository = AttoInMemoryAccountEntryRepository()

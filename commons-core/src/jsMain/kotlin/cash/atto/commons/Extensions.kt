@@ -16,7 +16,6 @@ fun Uint8Array.toByteArray(): ByteArray {
     return output
 }
 
-
 fun ByteArray.toUint8Array(): Uint8Array {
     val output = Uint8Array(size)
     repeat(size) { index ->
@@ -25,6 +24,7 @@ fun ByteArray.toUint8Array(): Uint8Array {
     return output
 }
 
-suspend fun <T> Promise<T>.await(): T = suspendCoroutine { cont ->
-    then({ cont.resume(it) }, { cont.resumeWithException(it) })
-}
+suspend fun <T> Promise<T>.await(): T =
+    suspendCoroutine { cont ->
+        then({ cont.resume(it) }, { cont.resumeWithException(it) })
+    }

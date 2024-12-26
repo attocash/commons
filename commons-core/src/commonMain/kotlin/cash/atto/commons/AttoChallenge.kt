@@ -9,12 +9,13 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Serializable(with = AttoChallengeSerializer::class)
-data class AttoChallenge(val value: ByteArray) {
+data class AttoChallenge(
+    val value: ByteArray,
+) {
     companion object {}
 
     init {
         require(value.size >= 64) { "Challenge should have at least 64 bytes" }
-
     }
 
     override fun equals(other: Any?): Boolean {
@@ -26,18 +27,12 @@ data class AttoChallenge(val value: ByteArray) {
         return value.contentEquals(other.value)
     }
 
-    override fun hashCode(): Int {
-        return value.contentHashCode()
-    }
+    override fun hashCode(): Int = value.contentHashCode()
 
-    override fun toString(): String {
-        return value.toHex()
-    }
+    override fun toString(): String = value.toHex()
 }
 
-fun AttoChallenge.Companion.generate(size: UInt = 64U): AttoChallenge {
-    return AttoChallenge(SecureRandom.randomByteArray(size))
-}
+fun AttoChallenge.Companion.generate(size: UInt = 64U): AttoChallenge = AttoChallenge(SecureRandom.randomByteArray(size))
 
 object AttoChallengeSerializer : KSerializer<AttoChallenge> {
     override val descriptor = PrimitiveSerialDescriptor("AttoChallenge", PrimitiveKind.STRING)

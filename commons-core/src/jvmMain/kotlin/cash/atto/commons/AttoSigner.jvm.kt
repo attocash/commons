@@ -3,8 +3,10 @@ package cash.atto.commons
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
 
+internal object AttoSignerSignerHolder
+
 actual class InMemorySigner actual constructor(
-    internal actual val privateKey: AttoPrivateKey
+    internal actual val privateKey: AttoPrivateKey,
 ) : AttoSigner {
     actual override val publicKey: AttoPublicKey = privateKey.toPublicKey()
 

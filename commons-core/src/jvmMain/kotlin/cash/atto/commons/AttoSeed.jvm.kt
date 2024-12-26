@@ -7,7 +7,7 @@ actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     mnemonic: CharArray,
     salt: ByteArray,
     iterations: Int,
-    keyLength: Int
+    keyLength: Int,
 ): ByteArray {
     val spec = PBEKeySpec(mnemonic, salt, iterations, keyLength)
 
