@@ -115,7 +115,7 @@ allOpen {
 
 val javadocJar by tasks.creating(Jar::class) {
     archiveClassifier.set("javadoc")
-    from(tasks.named("dokkaJavadoc"))
+    from(tasks.named("dokkaHtml"))
 }
 
 publishing {
