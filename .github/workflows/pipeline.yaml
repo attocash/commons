@@ -37,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - test
+    if: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
     steps:
       - uses: actions/checkout@v4
 
