@@ -99,10 +99,16 @@ class AttoWalletManagerTest {
             val expectedEntry = AttoAccountEntry.sample()
 
             // when
-            backend.accountEntryFlow.emit(expectedEntry)
+            val streamedEntry =
+                withTimeoutOrNull(5.seconds) {
+                    walletManager
+                        .accountEntryFlow
+                        .onStart {
+                            backend.accountEntryFlow.emit(expectedEntry)
+                        }.first()
+                }
 
             // then
-            val streamedEntry = withTimeoutOrNull(5.seconds) { walletManager.accountEntryFlow.first() }
             assertEquals(expectedEntry, streamedEntry)
             val repositoryEntry =
                 accountEntryRepository.filterOrNullWhenTimeout {
@@ -118,10 +124,16 @@ class AttoWalletManagerTest {
             val expectedTransaction = AttoTransaction.sample()
 
             // when
-            backend.transactionFlow.emit(expectedTransaction)
+            val streamedTransaction =
+                withTimeoutOrNull(5.seconds) {
+                    walletManager
+                        .transactionFlow
+                        .onStart {
+                            backend.transactionFlow.emit(expectedTransaction)
+                        }.first()
+                }
 
             // then
-            val streamedTransaction = withTimeoutOrNull(5.seconds) { walletManager.transactionFlow.first() }
             assertEquals(expectedTransaction, streamedTransaction)
             val repositoryTransaction =
                 transactionRepository.filterOrNullWhenTimeout {
@@ -137,10 +149,16 @@ class AttoWalletManagerTest {
             val expectedReceivable = AttoReceivable.sample()
 
             // when
-            backend.receivableFlow.emit(expectedReceivable)
+            val transaction =
+                withTimeoutOrNull(5.seconds) {
+                    walletManager
+                        .receivableFlow
+                        .onStart {
+                            backend.receivableFlow.emit(expectedReceivable)
+                        }.first { expectedReceivable == it }
+                }
 
             // then
-            val transaction = withTimeoutOrNull(5.seconds) { walletManager.receivableFlow.first { expectedReceivable == it } }
             assertEquals(expectedReceivable, transaction)
         }
 
