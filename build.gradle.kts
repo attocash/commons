@@ -23,12 +23,15 @@ subprojects {
     }
 
     tasks
-        .matching { it.name == "publishJvmPublicationToSonatypeRepository" || it.name == "publishJsPublicationToSonatypeRepository" }
-        .configureEach {
+        .matching {
+            it.name == "publishJvmPublicationToSonatypeRepository" || it.name == "publishJsPublicationToSonatypeRepository" ||
+                it.name == "publishWasmJsPublicationToSonatypeRepository"
+        }.configureEach {
             dependsOn(tasks.named("signKotlinMultiplatformPublication"))
             dependsOn(tasks.named("signJvmPublication"))
             if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl") {
                 dependsOn(tasks.named("signJsPublication"))
+                dependsOn(tasks.named("signWasmJsPublication"))
             }
         }
 
@@ -36,6 +39,7 @@ subprojects {
         dependsOn(tasks.named("signJvmPublication"))
         if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl") {
             dependsOn(tasks.named("signJsPublication"))
+            dependsOn(tasks.named("signWasmJsPublication"))
         }
     }
 }

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     val kotlinVersion = "2.1.0"
     kotlin("plugin.serialization") version kotlinVersion
@@ -33,12 +35,26 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    useChromiumHeadless()
+                    useChromeHeadlessNoSandbox()
                 }
             }
         }
 
         nodejs()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        compilerOptions {
+            freeCompilerArgs.add("-Xwasm-attach-js-exception")
+        }
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadlessNoSandbox()
+                }
+            }
+        }
     }
 
     applyDefaultHierarchyTemplate()
@@ -83,6 +99,23 @@ kotlin {
         }
 
         val jsTest by getting {
+            dependencies {
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-browser:0.3")
+
+                implementation(npm("@stablelib/sha256", stablelibVersion))
+                implementation(npm("@stablelib/sha512", stablelibVersion))
+                implementation(npm("@stablelib/blake2b", stablelibVersion))
+                implementation(npm("@stablelib/hmac", stablelibVersion))
+                implementation(npm("@stablelib/ed25519", stablelibVersion))
+            }
+        }
+
+        val wasmJsTest by getting {
             dependencies {
             }
         }
