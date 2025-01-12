@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     val kotlinVersion = "2.1.0"
     kotlin("plugin.serialization") version kotlinVersion
@@ -33,12 +35,26 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    useChromiumHeadless()
+                    useChromeHeadlessNoSandbox()
                 }
             }
         }
 
         nodejs()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        compilerOptions {
+            freeCompilerArgs.add("-Xwasm-attach-js-exception")
+        }
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadlessNoSandbox()
+                }
+            }
+        }
     }
 
     applyDefaultHierarchyTemplate()
@@ -64,11 +80,13 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation("io.ktor:ktor-client-cio:$ktorVersion")
-                implementation("com.auth0:java-jwt:4.4.0")
             }
         }
 
-        val jvmTest by getting
+        val jvmTest by getting {
+            dependencies {
+            }
+        }
 
         val jsMain by getting {
             dependencies {
@@ -78,6 +96,12 @@ kotlin {
 
         val jsTest by getting {
             dependencies {
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js-wasm-js:$ktorVersion")
             }
         }
     }

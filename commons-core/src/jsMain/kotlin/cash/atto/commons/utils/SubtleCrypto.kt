@@ -5,8 +5,6 @@ import org.khronos.webgl.Uint8Array
 import kotlin.js.Promise
 
 external interface SubtleCrypto {
-    companion object {}
-
     fun importKey(
         format: String,
         keyData: Uint8Array,
@@ -28,7 +26,7 @@ external interface SubtleCrypto {
     ): Promise<ArrayBuffer>
 }
 
-fun SubtleCrypto.Companion.getInstance(): SubtleCrypto =
+fun getSubtleCryptoInstance(): SubtleCrypto =
     js(
         code = """
 
@@ -41,9 +39,5 @@ fun SubtleCrypto.Companion.getInstance(): SubtleCrypto =
 
                """,
     ).unsafeCast<SubtleCrypto>()
-
-external interface Algorithm
-
-fun Algorithm(name: String): Algorithm = js("{ name: name }").unsafeCast<Algorithm>()
 
 interface CryptoKey
