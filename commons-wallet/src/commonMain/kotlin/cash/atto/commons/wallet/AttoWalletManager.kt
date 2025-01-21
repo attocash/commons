@@ -217,7 +217,11 @@ class AttoWalletManager(
     }
 
     override fun close() {
-        scope.cancel()
+        try {
+            scope.cancel()
+        } catch (e: Exception) {
+            // ignore
+        }
         viewer.close()
     }
 
