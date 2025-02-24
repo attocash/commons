@@ -32,7 +32,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val ktorVersion = "3.1.0"
+        val ktorVersion = "3.1.1"
 
         val commonMain by getting {
             dependencies {
