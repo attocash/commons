@@ -91,7 +91,7 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation("io.ktor:ktor-server-cio:$ktorVersion")
-                implementation("org.slf4j:slf4j-simple:2.0.16")
+                implementation("org.slf4j:slf4j-simple:2.0.17")
                 implementation("com.auth0:java-jwt:4.5.0")
             }
         }
