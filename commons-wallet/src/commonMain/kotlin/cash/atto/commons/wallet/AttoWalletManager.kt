@@ -158,18 +158,21 @@ class AttoWalletManager(
         return transaction
     }
 
-    suspend fun receive(receivable: AttoReceivable): AttoBlock {
+    suspend fun receive(
+        receivable: AttoReceivable,
+        timestamp: Instant? = null,
+    ): AttoBlock {
         requireReady()
 
         mutex.withLock {
-            val now = client.now()
+            val blockTimestamp = timestamp ?: client.now()
             val account = this.account
             val (block, newAccount) =
                 if (account == null) {
                     val algorithmPublicKey = representativeProvider.invoke()
-                    AttoAccount.open(algorithmPublicKey.algorithm, algorithmPublicKey.publicKey, receivable, client.network, now)
+                    AttoAccount.open(algorithmPublicKey.algorithm, algorithmPublicKey.publicKey, receivable, client.network, blockTimestamp)
                 } else {
-                    account.receive(receivable, now)
+                    account.receive(receivable, blockTimestamp)
                 }
 
             publish(block, newAccount)
@@ -181,6 +184,7 @@ class AttoWalletManager(
     suspend fun send(
         receiverAddress: AttoAddress,
         amount: AttoAmount,
+        timestamp: Instant? = null,
     ): AttoSendBlock {
         requireReady()
         require(receiverAddress.publicKey != publicKey) { "You can't send $amount to yourself" }
@@ -192,8 +196,8 @@ class AttoWalletManager(
                 throw IllegalStateException("${account.balance} balance is not enough to send $amount")
             }
 
-            val now = client.now()
-            val (block, newAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, now)
+            val blockTimestamp = timestamp ?: client.now()
+            val (block, newAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, blockTimestamp)
 
             publish(block, newAccount)
 
@@ -201,14 +205,17 @@ class AttoWalletManager(
         }
     }
 
-    suspend fun change(representativeAddress: AttoAddress): AttoChangeBlock {
+    suspend fun change(
+        representativeAddress: AttoAddress,
+        timestamp: Instant? = null,
+    ): AttoChangeBlock {
         requireReady()
 
         mutex.withLock {
             val account = getAccountOrThrow()
 
-            val now = client.now()
-            val (block, newAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey, now)
+            val blockTimestamp = timestamp ?: client.now()
+            val (block, newAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey, blockTimestamp)
 
             publish(block, newAccount)
 
