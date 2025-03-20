@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import cash.atto.commons.serialiazer.InstantMillisSerializer
 import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.serialization.Serializable
@@ -11,6 +12,7 @@ data class AttoVote(
     val publicKey: AttoPublicKey,
     val blockAlgorithm: AttoAlgorithm,
     val blockHash: AttoHash,
+    @Serializable(with = InstantMillisSerializer::class)
     val timestamp: Instant,
 ) : AttoHashable,
     AttoSerializable {

@@ -7,6 +7,7 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.fromHexToByteArray
+import cash.atto.commons.serialiazer.InstantMillisSerializer
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
@@ -106,6 +107,7 @@ private class WalletGatekeeperClient(
 
     @Serializable
     data class TokenInitAnswer(
+        @Serializable(with = InstantMillisSerializer::class)
         val timestamp: Instant,
         val signature: AttoSignature,
     )

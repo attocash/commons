@@ -1,9 +1,7 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
+import cash.atto.commons.serialiazer.InstantMillisSerializer
 import kotlinx.datetime.Instant
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,6 +10,7 @@ data class AttoReceivable(
     val version: AttoVersion,
     val algorithm: AttoAlgorithm,
     val publicKey: AttoPublicKey,
+    @Serializable(with = InstantMillisSerializer::class)
     val timestamp: Instant,
     val receiverAlgorithm: AttoAlgorithm,
     val receiverPublicKey: AttoPublicKey,
