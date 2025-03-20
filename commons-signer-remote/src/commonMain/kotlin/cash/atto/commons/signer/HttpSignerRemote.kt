@@ -7,6 +7,7 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoVote
+import cash.atto.commons.serialiazer.InstantMillisSerializer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -220,6 +221,7 @@ internal class HttpSignerRemote(
     @Serializable
     data class ChallengeSignatureRequest(
         override val target: AttoChallenge,
+        @Serializable(with = InstantMillisSerializer::class)
         val timestamp: Instant,
     ) : SignatureRequest<AttoChallenge>
 

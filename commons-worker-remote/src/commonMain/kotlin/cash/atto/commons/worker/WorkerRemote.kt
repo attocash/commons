@@ -3,6 +3,7 @@ package cash.atto.commons.worker
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.gatekeeper.AttoAuthenticator
+import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.toHex
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -81,6 +82,7 @@ private class WorkerRemote(
     @Serializable
     private data class Request(
         val network: AttoNetwork,
+        @Serializable(with = InstantMillisSerializer::class)
         val timestamp: Instant,
         val target: String,
     )
@@ -136,6 +138,7 @@ private class WorkerGatekeeper(
 
     @Serializable
     data class Request(
+        @Serializable(with = InstantMillisSerializer::class)
         val timestamp: Instant,
         val target: String,
     )

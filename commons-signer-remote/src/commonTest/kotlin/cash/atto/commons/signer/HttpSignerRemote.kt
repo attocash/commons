@@ -89,7 +89,7 @@ class SignerRemoteTest {
             publicKey = signer.publicKey,
             blockAlgorithm = AttoAlgorithm.V1,
             blockHash = AttoHash(Random.nextBytes(ByteArray(32))),
-            timestamp = Clock.System.now(),
+            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
         )
 
     private fun AttoBlock.Companion.sample(): AttoBlock =
