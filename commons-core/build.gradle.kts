@@ -153,7 +153,7 @@ publishing {
                 "Atto Commons Core provides a set of low-level operations that includes signing, " +
                     "seed generation, block hashing, and account creation.",
             )
-            url.set("https://atto.cash")
+            url.set("https://github.com/attocash/commons")
 
             organization {
                 name.set("Atto")

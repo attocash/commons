@@ -94,7 +94,7 @@ publishing {
             description.set(
                 "Atto Commons Signer remote provide client for signer application.",
             )
-            url.set("https://atto.cash")
+            url.set("https://github.com/attocash/commons")
 
             organization {
                 name.set("Atto")

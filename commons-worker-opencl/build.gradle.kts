@@ -84,7 +84,7 @@ publishing {
             description.set(
                 "Atto Commons Worker provides OpenCL GPU work implementation.",
             )
-            url.set("https://atto.cash")
+            url.set("https://github.com/attocash/commons")
 
             organization {
                 name.set("Atto")
