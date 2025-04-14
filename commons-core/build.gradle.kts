@@ -155,6 +155,11 @@ publishing {
             )
             url.set("https://atto.cash")
 
+            organization {
+                name.set("Atto")
+                url.set("https://atto.cash")
+            }
+
             licenses {
                 license {
                     name.set("BSD 3-Clause License")
