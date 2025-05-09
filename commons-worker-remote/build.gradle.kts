@@ -64,7 +64,6 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                api(project(":commons-gatekeeper"))
                 api(project(":commons-worker"))
 
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")

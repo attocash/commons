@@ -7,7 +7,11 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.fromHexToByteArray
+import cash.atto.commons.node.AttoNodeOperations
+import cash.atto.commons.node.custom
 import cash.atto.commons.serialiazer.InstantMillisSerializer
+import cash.atto.commons.worker.AttoWorker
+import cash.atto.commons.worker.remote
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
@@ -127,3 +131,34 @@ fun AttoAuthenticator.Companion.attoBackend(
     val url = "https://wallet-gatekeeper.${network.name.lowercase()}.application.atto.cash"
     return WalletGatekeeperClient(url, signer)
 }
+
+fun AttoAuthenticator.toHeaderProvider(): suspend () -> Map<String, String> {
+    return {
+        val jwt = getAuthorization()
+        mapOf("Authorization" to "Bearer $jwt")
+    }
+}
+
+/**
+ * Creates a AttoClient using Atto backend
+ */
+fun AttoNodeOperations.Companion.attoBackend(
+    network: AttoNetwork,
+    authenticator: AttoAuthenticator,
+): AttoNodeOperations {
+    val gatekeeperUrl = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"
+    return AttoNodeOperations.custom(network, gatekeeperUrl, authenticator.toHeaderProvider())
+}
+
+internal fun AttoWorker.Companion.attoBackend(
+    network: AttoNetwork,
+    headerProvider: suspend () -> Map<String, String> = { emptyMap() },
+): AttoWorker {
+    val gatekeeperUrl = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"
+    return AttoWorker.remote(gatekeeperUrl, headerProvider)
+}
+
+fun AttoWorker.Companion.attoBackend(
+    network: AttoNetwork,
+    authenticator: AttoAuthenticator,
+): AttoWorker = AttoWorker.attoBackend(network, authenticator.toHeaderProvider())

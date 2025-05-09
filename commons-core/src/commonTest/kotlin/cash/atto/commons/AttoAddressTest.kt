@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import kotlinx.io.readByteArray
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -19,6 +20,16 @@ internal class AttoAddressTest {
 
         // then
         assertEquals(expectedAddress, account)
+    }
+
+    @Test
+    fun `should serialize and deserialize`() {
+        // when
+        val serialized = expectedAddress.toBuffer().readByteArray()
+        val deserialized = AttoAddress.parse(serialized)
+
+        // then
+        assertEquals(expectedAddress, deserialized)
     }
 
     @Test
@@ -45,6 +56,7 @@ internal class AttoAddressTest {
         val address = AttoAddress.parsePath(expectedAddress.path)
 
         // then
+        assertTrue(AttoAddress.isValidPath(expectedAddress.path))
         assertEquals(expectedAddress, address)
     }
 

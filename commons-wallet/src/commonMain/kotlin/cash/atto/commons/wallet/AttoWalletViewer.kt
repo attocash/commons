@@ -5,6 +5,7 @@ import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.node.AttoNodeOperations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,13 +20,12 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 class AttoWalletViewer(
     val publicKey: AttoPublicKey,
-    private val client: AttoNodeClient,
+    private val client: AttoNodeOperations,
     private val accountEntryRepository: AttoAccountEntryRepository? = null,
     private val transactionRepository: AttoTransactionRepository? = null,
 ) : AutoCloseable {
@@ -60,7 +60,6 @@ class AttoWalletViewer(
                 delay(retryDelay)
             }
         }
-        throw CancellationException("Transaction saving cancelled.")
     }
 
     private fun startAccountEntryStream() {
@@ -68,10 +67,20 @@ class AttoWalletViewer(
             logger.info { "No account entry repository defined. Account Entry stream won't start" }
             return
         }
+
         scope.launch {
-            val fromHeight = accountEntryRepository.last(publicKey)?.height ?: AttoHeight(1U)
-            client.accountEntryStream(publicKey, fromHeight).collect {
-                _accountEntryFlow.emit(it)
+            while (isActive) {
+                try {
+                    val fromHeight = accountEntryRepository.last(publicKey)?.height ?: AttoHeight(1U)
+
+                    client.accountEntryStream(publicKey, fromHeight).collect {
+                        _accountEntryFlow.emit(it)
+                    }
+                    break
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to stream account entries. Retrying in 10s..." }
+                    delay(10_000)
+                }
             }
         }
     }
@@ -91,7 +100,6 @@ class AttoWalletViewer(
                         delay(retryDelay)
                     }
                 }
-                throw CancellationException("Transaction saving cancelled.")
             }
         }
     }
@@ -102,9 +110,16 @@ class AttoWalletViewer(
             return
         }
         scope.launch {
-            val fromHeight = transactionRepository.last(publicKey)?.height ?: AttoHeight(1U)
-            client.transactionStream(publicKey, fromHeight).collect {
-                _transactionFlow.emit(it)
+            while (isActive) {
+                try {
+                    val fromHeight = transactionRepository.last(publicKey)?.height ?: AttoHeight(1U)
+                    client.transactionStream(publicKey, fromHeight).collect {
+                        _transactionFlow.emit(it)
+                    }
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to stream transactions. Retrying in 10s..." }
+                    delay(10_000)
+                }
             }
         }
     }
@@ -124,7 +139,6 @@ class AttoWalletViewer(
                         delay(retryDelay)
                     }
                 }
-                throw CancellationException("Transaction saving cancelled.")
             }
         }
     }

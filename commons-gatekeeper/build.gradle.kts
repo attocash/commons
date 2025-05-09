@@ -64,7 +64,11 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
+                api(project(":commons-node"))
+                api(project(":commons-node-remote"))
+
                 api(project(":commons-worker"))
+                api(project(":commons-worker-remote"))
 
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
@@ -135,7 +139,7 @@ publishing {
         pom {
             name.set("Atto Commons Worker")
             description.set(
-                "Atto Commons Worker provides worker interface and CPU worker implementation.",
+                "Atto Commons Gatekeeper provides access to atto backend operations.",
             )
             url.set("https://github.com/attocash/commons")
 

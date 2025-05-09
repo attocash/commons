@@ -1,4 +1,4 @@
-package cash.atto.commons.signer
+package cash.atto.commons.node
 
 import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoAmount
