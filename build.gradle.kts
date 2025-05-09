@@ -29,7 +29,10 @@ subprojects {
         }.configureEach {
             dependsOn(tasks.named("signKotlinMultiplatformPublication"))
             dependsOn(tasks.named("signJvmPublication"))
-            if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl") {
+            if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl" &&
+                project.name != "commons-gatekeeper-test" && project.name != "commons-node-test" &&
+                project.name != "commons-worker-test"
+            ) {
                 dependsOn(tasks.named("signJsPublication"))
                 dependsOn(tasks.named("signWasmJsPublication"))
             }
@@ -37,7 +40,10 @@ subprojects {
 
     tasks.matching { it.name == "publishKotlinMultiplatformPublicationToSonatypeRepository" }.configureEach {
         dependsOn(tasks.named("signJvmPublication"))
-        if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl") {
+        if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl" &&
+            project.name != "commons-gatekeeper-test" && project.name != "commons-node-test" &&
+            project.name != "commons-worker-test"
+        ) {
             dependsOn(tasks.named("signJsPublication"))
             dependsOn(tasks.named("signWasmJsPublication"))
         }

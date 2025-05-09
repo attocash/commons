@@ -1,17 +1,14 @@
-package cash.atto.commons.wallet
+package cash.atto.commons.node
 
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
+import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoWork
-import cash.atto.commons.gatekeeper.AttoJWT
-import cash.atto.commons.toHex
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -30,49 +27,23 @@ import io.ktor.server.routing.routing
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.security.KeyPairGenerator
-import java.security.interfaces.ECPrivateKey
-import kotlin.time.Duration.Companion.days
+import java.net.ServerSocket
 
-private val jwtAlgorithm by lazy {
-    val keyPairGenerator = KeyPairGenerator.getInstance("EC")
-    keyPairGenerator.initialize(521)
-    val keyPair = keyPairGenerator.generateKeyPair()
-    val privateKey = keyPair.private as ECPrivateKey
-    Algorithm.ECDSA512(null, privateKey)
+fun randomPort(): Int {
+    ServerSocket(0).use { socket ->
+        return socket.localPort
+    }
 }
 
-fun generateJwt(): AttoJWT {
-    val jwt =
-        JWT
-            .create()
-            .withIssuer("test")
-            .withAudience("http://localhost")
-            .withIssuedAt(java.time.Instant.now())
-            .withExpiresAt(
-                java
-                    .time
-                    .Instant
-                    .now()
-                    .plusSeconds(1.days.inWholeSeconds),
-            ).withSubject(ByteArray(32).toHex())
-            .sign(jwtAlgorithm)
-
-    val decodedJWT = JWT.decode(jwt)
-
-    return AttoJWT(decodedJWT.expiresAtAsInstant.toKotlinInstant(), jwt)
-}
-
-class AttoTestBackend(
-    port: Int,
-) {
+class AttoMockNode(
+    val port: Int = randomPort(),
+) : AutoCloseable {
     private val logger = KotlinLogging.logger {}
 
     val accountMap = mutableMapOf<AttoPublicKey, AttoAccount>()
@@ -87,14 +58,6 @@ class AttoTestBackend(
             }
 
             routing {
-                post("/login") {
-                    val response = TokenInitResponse(ByteArray(64).toHex())
-                    call.respond(response)
-                }
-
-                post("/login/challenges/{challenge}") {
-                    call.respond(generateJwt().encoded)
-                }
 
                 get("/accounts/{publicKey}") {
                     val publicKeyString = call.parameters["publicKey"]
@@ -105,13 +68,21 @@ class AttoTestBackend(
                         val account = accountMap[publicKey]
 
                         if (account != null) {
-                            call.respond(account) // Respond with the account if found
+                            call.respond(account)
                         } else {
-                            call.respond(HttpStatusCode.NotFound, "Account not found") // Respond with 404 if not found
+                            call.respond(HttpStatusCode.NotFound, "Account not found")
                         }
                     } else {
                         call.respond(HttpStatusCode.BadRequest, "Invalid or missing publicKey")
                     }
+                }
+
+                post("/accounts") {
+                    val search = call.request.call.receive<AttoNodeOperations.AccountSearch>()
+
+                    val accounts = search.addresses.map { AttoAddress.parsePath(it) }.mapNotNull { accountMap[it.publicKey] }
+
+                    call.respond(accounts)
                 }
 
                 get("/accounts/{publicKey}/transactions/stream") {
@@ -121,7 +92,7 @@ class AttoTestBackend(
                         call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
                             transactionFlow
                                 .onStart { logger.info { "TransactionFlow(publicKey=$publicKey) started" } }
-                                .onEach { logger.info { "TransactionFlow(publicKey=$publicKey) stopped" } }
+                                .onCompletion { logger.info { "TransactionFlow(publicKey=$publicKey) stopped" } }
                                 .filter { it.block.publicKey == publicKey }
                                 .collect {
                                     val ndjsonLine = Json.encodeToString(AttoTransaction.serializer(), it) + "\n"
@@ -142,7 +113,7 @@ class AttoTestBackend(
                         call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
                             accountEntryFlow
                                 .onStart { logger.info { "AccountEntryFlow(publicKey=$publicKey) started" } }
-                                .onEach { logger.info { "AccountEntryFlow(publicKey=$publicKey) stopped" } }
+                                .onCompletion { logger.info { "AccountEntryFlow(publicKey=$publicKey) stopped" } }
                                 .filter { it.publicKey == publicKey }
                                 .collect {
                                     val ndjsonLine = Json.encodeToString(AttoAccountEntry.serializer(), it) + "\n"
@@ -162,7 +133,7 @@ class AttoTestBackend(
                         call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
                             receivableFlow
                                 .onStart { logger.info { "ReceivableFlow(publicKey=$publicKey) started" } }
-                                .onEach { logger.info { "ReceivableFlow(publicKey=$publicKey) stopped" } }
+                                .onCompletion { logger.info { "ReceivableFlow(publicKey=$publicKey) stopped" } }
                                 .filter { it.receiverPublicKey == publicKey }
                                 .collect {
                                     val ndjsonLine = Json.encodeToString(AttoReceivable.serializer(), it) + "\n"
@@ -173,6 +144,32 @@ class AttoTestBackend(
                         }
                     } catch (e: Exception) {
                         logger.error(e) { "ReceivableFlow(publicKey=$publicKey) failed" }
+                    }
+                }
+
+                post("/accounts/receivables/stream") {
+                    val search = call.request.call.receive<AttoNodeOperations.AccountSearch>()
+                    val publicKeys =
+                        search
+                            .addresses
+                            .asSequence()
+                            .map { AttoAddress.parsePath(it).publicKey }
+                            .toSet()
+                    try {
+                        call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
+                            receivableFlow
+                                .onStart { logger.info { "ReceivableFlow(publicKeys=$publicKeys) started" } }
+                                .onCompletion { logger.info { "ReceivableFlow(publicKeys=$publicKeys) stopped" } }
+                                .filter { it.receiverPublicKey in publicKeys }
+                                .collect {
+                                    val ndjsonLine = Json.encodeToString(AttoReceivable.serializer(), it) + "\n"
+                                    writeStringUtf8(ndjsonLine)
+                                    flush()
+                                    logger.info { "Emitted $it" }
+                                }
+                        }
+                    } catch (e: Exception) {
+                        logger.error(e) { "ReceivableFlow(publicKeys=$publicKeys) failed" }
                     }
                 }
 
@@ -196,11 +193,6 @@ class AttoTestBackend(
 
                     call.respond(response)
                 }
-
-                post("/works") {
-                    val response = WorkResponse(AttoWork(ByteArray(8)))
-                    call.respond(response)
-                }
             }
         }
 
@@ -210,6 +202,10 @@ class AttoTestBackend(
 
     fun stop() {
         server.stop()
+    }
+
+    override fun close() {
+        stop()
     }
 
     @Serializable

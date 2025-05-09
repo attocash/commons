@@ -19,6 +19,9 @@ data class AttoAccount(
     val representativeAlgorithm: AttoAlgorithm,
     val representativePublicKey: AttoPublicKey,
 ) : HeightSupport {
+    val address by lazy { AttoAddress(algorithm, publicKey) }
+    val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
+
     companion object {
         fun open(
             representativeAlgorithm: AttoAlgorithm,

@@ -17,4 +17,7 @@ data class AttoAccountEntry(
     val balance: AttoAmount,
     @Serializable(with = InstantMillisSerializer::class)
     val timestamp: Instant,
-) : HeightSupport
+) : HeightSupport {
+    val address by lazy { AttoAddress(algorithm, publicKey) }
+    val subjectAddress by lazy { AttoAddress(subjectAlgorithm, subjectPublicKey) }
+}

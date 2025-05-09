@@ -1,11 +1,11 @@
-package cash.atto.commons.signer
+package cash.atto.commons.node
 
 import cash.atto.commons.AttoPrivateKey
-import cash.atto.commons.signer.HttpSignerRemote.BlockSignatureRequest
-import cash.atto.commons.signer.HttpSignerRemote.ChallengeSignatureRequest
-import cash.atto.commons.signer.HttpSignerRemote.PublicKeyResponse
-import cash.atto.commons.signer.HttpSignerRemote.SignatureResponse
-import cash.atto.commons.signer.HttpSignerRemote.VoteSignatureRequest
+import cash.atto.commons.node.HttpSignerRemote.BlockSignatureRequest
+import cash.atto.commons.node.HttpSignerRemote.ChallengeSignatureRequest
+import cash.atto.commons.node.HttpSignerRemote.PublicKeyResponse
+import cash.atto.commons.node.HttpSignerRemote.SignatureResponse
+import cash.atto.commons.node.HttpSignerRemote.VoteSignatureRequest
 import cash.atto.commons.toSigner
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json

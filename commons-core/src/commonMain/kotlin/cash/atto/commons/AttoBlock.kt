@@ -134,6 +134,9 @@ data class AttoSendBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
+    val address by lazy { AttoAddress(algorithm, publicKey) }
+    val receiverAddress by lazy { AttoAddress(receiverAlgorithm, receiverPublicKey) }
+
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoSendBlock? {
             if (AttoBlockType.SEND.size > serializedBlock.size) {
@@ -208,6 +211,8 @@ data class AttoReceiveBlock(
     override val type = AttoBlockType.RECEIVE
 
     override val hash by lazy { toBuffer().hash() }
+
+    val address by lazy { AttoAddress(algorithm, publicKey) }
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoReceiveBlock? {
@@ -284,6 +289,9 @@ data class AttoOpenBlock(
     @Transient
     override val height = AttoHeight(1UL)
 
+    val address by lazy { AttoAddress(algorithm, publicKey) }
+    val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
+
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoOpenBlock? {
             if (AttoBlockType.OPEN.size > serializedBlock.size) {
@@ -354,6 +362,9 @@ data class AttoChangeBlock(
     override val type = AttoBlockType.CHANGE
 
     override val hash by lazy { toBuffer().hash() }
+
+    val address by lazy { AttoAddress(algorithm, publicKey) }
+    val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoChangeBlock? {

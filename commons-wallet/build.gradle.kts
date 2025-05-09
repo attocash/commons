@@ -64,11 +64,14 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":commons-core"))
-                api(project(":commons-gatekeeper"))
+                api(project(":commons-node"))
+                api(project(":commons-node-remote"))
                 api(project(":commons-worker-remote"))
+                api(project(":commons-gatekeeper"))
+
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-                implementation("io.github.oshai:kotlin-logging:7.0.7")
+                implementation("io.github.oshai:kotlin-logging:7.0.6")
 
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
@@ -90,9 +93,14 @@ kotlin {
 
         val jvmTest by getting {
             dependencies {
+                implementation(project(":commons-node-test"))
+                implementation(project(":commons-worker-test"))
+                implementation(project(":commons-gatekeeper-test"))
+
                 implementation("io.ktor:ktor-server-cio:$ktorVersion")
-                implementation("org.slf4j:slf4j-simple:2.0.17")
                 implementation("com.auth0:java-jwt:4.5.0")
+
+                implementation("org.slf4j:slf4j-simple:2.0.17")
             }
         }
 

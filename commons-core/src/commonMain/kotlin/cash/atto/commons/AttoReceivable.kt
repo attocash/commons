@@ -15,7 +15,10 @@ data class AttoReceivable(
     val receiverAlgorithm: AttoAlgorithm,
     val receiverPublicKey: AttoPublicKey,
     val amount: AttoAmount,
-)
+) {
+    val address by lazy { AttoAddress(algorithm, publicKey) }
+    val receiverAddress by lazy { AttoAddress(receiverAlgorithm, receiverPublicKey) }
+}
 
 fun AttoSendBlock.toReceivable(): AttoReceivable =
     AttoReceivable(

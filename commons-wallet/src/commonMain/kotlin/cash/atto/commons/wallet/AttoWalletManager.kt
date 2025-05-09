@@ -13,6 +13,7 @@ import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoWork
 import cash.atto.commons.PreviousSupport
 import cash.atto.commons.isValid
+import cash.atto.commons.node.AttoNodeOperations
 import cash.atto.commons.toHex
 import cash.atto.commons.worker.AttoWorker
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -35,7 +36,7 @@ import kotlin.time.Duration.Companion.seconds
 class AttoWalletManager(
     private val viewer: AttoWalletViewer,
     private val signer: AttoSigner,
-    private val client: AttoNodeClient,
+    private val client: AttoNodeOperations,
     private val worker: AttoWorker,
     private val workCache: AttoWorkCache = AttoWorkCache.inMemory(),
     private val representativeProvider: () -> AttoAddress,

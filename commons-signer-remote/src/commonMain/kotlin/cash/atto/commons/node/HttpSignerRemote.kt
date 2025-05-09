@@ -1,4 +1,4 @@
-package cash.atto.commons.signer
+package cash.atto.commons.node
 
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChallenge

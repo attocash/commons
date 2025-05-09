@@ -1,6 +1,10 @@
 package cash.atto.commons
 
+import cash.atto.commons.serialiazer.AttoAddressAsByteArraySerializer
 import cash.atto.commons.utils.Base32
+import kotlinx.io.Buffer
+import kotlinx.io.writeUByte
+import kotlinx.serialization.Serializable
 
 private const val SCHEMA = "atto://"
 
@@ -13,37 +17,45 @@ private fun String.fromAddress(): ByteArray {
     return Base32.decode(this.substring(SCHEMA.length).uppercase() + "===")
 }
 
+@Serializable(with = AttoAddressAsByteArraySerializer::class)
 data class AttoAddress(
-    val algorithmPublicKey: AttoAlgorithmPublicKey,
+    val algorithm: AttoAlgorithm,
+    val publicKey: AttoPublicKey,
 ) {
-    val algorithm = algorithmPublicKey.algorithm
-    val publicKey = algorithmPublicKey.publicKey
     val schema = SCHEMA
-    val path = toAddress(algorithmPublicKey)
+    val path = toAddress(algorithm, publicKey)
     val value = schema + path
-
-    constructor(algorithm: AttoAlgorithm, publicKey: AttoPublicKey) : this(AttoAlgorithmPublicKey(algorithm, publicKey))
 
     companion object {
         private val regex = "^$SCHEMA[a-z2-7]{61}$".toRegex()
         private const val CHECKSUM_SIZE = 5
 
-        private fun checksum(algorithmPublicKey: AttoAlgorithmPublicKey): ByteArray {
+        private fun checksum(
+            algorithm: ByteArray,
+            publicKey: ByteArray,
+        ): ByteArray {
             return AttoHasher.hash(
                 CHECKSUM_SIZE,
-                byteArrayOf(algorithmPublicKey.algorithm.code.toByte()),
-                algorithmPublicKey.publicKey.value,
+                algorithm,
+                publicKey,
             )
         }
 
-        private fun toAlgorithmPublicKey(decoded: ByteArray): AttoAlgorithmPublicKey {
+        private fun checksum(
+            algorithm: AttoAlgorithm,
+            publicKey: AttoPublicKey,
+        ): ByteArray {
+            return checksum(byteArrayOf(algorithm.code.toByte()), publicKey.value)
+        }
+
+        private fun toAlgorithmPublicKey(decoded: ByteArray): Pair<AttoAlgorithm, AttoPublicKey> {
             val algorithm = AttoAlgorithm.from(decoded[0].toUByte())
             val publicKey = AttoPublicKey(decoded.sliceArray(1 until 33))
 
-            return AttoAlgorithmPublicKey(algorithm, publicKey)
+            return algorithm to publicKey
         }
 
-        private fun toAlgorithmPublicKey(value: String): AttoAlgorithmPublicKey {
+        private fun toAlgorithmPublicKey(value: String): Pair<AttoAlgorithm, AttoPublicKey> {
             return toAlgorithmPublicKey(value.fromAddress())
         }
 
@@ -53,10 +65,10 @@ data class AttoAddress(
             }
             val decoded = value.fromAddress()
 
-            val algorithmPublicKey = toAlgorithmPublicKey(decoded)
+            val (algorithm, publicKey) = toAlgorithmPublicKey(decoded)
             val checksum = decoded.sliceArray(33 until decoded.size)
 
-            return checksum.contentEquals(checksum(algorithmPublicKey))
+            return checksum.contentEquals(checksum(algorithm, publicKey))
         }
 
         fun isValidPath(path: String): Boolean {
@@ -64,20 +76,29 @@ data class AttoAddress(
             return isValid(value)
         }
 
-        fun toAddress(algorithmPublicKey: AttoAlgorithmPublicKey): String {
-            val algorithm = byteArrayOf(algorithmPublicKey.algorithm.code.toByte())
-            val publicKey = algorithmPublicKey.publicKey.value
-            val checksum = checksum(algorithmPublicKey)
+        fun toAddress(
+            algorithm: AttoAlgorithm,
+            publicKey: AttoPublicKey,
+        ): String {
+            val algorithm = byteArrayOf(algorithm.code.toByte())
+            val publicKey = publicKey.value
+            val checksum = checksum(algorithm, publicKey)
 
             return (algorithm + publicKey + checksum).toAddress()
+        }
+
+        fun parse(serialized: ByteArray): AttoAddress {
+            val algorithm = AttoAlgorithm.from(serialized[0].toUByte())
+            val publicKey = AttoPublicKey(serialized.sliceArray(1 until serialized.size))
+            return AttoAddress(algorithm, publicKey)
         }
 
         fun parse(value: String): AttoAddress {
             require(isValid(value)) { "$value is invalid" }
 
-            val algorithmPublicKey = toAlgorithmPublicKey(value)
+            val (algorithm, publicKey) = toAlgorithmPublicKey(value)
 
-            return AttoAddress(algorithmPublicKey)
+            return AttoAddress(algorithm, publicKey)
         }
 
         fun parsePath(path: String): AttoAddress {
@@ -86,9 +107,13 @@ data class AttoAddress(
         }
     }
 
+    fun toBuffer(): Buffer =
+        Buffer().apply {
+            this.writeUByte(algorithm.code)
+            this.write(publicKey.value, 0, publicKey.value.size)
+        }
+
     override fun toString(): String = value
 }
 
 fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)
-
-fun AttoAccount.getAddress(): AttoAddress = AttoAddress(this.algorithm, this.publicKey)

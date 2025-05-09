@@ -16,14 +16,6 @@ interface AttoWorker : AutoCloseable {
         target: ByteArray,
     ): AttoWork
 
-    suspend fun work(block: AttoOpenBlock): AttoWork {
-        return work(block.network, block.timestamp, block.publicKey.value)
-    }
-
-    suspend fun <T> work(block: T): AttoWork where T : PreviousSupport, T : AttoBlock {
-        return work(block.network, block.timestamp, block.previous.value)
-    }
-
     suspend fun work(
         network: AttoNetwork,
         timestamp: Instant,
@@ -31,6 +23,16 @@ interface AttoWorker : AutoCloseable {
     ): AttoWork {
         val threshold = AttoWork.getThreshold(network, timestamp)
         return work(threshold, target)
+    }
+
+    suspend fun work(block: AttoBlock): AttoWork {
+        val target =
+            when (block) {
+                is AttoOpenBlock -> block.publicKey.value
+                is PreviousSupport -> block.previous.value
+                else -> throw IllegalArgumentException("Unsupported block type $block")
+            }
+        return work(block.network, block.timestamp, target)
     }
 }
 
