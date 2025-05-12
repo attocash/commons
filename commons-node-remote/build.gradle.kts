@@ -74,7 +74,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
                 implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
 
-                implementation("io.github.oshai:kotlin-logging:7.0.6")
+                implementation("io.github.oshai:kotlin-logging:7.0.7")
             }
         }
     }
