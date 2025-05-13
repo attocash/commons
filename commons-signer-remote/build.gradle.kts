@@ -1,5 +1,5 @@
 plugins {
-    val kotlinVersion = "2.1.20"
+    val kotlinVersion = "2.1.21"
     kotlin("plugin.serialization") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
 

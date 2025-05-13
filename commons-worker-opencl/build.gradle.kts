@@ -1,5 +1,5 @@
 plugins {
-    val kotlinVersion = "2.1.20"
+    val kotlinVersion = "2.1.21"
     kotlin("plugin.allopen") version kotlinVersion
 
     id("org.jetbrains.kotlinx.benchmark") version "0.4.13"
