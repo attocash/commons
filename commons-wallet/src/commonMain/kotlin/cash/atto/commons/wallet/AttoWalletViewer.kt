@@ -13,10 +13,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -39,7 +37,7 @@ class AttoWalletViewer(
     val accountFlow = accountState.asSharedFlow().filterNotNull()
     val account: AttoAccount? get() = accountState.value
 
-    val receivableFlow = client.receivableStream(publicKey).shareIn(scope, SharingStarted.Eagerly)
+    val receivableFlow = client.receivableStream(publicKey)
 
     private val _accountEntryFlow = MutableSharedFlow<AttoAccountEntry>()
     val accountEntryFlow = _accountEntryFlow.asSharedFlow()

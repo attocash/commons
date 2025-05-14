@@ -98,15 +98,14 @@ class AttoWalletManager(
 
     private fun startAutoReceiver() {
         scope.launch {
-            receivableFlow.collect { receivable ->
-                while (isActive) {
-                    try {
+            while (isActive) {
+                try {
+                    receivableFlow.collect { receivable ->
                         receive(receivable)
-                        return@collect
-                    } catch (e: Exception) {
-                        logger.warn(e) { "Failed to receive $receivable. Retrying in $retryDelay..." }
-                        delay(retryDelay)
                     }
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to collect receivables. Retrying in $retryDelay..." }
+                    delay(retryDelay)
                 }
             }
         }
