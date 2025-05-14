@@ -3,7 +3,7 @@ plugins {
     kotlin("plugin.serialization") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
 
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.13"
+    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
 
     id("maven-publish")
     signing
