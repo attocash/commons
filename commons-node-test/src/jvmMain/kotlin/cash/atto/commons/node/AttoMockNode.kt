@@ -130,15 +130,18 @@ class AttoMockNode(
                     }
                 }
 
-
                 post("/accounts/entries/stream") {
                     val heightSearch = call.request.call.receive<AttoNodeOperations.HeightSearch>()
                     try {
                         call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
-                            heightSearch.search
+                            heightSearch
+                                .search
                                 .asFlow()
-                                .map { search -> accountEntryFlow.first { accountEntry -> accountEntry.height.value >= search.fromHeight && accountEntry.height.value <= search.toHeight } }
-                                .onStart { logger.info { "Started /accounts/entries/stream $heightSearch" } }
+                                .map { search ->
+                                    accountEntryFlow.first { accountEntry ->
+                                        accountEntry.height.value >= search.fromHeight && accountEntry.height.value <= search.toHeight
+                                    }
+                                }.onStart { logger.info { "Started /accounts/entries/stream $heightSearch" } }
                                 .onCompletion { logger.info { "Completed /accounts/entries/stream $heightSearch" } }
                                 .collect {
                                     val ndjsonLine = Json.encodeToString(AttoAccountEntry.serializer(), it) + "\n"
