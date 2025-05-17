@@ -26,7 +26,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.datetime.Clock
@@ -124,6 +127,28 @@ class AttoMockNode(
                         }
                     } catch (e: Exception) {
                         logger.error(e) { "AccountEntryFlow(publicKey=$publicKey) failed" }
+                    }
+                }
+
+
+                post("/accounts/entries/stream") {
+                    val heightSearch = call.request.call.receive<AttoNodeOperations.HeightSearch>()
+                    try {
+                        call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
+                            heightSearch.search
+                                .asFlow()
+                                .map { search -> accountEntryFlow.first { accountEntry -> accountEntry.height.value >= search.fromHeight && accountEntry.height.value <= search.toHeight } }
+                                .onStart { logger.info { "Started /accounts/entries/stream $heightSearch" } }
+                                .onCompletion { logger.info { "Completed /accounts/entries/stream $heightSearch" } }
+                                .collect {
+                                    val ndjsonLine = Json.encodeToString(AttoAccountEntry.serializer(), it) + "\n"
+                                    writeStringUtf8(ndjsonLine)
+                                    flush()
+                                    logger.info { "Emitted $it" }
+                                }
+                        }
+                    } catch (e: Exception) {
+                        logger.error(e) { "Error /accounts/entries/stream $heightSearch" }
                     }
                 }
 
