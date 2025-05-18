@@ -206,7 +206,8 @@ class AttoBlockTest {
                "sendHashAlgorithm":"V1",
                "sendHash":"4DC7257C0F492B8C7AC2D8DE4A6DC4078B060BB42FDB6F8032A839AAA9048DB0",
                "representativeAlgorithm":"V1",
-               "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105"
+               "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105",
+               "height":1
             }
             """,
                 """

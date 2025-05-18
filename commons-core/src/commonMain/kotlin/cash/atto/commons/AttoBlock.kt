@@ -6,6 +6,7 @@ import cash.atto.commons.serialiazer.InstantMillisSerializer
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -286,7 +287,7 @@ data class AttoOpenBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    @Transient
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     override val height = AttoHeight(1UL)
 
     val address by lazy { AttoAddress(algorithm, publicKey) }
