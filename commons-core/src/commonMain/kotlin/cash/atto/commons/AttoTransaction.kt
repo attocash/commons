@@ -52,11 +52,7 @@ data class AttoTransaction(
             return false
         }
 
-        if (block is PreviousSupport && !work.isValid(block)) {
-            return false
-        }
-
-        if (block is AttoOpenBlock && !work.isValid(block)) {
+        if (!work.isValid(block)) {
             return false
         }
 
