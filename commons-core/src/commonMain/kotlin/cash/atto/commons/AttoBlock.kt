@@ -21,13 +21,13 @@ enum class AttoBlockType(
 ) {
     UNKNOWN(UByte.MAX_VALUE, 0),
 
-    OPEN(0u, 117),
+    OPEN(0u, 119),
 
-    RECEIVE(1u, 125),
+    RECEIVE(1u, 126),
 
-    SEND(2u, 133),
+    SEND(2u, 134),
 
-    CHANGE(3u, 124),
+    CHANGE(3u, 126),
     ;
 
     companion object {
