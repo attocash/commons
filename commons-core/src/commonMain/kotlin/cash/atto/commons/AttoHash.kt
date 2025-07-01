@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -8,6 +9,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+@JsExportForJs
 @Serializable(with = AttoHashSerializer::class)
 data class AttoHash(
     val value: ByteArray,
@@ -54,6 +56,7 @@ data class AttoHash(
     fun isValid(): Boolean = AttoAlgorithm.entries.any { it.hashSize == value.size }
 }
 
+@JsExportForJs
 interface AttoHashable {
     val hash: AttoHash
 }

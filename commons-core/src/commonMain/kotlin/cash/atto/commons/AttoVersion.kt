@@ -1,22 +1,20 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlin.jvm.JvmInline
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
 
-@JvmInline
-@Serializable
-value class AttoVersion(
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
+@Serializable(with = AttoVersionSerializer::class)
+data class AttoVersion(
     val value: UShort,
 ) : Comparable<AttoVersion> {
     override operator fun compareTo(other: AttoVersion): Int = value.compareTo(other.value)
-
-    operator fun plus(uShort: UShort): AttoVersion = AttoVersion((value + uShort).toUShort())
-
-    operator fun plus(uInt: UInt): AttoVersion = AttoVersion((value + uInt).toUShort())
-
-    operator fun minus(uShort: UShort): AttoVersion = AttoVersion((value - uShort).toUShort())
-
-    operator fun minus(uInt: UInt): AttoVersion = AttoVersion((value - uInt).toUShort())
 
     override fun toString(): String {
         return value.toString()
@@ -34,3 +32,16 @@ fun AttoVersion.max(anotherVersion: AttoVersion): AttoVersion {
 fun UShort.toAttoVersion(): AttoVersion = AttoVersion(this)
 
 fun UInt.toAttoVersion(): AttoVersion = this.toUShort().toAttoVersion()
+
+object AttoVersionSerializer : KSerializer<AttoVersion> {
+    override val descriptor = UShort.serializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoVersion,
+    ) {
+        UShort.serializer().serialize(encoder, value.value)
+    }
+
+    override fun deserialize(decoder: Decoder): AttoVersion = AttoVersion(UShort.serializer().deserialize(decoder))
+}

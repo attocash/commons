@@ -8,10 +8,17 @@ import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
 import kotlin.time.Duration.Companion.milliseconds
 
 interface AttoNodeOperations {
@@ -21,7 +28,7 @@ interface AttoNodeOperations {
 
     suspend fun account(publicKey: AttoPublicKey): AttoAccount?
 
-    suspend fun account(addresses: List<AttoAddress>): Collection<AttoAccount>
+    suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount>
 
     fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount>
 
@@ -55,28 +62,57 @@ interface AttoNodeOperations {
     }
 
     suspend fun publish(transaction: AttoTransaction)
+}
 
-    @Serializable
-    data class TimeDifferenceResponse(
-        val clientInstant: Instant,
-        val serverInstant: Instant,
-        val differenceMillis: Long,
-    )
+@OptIn(ExperimentalJsExport::class)
+@Serializable
+@JsExportForJs
+data class TimeDifferenceResponse(
+    val clientInstant: Instant,
+    val serverInstant: Instant,
+    val differenceMillis: Long,
+)
 
-    @Serializable
-    data class AccountSearch(
-        val addresses: Collection<String>,
-    )
+@OptIn(ExperimentalJsExport::class)
+@Serializable
+@JsExportForJs
+data class AccountSearch(
+    val addresses: Collection<
+        @Serializable(with = AttoAddressSerializer::class)
+        AttoAddress,
+        >,
+)
 
-    @Serializable
-    data class AccountHeightSearch(
-        val address: String,
-        val fromHeight: ULong,
-        val toHeight: ULong = ULong.MAX_VALUE,
-    )
+@OptIn(ExperimentalJsExport::class)
+@Serializable
+@JsExportForJs
+data class AccountHeightSearch(
+    @Serializable(with = AttoAddressSerializer::class)
+    val address: AttoAddress,
+    val fromHeight: AttoHeight,
+    val toHeight: AttoHeight = AttoHeight.MAX,
+)
 
-    @Serializable
-    data class HeightSearch(
-        val search: Collection<AccountHeightSearch>,
-    )
+@OptIn(ExperimentalJsExport::class)
+@Serializable
+@JsExportForJs
+data class HeightSearch(
+    val search: Collection<AccountHeightSearch>,
+) {
+    companion object {
+        fun fromArray(search: Array<AccountHeightSearch>): HeightSearch = HeightSearch(search.toList())
+    }
+}
+
+object AttoAddressSerializer : KSerializer<AttoAddress> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoAddress,
+    ) {
+        encoder.encodeString(value.path)
+    }
+
+    override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parsePath(decoder.decodeString())
 }

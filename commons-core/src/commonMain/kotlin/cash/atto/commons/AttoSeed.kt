@@ -1,5 +1,10 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
+import kotlin.js.ExperimentalJsExport
+
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 data class AttoSeed(
     val value: ByteArray,
 ) {

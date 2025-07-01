@@ -1,10 +1,12 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
+@JsExportForJs
 enum class AttoNetwork(
     val code: UByte,
     val thresholdIncreaseFactor: ULong,

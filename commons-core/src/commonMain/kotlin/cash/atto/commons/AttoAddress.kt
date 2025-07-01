@@ -2,9 +2,11 @@ package cash.atto.commons
 
 import cash.atto.commons.serialiazer.AttoAddressAsByteArraySerializer
 import cash.atto.commons.utils.Base32
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.io.Buffer
 import kotlinx.io.writeUByte
 import kotlinx.serialization.Serializable
+import kotlin.js.JsName
 
 private const val SCHEMA = "atto://"
 
@@ -17,6 +19,7 @@ private fun String.fromAddress(): ByteArray {
     return Base32.decode(this.substring(SCHEMA.length).uppercase() + "===")
 }
 
+@JsExportForJs
 @Serializable(with = AttoAddressAsByteArraySerializer::class)
 data class AttoAddress(
     val algorithm: AttoAlgorithm,
@@ -87,6 +90,7 @@ data class AttoAddress(
             return (algorithm + publicKey + checksum).toAddress()
         }
 
+        @JsName("parseSerialized")
         fun parse(serialized: ByteArray): AttoAddress {
             val algorithm = AttoAlgorithm.from(serialized[0].toUByte())
             val publicKey = AttoPublicKey(serialized.sliceArray(1 until serialized.size))

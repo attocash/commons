@@ -1,12 +1,15 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.readULongLe
 import kotlinx.io.writeULongLe
+import kotlin.js.ExperimentalJsExport
 
-@OptIn(ExperimentalStdlibApi::class)
+@OptIn(ExperimentalStdlibApi::class, ExperimentalJsExport::class)
+@JsExportForJs
 fun ByteArray.toHex(): String = this.toHexString(HexFormat.UpperCase)
 
 fun Buffer.toHex(): String = this.copy().readByteArray().toHex()
@@ -15,6 +18,8 @@ fun AttoSerializable.toHex(): String {
     return toBuffer().toHex()
 }
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 fun String.fromHexToByteArray(): ByteArray =
     chunked(2)
         .map { it.toInt(16).toByte() }

@@ -1,12 +1,11 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.io.Buffer
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
+@JsExportForJs
 @Serializable
 data class AttoTransaction(
     val block: AttoBlock,

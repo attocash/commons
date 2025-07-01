@@ -1,5 +1,5 @@
 plugins {
-    val kotlinVersion = "2.1.21"
+    val kotlinVersion = "2.2.0"
     id("org.jetbrains.kotlin.multiplatform") version kotlinVersion apply false
     id("org.jetbrains.kotlin.native.cocoapods") version kotlinVersion apply false
 
@@ -14,12 +14,15 @@ repositories {
     mavenCentral()
     mavenLocal()
 }
-
-subprojects {
+allprojects {
     apply {
         plugin("org.jetbrains.kotlin.multiplatform")
         plugin("org.jetbrains.dokka")
         plugin("org.jlleitschuh.gradle.ktlint")
+    }
+
+    project.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
+        project.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().version = "24.3.0"
     }
 
     tasks
@@ -27,6 +30,10 @@ subprojects {
             it.name == "publishJvmPublicationToSonatypeRepository" || it.name == "publishJsPublicationToSonatypeRepository" ||
                 it.name == "publishWasmJsPublicationToSonatypeRepository"
         }.configureEach {
+            if (project.name == "commons-js") {
+                return@configureEach
+            }
+
             dependsOn(tasks.named("signKotlinMultiplatformPublication"))
             dependsOn(tasks.named("signJvmPublication"))
             if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl" &&
@@ -39,6 +46,10 @@ subprojects {
         }
 
     tasks.matching { it.name == "publishKotlinMultiplatformPublicationToSonatypeRepository" }.configureEach {
+        if (project.name == "commons-js") {
+            return@configureEach
+        }
+
         dependsOn(tasks.named("signJvmPublication"))
         if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl" &&
             project.name != "commons-gatekeeper-test" && project.name != "commons-node-test" &&

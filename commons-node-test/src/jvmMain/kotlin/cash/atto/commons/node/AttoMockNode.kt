@@ -2,7 +2,6 @@ package cash.atto.commons.node
 
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
-import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
@@ -81,9 +80,9 @@ class AttoMockNode(
                 }
 
                 post("/accounts") {
-                    val search = call.request.call.receive<AttoNodeOperations.AccountSearch>()
+                    val search = call.request.call.receive<AccountSearch>()
 
-                    val accounts = search.addresses.map { AttoAddress.parsePath(it) }.mapNotNull { accountMap[it.publicKey] }
+                    val accounts = search.addresses.map { it }.mapNotNull { accountMap[it.publicKey] }
 
                     call.respond(accounts)
                 }
@@ -131,7 +130,7 @@ class AttoMockNode(
                 }
 
                 post("/accounts/entries/stream") {
-                    val heightSearch = call.request.call.receive<AttoNodeOperations.HeightSearch>()
+                    val heightSearch = call.request.call.receive<HeightSearch>()
                     try {
                         call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
                             heightSearch
@@ -139,7 +138,7 @@ class AttoMockNode(
                                 .asFlow()
                                 .map { search ->
                                     accountEntryFlow.first { accountEntry ->
-                                        accountEntry.height.value >= search.fromHeight && accountEntry.height.value <= search.toHeight
+                                        accountEntry.height >= search.fromHeight && accountEntry.height <= search.toHeight
                                     }
                                 }.onStart { logger.info { "Started /accounts/entries/stream $heightSearch" } }
                                 .onCompletion { logger.info { "Completed /accounts/entries/stream $heightSearch" } }
@@ -176,12 +175,12 @@ class AttoMockNode(
                 }
 
                 post("/accounts/receivables/stream") {
-                    val search = call.request.call.receive<AttoNodeOperations.AccountSearch>()
+                    val search = call.request.call.receive<AccountSearch>()
                     val publicKeys =
                         search
                             .addresses
                             .asSequence()
-                            .map { AttoAddress.parsePath(it).publicKey }
+                            .map { it.publicKey }
                             .toSet()
                     try {
                         call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {

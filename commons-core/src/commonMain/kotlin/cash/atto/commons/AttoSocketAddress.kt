@@ -1,5 +1,8 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
+
+@JsExportForJs
 data class AttoSocketAddress(
     val address: ByteArray,
     val port: UShort,

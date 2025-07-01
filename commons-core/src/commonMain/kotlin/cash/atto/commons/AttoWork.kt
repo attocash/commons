@@ -4,6 +4,7 @@ import cash.atto.commons.AttoNetwork.Companion.DOUBLING_PERIOD
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_DATE
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -14,6 +15,7 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.js.JsExport
 import kotlin.math.pow
 
 private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
@@ -50,6 +52,7 @@ fun AttoWork.Companion.getThreshold(
     return thresholdCache[network]!![timestamp.toLocalDateTime(TimeZone.UTC).year]!!
 }
 
+@JsExport.Ignore
 fun AttoWork.Companion.isValid(
     threshold: ULong,
     target: ByteArray,
@@ -71,6 +74,7 @@ fun AttoWork.Companion.isValid(
     return isValid(AttoWork.getThreshold(network, timestamp), target, work)
 }
 
+@JsExportForJs
 @Serializable(with = AttoWorkSerializer::class)
 data class AttoWork(
     val value: ByteArray,

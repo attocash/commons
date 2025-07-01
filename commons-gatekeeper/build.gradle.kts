@@ -32,6 +32,8 @@ kotlin {
     jvm()
 
     js(IR) {
+        binaries.library()
+
         browser {
             testTask {
                 useKarma {
@@ -41,6 +43,8 @@ kotlin {
         }
 
         nodejs()
+
+        generateTypeScriptDefinitions()
     }
 
     @OptIn(ExperimentalWasmDsl::class)

@@ -1,7 +1,9 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.Serializable
 
+@JsExportForJs
 @Serializable
 enum class AttoAlgorithm(
     val code: UByte,
