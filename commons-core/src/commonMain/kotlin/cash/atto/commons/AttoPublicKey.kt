@@ -1,13 +1,17 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
 
+@OptIn(ExperimentalJsExport::class)
 @Serializable(with = AttoPublicKeySerializer::class)
+@JsExportForJs
 data class AttoPublicKey(
     val value: ByteArray,
 ) {

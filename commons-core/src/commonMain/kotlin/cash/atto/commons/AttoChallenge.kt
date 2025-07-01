@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.utils.SecureRandom
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -8,6 +9,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+@JsExportForJs
 @Serializable(with = AttoChallengeSerializer::class)
 data class AttoChallenge(
     val value: ByteArray,

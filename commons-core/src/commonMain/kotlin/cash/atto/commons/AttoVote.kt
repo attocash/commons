@@ -1,10 +1,14 @@
 package cash.atto.commons
 
 import cash.atto.commons.serialiazer.InstantMillisSerializer
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.serialization.Serializable
+import kotlin.js.ExperimentalJsExport
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 @Serializable
 data class AttoVote(
     val version: AttoVersion,

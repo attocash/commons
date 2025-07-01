@@ -1,11 +1,16 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsName
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 enum class AttoUnit(
     val prefix: String,
     internal val scale: UByte,
@@ -14,6 +19,8 @@ enum class AttoUnit(
     RAW("raw", 0U),
 }
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 @Serializable(with = AttoAmountSerializer::class)
 data class AttoAmount(
     val raw: ULong,
@@ -60,6 +67,7 @@ data class AttoAmount(
         }
     }
 
+    @JsName("toFormattedString")
     fun toString(unit: AttoUnit): String {
         val factor = scaleFactor(unit.scale)
         val wholePart = raw / factor

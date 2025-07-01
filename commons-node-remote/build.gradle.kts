@@ -32,6 +32,8 @@ kotlin {
     jvm()
 
     js(IR) {
+        binaries.library()
+
         browser {
             testTask {
                 useKarma {
@@ -41,6 +43,21 @@ kotlin {
         }
 
         nodejs()
+
+        generateTypeScriptDefinitions()
+
+        compilations["main"].packageJson {
+            customField("name", "@attocash/commons-node-remote")
+        }
+
+        compilerOptions {
+            target = "es2015"
+            useEsClasses = true
+            freeCompilerArgs.addAll(
+                // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
+                "-Xir-per-file",
+            )
+        }
     }
 
     @OptIn(ExperimentalWasmDsl::class)

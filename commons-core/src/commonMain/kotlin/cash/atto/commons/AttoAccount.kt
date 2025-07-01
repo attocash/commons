@@ -1,11 +1,16 @@
 package cash.atto.commons
 
 import cash.atto.commons.serialiazer.InstantMillisSerializer
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 @Serializable
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 data class AttoAccount(
     val publicKey: AttoPublicKey,
     val network: AttoNetwork,
@@ -23,6 +28,7 @@ data class AttoAccount(
     val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
 
     companion object {
+        @JsExport.Ignore
         fun open(
             representativeAlgorithm: AttoAlgorithm,
             representativePublicKey: AttoPublicKey,
@@ -60,6 +66,7 @@ data class AttoAccount(
         }
     }
 
+    @JsExport.Ignore
     fun send(
         receiverAlgorithm: AttoAlgorithm,
         receiverPublicKey: AttoPublicKey,
@@ -70,7 +77,7 @@ data class AttoAccount(
             throw IllegalArgumentException("You can't send money to yourself")
         }
         val newBalance = balance.minus(amount)
-        val newHeight = height + 1U
+        val newHeight = height + 1U.toAttoHeight()
         val block =
             AttoSendBlock(
                 network = network,
@@ -95,6 +102,7 @@ data class AttoAccount(
         return Pair(block, updatedAccount)
     }
 
+    @JsExport.Ignore
     fun receive(
         receivable: AttoReceivable,
         timestamp: Instant = Clock.System.now(),
@@ -102,7 +110,7 @@ data class AttoAccount(
         require(timestamp > receivable.timestamp) { "Timestamp can't be before receivable timestamp" }
 
         val newBalance = balance.plus(receivable.amount)
-        val newHeight = height + 1U
+        val newHeight = height + 1U.toAttoHeight()
         val newVersion = version.max(receivable.version)
         val block =
             AttoReceiveBlock(
@@ -128,12 +136,13 @@ data class AttoAccount(
         return Pair(block, updatedAccount)
     }
 
+    @JsExport.Ignore
     fun change(
         representativeAlgorithm: AttoAlgorithm,
         representativePublicKey: AttoPublicKey,
         timestamp: Instant = Clock.System.now(),
     ): Pair<AttoChangeBlock, AttoAccount> {
-        val newHeight = height + 1U
+        val newHeight = height + 1U.toAttoHeight()
         val block =
             AttoChangeBlock(
                 network = network,

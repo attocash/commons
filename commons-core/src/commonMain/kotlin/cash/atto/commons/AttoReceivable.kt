@@ -1,9 +1,11 @@
 package cash.atto.commons
 
 import cash.atto.commons.serialiazer.InstantMillisSerializer
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
+@JsExportForJs
 @Serializable
 data class AttoReceivable(
     val hash: AttoHash,

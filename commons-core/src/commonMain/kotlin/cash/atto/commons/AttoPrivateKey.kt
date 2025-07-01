@@ -1,9 +1,14 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.utils.SecureRandom
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsName
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 class AttoPrivateKey(
     val value: ByteArray,
 ) {
@@ -11,6 +16,7 @@ class AttoPrivateKey(
         value.checkLength(32)
     }
 
+    @JsName("fromSeed")
     constructor(seed: AttoSeed, index: UInt) : this(ed25519BIP44(seed, "m/44'/$coinType'/$index'"))
 
     companion object {

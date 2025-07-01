@@ -85,10 +85,10 @@ private class AttoNodeClient(
         }
     }
 
-    override suspend fun account(addresses: List<AttoAddress>): Collection<AttoAccount> {
+    override suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount> {
         val uri = "$baseUrl/accounts"
         val headers = headerProvider.invoke()
-        val search = AttoNodeOperations.AccountSearch(addresses.map { it.path })
+        val search = AccountSearch(addresses)
 
         return httpClient
             .post(uri) {
@@ -166,7 +166,7 @@ private class AttoNodeClient(
     }
 
     override fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount> {
-        return fetchStream("accounts/stream", AttoNodeOperations.AccountSearch(addresses.map { it.path }))
+        return fetchStream("accounts/stream", AccountSearch(addresses))
     }
 
     override fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable> {
@@ -174,7 +174,7 @@ private class AttoNodeClient(
     }
 
     override fun receivableStream(addresses: List<AttoAddress>): Flow<AttoReceivable> {
-        return fetchStream("accounts/receivables/stream", AttoNodeOperations.AccountSearch(addresses.map { it.path }))
+        return fetchStream("accounts/receivables/stream", AccountSearch(addresses))
     }
 
     override fun accountEntryStream(
@@ -192,7 +192,7 @@ private class AttoNodeClient(
         return fetchStream("accounts/$publicKey/entries/stream?$queryParams")
     }
 
-    override fun accountEntryStream(search: AttoNodeOperations.HeightSearch): Flow<AttoAccountEntry> {
+    override fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry> {
         return fetchStream("accounts/entries/stream", search)
     }
 
@@ -211,11 +211,11 @@ private class AttoNodeClient(
         return fetchStream("accounts/$publicKey/transactions/stream?$queryParams")
     }
 
-    override fun transactionStream(search: AttoNodeOperations.HeightSearch): Flow<AttoTransaction> {
-        return fetchStream("accounts/transactions/stream")
+    override fun transactionStream(search: HeightSearch): Flow<AttoTransaction> {
+        return fetchStream("accounts/transactions/stream", search)
     }
 
-    override suspend fun now(currentTime: Instant): AttoNodeOperations.TimeDifferenceResponse {
+    override suspend fun now(currentTime: Instant): TimeDifferenceResponse {
         val uri = "$baseUrl/instants/$currentTime"
         val headers = headerProvider.invoke()
 

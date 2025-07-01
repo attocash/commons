@@ -32,6 +32,8 @@ kotlin {
     jvm()
 
     js(IR) {
+        binaries.library()
+
         browser {
             testTask {
                 useKarma {
@@ -41,6 +43,21 @@ kotlin {
         }
 
         nodejs()
+
+        generateTypeScriptDefinitions()
+
+        compilations["main"].packageJson {
+            customField("name", "@attocash/commons-core")
+        }
+
+        compilerOptions {
+            target = "es2015"
+            useEsClasses = true
+            freeCompilerArgs.addAll(
+                // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
+                "-Xir-per-file",
+            )
+        }
     }
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -62,6 +79,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
                 api("org.jetbrains.kotlinx:kotlinx-io-core:0.7.0")
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")

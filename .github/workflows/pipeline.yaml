@@ -32,7 +32,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - run: |
-          ./gradlew --info --no-daemon ktlintCheck allTests
+          ./gradlew --info --no-daemon ktlintCheck allTests --stacktrace
   snapshot:
     runs-on: ubuntu-latest
     needs:

@@ -1,13 +1,11 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
 import cash.atto.commons.serialiazer.InstantMillisSerializer
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -15,6 +13,7 @@ import kotlin.time.Duration.Companion.minutes
 
 val maxVersion = AttoVersion(0U)
 
+@JsExportForJs
 enum class AttoBlockType(
     val code: UByte,
     val size: Int,
@@ -39,10 +38,12 @@ enum class AttoBlockType(
     }
 }
 
+@JsExportForJs
 interface HeightSupport {
     val height: AttoHeight
 }
 
+@JsExportForJs
 @Serializable
 sealed interface AttoBlock :
     HeightSupport,
@@ -98,21 +99,25 @@ sealed interface AttoBlock :
     }
 }
 
+@JsExportForJs
 interface PreviousSupport {
     val height: AttoHeight
     val previous: AttoHash
 }
 
+@JsExportForJs
 interface ReceiveSupport {
     val sendHashAlgorithm: AttoAlgorithm
     val sendHash: AttoHash
 }
 
+@JsExportForJs
 interface RepresentativeSupport {
     val representativeAlgorithm: AttoAlgorithm
     val representativePublicKey: AttoPublicKey
 }
 
+@JsExportForJs
 @Serializable
 @SerialName("SEND")
 data class AttoSendBlock(
@@ -191,6 +196,7 @@ data class AttoSendBlock(
     }
 }
 
+@JsExportForJs
 @Serializable
 @SerialName("RECEIVE")
 data class AttoReceiveBlock(
@@ -265,6 +271,7 @@ data class AttoReceiveBlock(
     }
 }
 
+@JsExportForJs
 @Serializable
 @SerialName("OPEN")
 data class AttoOpenBlock(
@@ -342,6 +349,7 @@ data class AttoOpenBlock(
     }
 }
 
+@JsExportForJs
 @Serializable
 @SerialName("CHANGE")
 data class AttoChangeBlock(
