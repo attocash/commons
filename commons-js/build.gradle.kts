@@ -6,9 +6,6 @@ plugins {
     kotlin("plugin.allopen") version kotlinVersion
 
     id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
-
-    id("maven-publish")
-    signing
 }
 
 group = "cash.atto"
@@ -110,12 +107,3 @@ allOpen {
 //        register("benchmarks")
 //    }
 // }
-
-signing {
-    val shouldSign = project.findProperty("signing.skip")?.toString()?.toBoolean() != true
-    if (shouldSign) {
-        val signingKey: String? by project
-        useInMemoryPgpKeys(signingKey, "")
-        sign(publishing.publications)
-    }
-}
