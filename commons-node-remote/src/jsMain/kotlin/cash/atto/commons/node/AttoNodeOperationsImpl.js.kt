@@ -3,6 +3,7 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAddress
+import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
@@ -22,6 +23,10 @@ private class AttoNodeOperationsJsImpl(
 
     override fun account(addresses: Array<AttoAddress>): Promise<Array<AttoAccount>> =
         GlobalScope.promise { operations.account(addresses.toList()).toTypedArray() }
+
+    override fun accountEntry(hash: AttoHash): Promise<AttoAccountEntry> = GlobalScope.promise { operations.accountEntry(hash) }
+
+    override fun transaction(hash: AttoHash): Promise<AttoTransaction> = GlobalScope.promise { operations.transaction(hash) }
 
     override fun now(): Promise<String> = GlobalScope.promise { operations.now().toString() }
 
