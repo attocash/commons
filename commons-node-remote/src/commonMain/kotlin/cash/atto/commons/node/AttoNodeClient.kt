@@ -3,6 +3,7 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAddress
+import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
@@ -31,6 +32,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
@@ -177,6 +179,10 @@ private class AttoNodeClient(
         return fetchStream("accounts/receivables/stream", AccountSearch(addresses))
     }
 
+    override suspend fun accountEntry(hash: AttoHash): AttoAccountEntry {
+        return fetchStream<AttoAccountEntry>("accounts/entries/$hash/stream").first()
+    }
+
     override fun accountEntryStream(
         publicKey: AttoPublicKey,
         fromHeight: AttoHeight,
@@ -194,6 +200,10 @@ private class AttoNodeClient(
 
     override fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry> {
         return fetchStream("accounts/entries/stream", search)
+    }
+
+    override suspend fun transaction(hash: AttoHash): AttoTransaction {
+        return fetchStream<AttoTransaction>("transactions/$hash/stream").first()
     }
 
     override fun transactionStream(

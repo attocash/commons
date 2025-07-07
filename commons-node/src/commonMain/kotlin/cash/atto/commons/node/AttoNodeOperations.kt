@@ -3,6 +3,7 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAddress
+import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
@@ -38,6 +39,8 @@ interface AttoNodeOperations {
 
     fun receivableStream(addresses: List<AttoAddress>): Flow<AttoReceivable>
 
+    suspend fun accountEntry(hash: AttoHash): AttoAccountEntry
+
     fun accountEntryStream(
         publicKey: AttoPublicKey,
         fromHeight: AttoHeight = AttoHeight(1UL),
@@ -45,6 +48,8 @@ interface AttoNodeOperations {
     ): Flow<AttoAccountEntry>
 
     fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry>
+
+    suspend fun transaction(hash: AttoHash): AttoTransaction
 
     fun transactionStream(
         publicKey: AttoPublicKey,
