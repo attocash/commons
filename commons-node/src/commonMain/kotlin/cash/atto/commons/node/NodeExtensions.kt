@@ -8,16 +8,10 @@ import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.js.JsName
 
-
 @JsExport
 @JsName("receivableToJson")
-fun AttoReceivable.toJson(): String {
-    return Json.encodeToString(this)
-}
+fun AttoReceivable.toJson(): String = Json.encodeToString(this)
 
 @JsExport
 @JsName("receivableFromJson")
-fun String.toReceivable(): AttoReceivable {
-    return Json.decodeFromString<AttoReceivable>(this)
-}
-
+fun String.toReceivable(): AttoReceivable = Json.decodeFromString<AttoReceivable>(this)
