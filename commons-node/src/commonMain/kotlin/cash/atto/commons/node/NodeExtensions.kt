@@ -6,7 +6,6 @@ import cash.atto.commons.AttoReceivable
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.json.Json
 import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 import kotlin.js.JsName
 
 @JsExportForJs
