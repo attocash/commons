@@ -82,7 +82,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
                 api("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
-                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.14")
             }
         }
@@ -90,7 +90,7 @@ kotlin {
             dependencies {
                 implementation(project(":commons-worker"))
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
             }
         }
