@@ -175,7 +175,7 @@ private class AttoNodeClient(
         return fetchStream("accounts/$publicKey/receivables/stream")
     }
 
-    override fun receivableStream(addresses: List<AttoAddress>): Flow<AttoReceivable> {
+    override fun receivableStream(addresses: Collection<AttoAddress>): Flow<AttoReceivable> {
         return fetchStream("accounts/receivables/stream", AccountSearch(addresses))
     }
 
@@ -269,5 +269,5 @@ private class AttoNodeClient(
 fun AttoNodeOperations.Companion.custom(
     network: AttoNetwork,
     baseUrl: String,
-    headerProvider: suspend () -> Map<String, String>,
+    headerProvider: suspend () -> Map<String, String> = { emptyMap() },
 ): AttoNodeOperations = AttoNodeClient(network, baseUrl, headerProvider)
