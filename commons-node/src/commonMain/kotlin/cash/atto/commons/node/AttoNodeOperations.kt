@@ -37,7 +37,7 @@ interface AttoNodeOperations {
 
     fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable>
 
-    fun receivableStream(addresses: List<AttoAddress>): Flow<AttoReceivable>
+    fun receivableStream(addresses: Collection<AttoAddress>): Flow<AttoReceivable>
 
     suspend fun accountEntry(hash: AttoHash): AttoAccountEntry
 
