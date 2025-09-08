@@ -110,7 +110,7 @@ data class HeightSearch(
 }
 
 object AttoAddressSerializer : KSerializer<AttoAddress> {
-    override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("AttoAddress", PrimitiveKind.STRING)
 
     override fun serialize(
         encoder: Encoder,
@@ -119,5 +119,11 @@ object AttoAddressSerializer : KSerializer<AttoAddress> {
         encoder.encodeString(value.path)
     }
 
-    override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parsePath(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): AttoAddress {
+        val address = decoder.decodeString()
+        if (address.startsWith("atto://")) {
+            return AttoAddress.parse(address)
+        }
+        return AttoAddress.parsePath(address)
+    }
 }
