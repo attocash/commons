@@ -222,7 +222,7 @@ private class AttoNodeClient(
     }
 
     override fun transactionStream(search: HeightSearch): Flow<AttoTransaction> {
-        return fetchStream("transactions/stream", search)
+        return fetchStream("accounts/transactions/stream", search)
     }
 
     override suspend fun now(currentTime: Instant): TimeDifferenceResponse {

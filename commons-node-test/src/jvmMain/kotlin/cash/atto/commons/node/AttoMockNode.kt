@@ -154,6 +154,31 @@ class AttoMockNode(
                     }
                 }
 
+                post("/accounts/transactions/stream") {
+                    val heightSearch = call.request.call.receive<HeightSearch>()
+                    try {
+                        call.respondBytesWriter(contentType = ContentType.parse("application/x-ndjson")) {
+                            heightSearch
+                                .search
+                                .asFlow()
+                                .map { search ->
+                                    transactionFlow.first { accountEntry ->
+                                        accountEntry.height >= search.fromHeight && accountEntry.height <= search.toHeight
+                                    }
+                                }.onStart { logger.info { "Started /accounts/transactions/stream $heightSearch" } }
+                                .onCompletion { logger.info { "Completed /accounts/transactions/stream $heightSearch" } }
+                                .collect {
+                                    val ndjsonLine = Json.encodeToString(AttoTransaction.serializer(), it) + "\n"
+                                    writeStringUtf8(ndjsonLine)
+                                    flush()
+                                    logger.info { "Emitted $it" }
+                                }
+                        }
+                    } catch (e: Exception) {
+                        logger.error(e) { "Error /accounts/transactions/stream $heightSearch" }
+                    }
+                }
+
                 get("/accounts/{publicKey}/receivables/stream") {
                     val publicKey = AttoPublicKey.parse(call.parameters["publicKey"]!!)
                     try {
