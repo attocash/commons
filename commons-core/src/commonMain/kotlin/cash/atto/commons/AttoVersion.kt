@@ -33,6 +33,10 @@ fun UShort.toAttoVersion(): AttoVersion = AttoVersion(this)
 
 fun UInt.toAttoVersion(): AttoVersion = this.toUShort().toAttoVersion()
 
+fun Short.toAttoVersion(): AttoVersion = this.toUShort().toAttoVersion()
+
+fun Int.toAttoVersion(): AttoVersion = this.toUShort().toAttoVersion()
+
 object AttoVersionSerializer : KSerializer<AttoVersion> {
     override val descriptor = UShort.serializer().descriptor
 

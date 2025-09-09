@@ -41,6 +41,10 @@ fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey {
     return AttoPrivateKey(this, index)
 }
 
+fun AttoSeed.toPrivateKey(index: Int): AttoPrivateKey {
+    return AttoPrivateKey(this, index.toUInt())
+}
+
 class AttoAlgorithmPrivateKey(
     val algorithm: AttoAlgorithm,
     val privateKey: AttoPrivateKey,

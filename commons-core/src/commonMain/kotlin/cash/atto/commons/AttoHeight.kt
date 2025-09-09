@@ -47,6 +47,10 @@ fun ULong.toAttoHeight() = AttoHeight(this)
 
 fun UInt.toAttoHeight() = this.toULong().toAttoHeight()
 
+fun Int.toAttoHeight() = this.toULong().toAttoHeight()
+
+fun Long.toAttoHeight() = this.toULong().toAttoHeight()
+
 object AttoHeightSerializer : KSerializer<AttoHeight> {
     override val descriptor = ULong.serializer().descriptor
 
