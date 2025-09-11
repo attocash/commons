@@ -48,6 +48,3 @@ fun ByteArray.toBlockJson(): String {
     val block = AttoBlock.fromBuffer(this.toBuffer()) ?: throw IllegalArgumentException("Invalid block")
     return Json.encodeToString<AttoBlock>(block)
 }
-
-
-
