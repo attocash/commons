@@ -3,6 +3,7 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAddress
+import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoNetwork
@@ -35,9 +36,15 @@ interface AttoNodeOperations {
 
     fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount>
 
-    fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable>
+    fun receivableStream(
+        publicKey: AttoPublicKey,
+        minAmount: AttoAmount = AttoAmount(1U),
+    ): Flow<AttoReceivable>
 
-    fun receivableStream(addresses: Collection<AttoAddress>): Flow<AttoReceivable>
+    fun receivableStream(
+        addresses: Collection<AttoAddress>,
+        minAmount: AttoAmount = AttoAmount(1U),
+    ): Flow<AttoReceivable>
 
     suspend fun accountEntry(hash: AttoHash): AttoAccountEntry
 

@@ -3,6 +3,7 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAddress
+import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoNetwork
@@ -171,12 +172,18 @@ private class AttoNodeClient(
         return fetchStream("accounts/stream", AccountSearch(addresses))
     }
 
-    override fun receivableStream(publicKey: AttoPublicKey): Flow<AttoReceivable> {
-        return fetchStream("accounts/$publicKey/receivables/stream")
+    override fun receivableStream(
+        publicKey: AttoPublicKey,
+        minAmount: AttoAmount,
+    ): Flow<AttoReceivable> {
+        return fetchStream("accounts/$publicKey/receivables/stream?minAmount=$minAmount")
     }
 
-    override fun receivableStream(addresses: Collection<AttoAddress>): Flow<AttoReceivable> {
-        return fetchStream("accounts/receivables/stream", AccountSearch(addresses))
+    override fun receivableStream(
+        addresses: Collection<AttoAddress>,
+        minAmount: AttoAmount,
+    ): Flow<AttoReceivable> {
+        return fetchStream("accounts/receivables/stream?minAmount=$minAmount", AccountSearch(addresses))
     }
 
     override suspend fun accountEntry(hash: AttoHash): AttoAccountEntry {
