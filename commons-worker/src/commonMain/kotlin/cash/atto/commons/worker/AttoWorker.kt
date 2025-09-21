@@ -2,9 +2,8 @@ package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoNetwork
-import cash.atto.commons.AttoOpenBlock
 import cash.atto.commons.AttoWork
-import cash.atto.commons.PreviousSupport
+import cash.atto.commons.getTarget
 import cash.atto.commons.getThreshold
 import kotlinx.datetime.Instant
 
@@ -26,12 +25,7 @@ interface AttoWorker : AutoCloseable {
     }
 
     suspend fun work(block: AttoBlock): AttoWork {
-        val target =
-            when (block) {
-                is AttoOpenBlock -> block.publicKey.value
-                is PreviousSupport -> block.previous.value
-                else -> throw IllegalArgumentException("Unsupported block type $block")
-            }
+        val target = block.getTarget()
         return work(block.network, block.timestamp, target)
     }
 }

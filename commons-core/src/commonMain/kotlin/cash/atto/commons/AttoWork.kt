@@ -52,6 +52,14 @@ fun AttoWork.Companion.getThreshold(
     return thresholdCache[network]!![timestamp.toLocalDateTime(TimeZone.UTC).year]!!
 }
 
+fun AttoBlock.getTarget(): ByteArray {
+    return when (this) {
+        is AttoOpenBlock -> this.publicKey.value
+        is PreviousSupport -> this.previous.value
+        else -> throw IllegalArgumentException("Unsupported block type $this")
+    }
+}
+
 @JsExport.Ignore
 fun AttoWork.Companion.isValid(
     threshold: ULong,
