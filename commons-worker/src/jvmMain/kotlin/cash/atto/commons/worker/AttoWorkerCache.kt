@@ -1,9 +1,10 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
-import cash.atto.commons.getThreshold
-import cash.atto.commons.toHex
+import cash.atto.commons.getTarget
+import cash.atto.commons.isValid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import java.util.concurrent.ConcurrentHashMap
 
 private class AttoWorkerCache(
@@ -18,56 +20,105 @@ private class AttoWorkerCache(
 ) : AttoWorker {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    private val cache = ConcurrentHashMap<Pair<ULong, String>, Deferred<AttoWork>>()
+    private val cache = ConcurrentHashMap<Target, Deferred<AttoWork>>()
 
     private fun delegateWork(
-        threshold: ULong,
-        target: ByteArray,
+        target: Target,
+        delegate: suspend () -> AttoWork
     ): Deferred<AttoWork> {
-        val key = threshold to target.toHex()
-
-        return cache.computeIfAbsent(key) {
+        return cache.computeIfAbsent(target) {
             scope.async {
                 try {
-                    return@async delegate.work(threshold, target)
+                    return@async delegate.invoke()
                 } catch (e: Exception) {
-                    cache.remove(threshold to target.toHex())
+                    cache.remove(target)
                     throw e
                 }
             }
         }
     }
 
-    override suspend fun work(
-        threshold: ULong,
-        target: ByteArray,
-    ): AttoWork {
-        val key = threshold to target.toHex()
-
-        val deferred = delegateWork(threshold, target)
-
-        return try {
-            deferred.await()
-        } finally {
-            cache.remove(key, deferred)
+    override suspend fun work(threshold: ULong, target: ByteArray): AttoWork {
+        val deferred = delegateWork(Target(target)) {
+            delegate.work(threshold, target)
         }
+
+        val work = deferred.await()
+
+        cache.remove(Target(target))
+
+        if (AttoWork.isValid(threshold, target, work.value)) {
+            return work
+        }
+
+        return work(threshold, target)
     }
 
+    override suspend fun work(
+        network: AttoNetwork,
+        timestamp: Instant,
+        target: ByteArray,
+    ): AttoWork {
+        val deferred = delegateWork(Target(target)) {
+            delegate.work(network, timestamp, target)
+        }
+
+        val work = deferred.await()
+
+        cache.remove(Target(target))
+
+        if (AttoWork.isValid(network, timestamp, target, work.value)) {
+            return work
+        }
+
+        return work(network, timestamp, target)
+    }
+
+
     override suspend fun work(block: AttoBlock): AttoWork {
-        val work = super.work(block)
+        val deferred = delegateWork(Target(block.getTarget())) {
+            delegate.work(block)
+        }
 
-        val nextThreshold = AttoWork.getThreshold(block.network, Clock.System.now())
-        val nextTarget = block.hash.value
+        val work = deferred.await()
 
-        delegateWork(nextThreshold, nextTarget)
+        cache.remove(Target(block.getTarget()))
 
-        return work
+        delegateWork(Target(block.getTarget())) {
+            delegate.work(block.network, Clock.System.now(), block.hash.value)
+        }
+
+        if (work.isValid(block)) {
+            return work
+        }
+
+        return work(block)
     }
 
     override fun close() {
         cache.clear()
         scope.cancel()
         delegate.close()
+    }
+
+    private data class Target(
+        val target: ByteArray
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Target
+
+            if (!target.contentEquals(other.target)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return target.contentHashCode()
+        }
+
     }
 }
 
