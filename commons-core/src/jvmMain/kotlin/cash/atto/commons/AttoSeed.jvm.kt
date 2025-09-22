@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import kotlinx.coroutines.runBlocking
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
@@ -14,3 +15,6 @@ actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     val skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
     return skf.generateSecret(spec).encoded
 }
+
+@JvmOverloads
+fun AttoMnemonic.toSeedBlocking(passphrase: String = ""): AttoSeed = runBlocking { toSeed(passphrase) }

@@ -1,9 +1,8 @@
 package cash.atto.commons
 
+import kotlinx.coroutines.runBlocking
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
-
-internal object AttoSignerSignerHolder
 
 actual class InMemorySigner actual constructor(
     internal actual val privateKey: AttoPrivateKey,
@@ -18,3 +17,13 @@ actual class InMemorySigner actual constructor(
         return AttoSignature(signer.generateSignature())
     }
 }
+
+fun AttoSigner.signBlocking(hash: AttoHash): AttoSignature =
+    runBlocking {
+        sign(hash)
+    }
+
+fun AttoSigner.signBlocking(block: AttoBlock): AttoSignature =
+    runBlocking {
+        sign(block)
+    }

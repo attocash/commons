@@ -24,7 +24,7 @@ private class AttoWorkerCache(
 
     private fun delegateWork(
         target: Target,
-        delegate: suspend () -> AttoWork
+        delegate: suspend () -> AttoWork,
     ): Deferred<AttoWork> {
         return cache.computeIfAbsent(target) {
             scope.async {
@@ -38,10 +38,14 @@ private class AttoWorkerCache(
         }
     }
 
-    override suspend fun work(threshold: ULong, target: ByteArray): AttoWork {
-        val deferred = delegateWork(Target(target)) {
-            delegate.work(threshold, target)
-        }
+    override suspend fun work(
+        threshold: ULong,
+        target: ByteArray,
+    ): AttoWork {
+        val deferred =
+            delegateWork(Target(target)) {
+                delegate.work(threshold, target)
+            }
 
         val work = deferred.await()
 
@@ -59,9 +63,10 @@ private class AttoWorkerCache(
         timestamp: Instant,
         target: ByteArray,
     ): AttoWork {
-        val deferred = delegateWork(Target(target)) {
-            delegate.work(network, timestamp, target)
-        }
+        val deferred =
+            delegateWork(Target(target)) {
+                delegate.work(network, timestamp, target)
+            }
 
         val work = deferred.await()
 
@@ -74,11 +79,11 @@ private class AttoWorkerCache(
         return work(network, timestamp, target)
     }
 
-
     override suspend fun work(block: AttoBlock): AttoWork {
-        val deferred = delegateWork(Target(block.getTarget())) {
-            delegate.work(block)
-        }
+        val deferred =
+            delegateWork(Target(block.getTarget())) {
+                delegate.work(block)
+            }
 
         val work = deferred.await()
 
@@ -102,7 +107,7 @@ private class AttoWorkerCache(
     }
 
     private data class Target(
-        val target: ByteArray
+        val target: ByteArray,
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -115,10 +120,7 @@ private class AttoWorkerCache(
             return true
         }
 
-        override fun hashCode(): Int {
-            return target.contentHashCode()
-        }
-
+        override fun hashCode(): Int = target.contentHashCode()
     }
 }
 
