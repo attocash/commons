@@ -101,10 +101,6 @@ kotlin {
 //    }
 // }
 
-//allOpen {
-//    annotation("org.openjdk.jmh.annotations.State")
-//}
-
 // benchmark {
 //    targets {
 //        register("benchmarks")
