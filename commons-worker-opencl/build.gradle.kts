@@ -1,7 +1,4 @@
 plugins {
-    val kotlinVersion = "2.1.21"
-    kotlin("plugin.allopen") version kotlinVersion
-
     id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
 
     id("maven-publish")
@@ -59,10 +56,6 @@ kotlin {
 //        register("jvm")
 //    }
 // }
-
-allOpen {
-    annotation("org.openjdk.jmh.annotations.State")
-}
 
 // benchmark {
 //    targets {

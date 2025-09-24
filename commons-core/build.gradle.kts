@@ -1,9 +1,8 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
-    val kotlinVersion = "2.1.21"
-    kotlin("plugin.serialization") version kotlinVersion
-    kotlin("plugin.allopen") version kotlinVersion
+    kotlin("plugin.serialization")
+    kotlin("plugin.allopen")
 
     id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
 
@@ -97,6 +96,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+                implementation("io.swagger.core.v3:swagger-annotations-jakarta:2.2.37")
             }
         }
         val jvmTest by getting {

@@ -1,9 +1,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
-    val kotlinVersion = "2.1.21"
-    kotlin("plugin.serialization") version kotlinVersion
-    kotlin("plugin.allopen") version kotlinVersion
+    kotlin("plugin.serialization")
 
     id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
 
@@ -92,10 +90,6 @@ kotlin {
             }
         }
     }
-}
-
-allOpen {
-    annotation("org.openjdk.jmh.annotations.State")
 }
 
 val javadocJar by tasks.creating(Jar::class) {

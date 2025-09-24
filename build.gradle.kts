@@ -2,6 +2,8 @@ plugins {
     val kotlinVersion = "2.2.0"
     id("org.jetbrains.kotlin.multiplatform") version kotlinVersion apply false
     id("org.jetbrains.kotlin.native.cocoapods") version kotlinVersion apply false
+    id("org.jetbrains.kotlin.plugin.spring") version kotlinVersion apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion apply false
 
     id("org.jetbrains.dokka") version "2.0.0"
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
@@ -16,7 +18,9 @@ repositories {
 }
 allprojects {
     apply {
-        plugin("org.jetbrains.kotlin.multiplatform")
+        if (name != "commons-spring-boot-starter") {
+            apply(plugin = "org.jetbrains.kotlin.multiplatform")
+        }
         plugin("org.jetbrains.dokka")
         plugin("org.jlleitschuh.gradle.ktlint")
     }
