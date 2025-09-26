@@ -15,6 +15,7 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.math.pow
 
@@ -60,6 +61,7 @@ fun AttoBlock.getTarget(): ByteArray {
     }
 }
 
+@OptIn(ExperimentalJsExport::class)
 @JsExport.Ignore
 fun AttoWork.Companion.isValid(
     threshold: ULong,
