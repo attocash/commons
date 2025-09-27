@@ -166,8 +166,8 @@ class AttoBlockTest {
                "receiverAlgorithm":"V1",
                "receiverPublicKey":"552254E101B51B22080D084C12C94BF7DFC5BE0D973025D62C0BC1FF4D9B145F",
                "amount":1,
-               "address":"acs6pzftxeyvamkocf35loo6ablwe2ywusz4h4o3g7pwoyukl32fouv6ysfxi",
-               "receiverAddress":"abksevhbag2rwiqibueeyewjjp357rn6bwltajowfqf4d72ntmkf7lcusv3ig"
+               "address":"atto://acs6pzftxeyvamkocf35loo6ablwe2ywusz4h4o3g7pwoyukl32fouv6ysfxi",
+               "receiverAddress":"atto://abksevhbag2rwiqibueeyewjjp357rn6bwltajowfqf4d72ntmkf7lcusv3ig"
             }
             """,
                 """
@@ -183,7 +183,7 @@ class AttoBlockTest {
                "previous":"03783A08F51486A66A602439D9164894F07F150B548911086DAE4E4F57A9C4DD",
                "sendHashAlgorithm":"V1",
                "sendHash":"EE5FDA9A1ACEC7A09231792C345CDF5CD29F1059E5C413535D9FCA66A1FB2F49",
-               "address":"aa43kzedudpdrwkxrsxx5j4ryl7ms2zrrr55tgesa62xkm2mlwprwr3zlywtm"
+               "address":"atto://aa43kzedudpdrwkxrsxx5j4ryl7ms2zrrr55tgesa62xkm2mlwprwr3zlywtm"
             }
             """,
                 """
@@ -200,8 +200,8 @@ class AttoBlockTest {
                "representativeAlgorithm":"V1",
                "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105",
                "height":1,
-               "address":"aakwewsighepcmjpdw2bkugq7vwhgd6mewnm4d7yrnia5klhqorurxntbiiim",
-               "representativeAddress":"abu4aefiu5esjued2h6ienegdnftk5jq6qrucsclj262nom7aryql4esxmsae"
+               "address":"atto://aakwewsighepcmjpdw2bkugq7vwhgd6mewnm4d7yrnia5klhqorurxntbiiim",
+               "representativeAddress":"atto://abu4aefiu5esjued2h6ienegdnftk5jq6qrucsclj262nom7aryql4esxmsae"
             }
             """,
                 """
@@ -217,8 +217,8 @@ class AttoBlockTest {
                "previous":"AD675BD718F3D96F9B89C58A8BF80741D5EDB6741D235B070D56E84098894DD5",
                "representativeAlgorithm":"V1",
                "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105",
-               "address":"aasbl3ugbbd3hioornqfez7igsa5qqtkjrbpqeuou4wxf4fna4w4zpqq5aol2",
-               "representativeAddress":"abu4aefiu5esjued2h6ienegdnftk5jq6qrucsclj262nom7aryql4esxmsae"
+               "address":"atto://aasbl3ugbbd3hioornqfez7igsa5qqtkjrbpqeuou4wxf4fna4w4zpqq5aol2",
+               "representativeAddress":"atto://abu4aefiu5esjued2h6ienegdnftk5jq6qrucsclj262nom7aryql4esxmsae"
             }
             """,
             )

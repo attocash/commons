@@ -14,12 +14,7 @@ import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -91,17 +86,13 @@ data class TimeDifferenceResponse(
 @Serializable
 @JsExportForJs
 data class AccountSearch(
-    val addresses: Collection<
-        @Serializable(with = AttoAddressSerializer::class)
-        AttoAddress,
-        >,
+    val addresses: Collection<AttoAddress>,
 )
 
 @OptIn(ExperimentalJsExport::class)
 @Serializable
 @JsExportForJs
 data class AccountHeightSearch(
-    @Serializable(with = AttoAddressSerializer::class)
     val address: AttoAddress,
     val fromHeight: AttoHeight,
     val toHeight: AttoHeight = AttoHeight.MAX,
@@ -115,24 +106,5 @@ data class HeightSearch(
 ) {
     companion object {
         fun fromArray(search: Array<AccountHeightSearch>): HeightSearch = HeightSearch(search.toList())
-    }
-}
-
-object AttoAddressSerializer : KSerializer<AttoAddress> {
-    override val descriptor = PrimitiveSerialDescriptor("AttoAddress", PrimitiveKind.STRING)
-
-    override fun serialize(
-        encoder: Encoder,
-        value: AttoAddress,
-    ) {
-        encoder.encodeString(value.path)
-    }
-
-    override fun deserialize(decoder: Decoder): AttoAddress {
-        val address = decoder.decodeString()
-        if (address.startsWith("atto://")) {
-            return AttoAddress.parse(address)
-        }
-        return AttoAddress.parsePath(address)
     }
 }
