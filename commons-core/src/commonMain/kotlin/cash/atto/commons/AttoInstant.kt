@@ -22,35 +22,23 @@ data class AttoInstant(
 ) : Comparable<AttoInstant> {
     companion object {
         @JsExport.Ignore
-        fun now(clock: Clock): AttoInstant {
-            return fromEpochMilliseconds(clock.now().toEpochMilliseconds())
-        }
+        fun now(clock: Clock): AttoInstant = fromEpochMilliseconds(clock.now().toEpochMilliseconds())
 
         /**
          * To avoid opt in warn
          */
-        fun now(): AttoInstant {
-            return now(Clock.System)
-        }
+        fun now(): AttoInstant = now(Clock.System)
 
-        fun fromIso(value: String): AttoInstant {
-            return fromEpochMilliseconds(Instant.parse(value).toEpochMilliseconds())
-        }
+        fun fromIso(value: String): AttoInstant = fromEpochMilliseconds(Instant.parse(value).toEpochMilliseconds())
 
-        fun fromEpochMilliseconds(value: Long): AttoInstant {
-            return AttoInstant(Instant.fromEpochMilliseconds(value))
-        }
+        fun fromEpochMilliseconds(value: Long): AttoInstant = AttoInstant(Instant.fromEpochMilliseconds(value))
     }
 
     @JsExport.Ignore
-    operator fun plus(duration: Duration): AttoInstant {
-        return AttoInstant(value.plus(duration))
-    }
+    operator fun plus(duration: Duration): AttoInstant = AttoInstant(value.plus(duration))
 
     @JsExport.Ignore
-    operator fun minus(duration: Duration): AttoInstant {
-        return AttoInstant(value.minus(duration))
-    }
+    operator fun minus(duration: Duration): AttoInstant = AttoInstant(value.minus(duration))
 
     @JsExport.Ignore
     operator fun minus(another: AttoInstant): Duration = value - another.value
