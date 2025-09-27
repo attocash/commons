@@ -53,18 +53,12 @@ data class AttoInstant(
     }
 
     @JsExport.Ignore
-    operator fun minus(another: AttoInstant): Duration {
-        return value - another.value
-    }
+    operator fun minus(another: AttoInstant): Duration = value - another.value
 
     @JsExport.Ignore
-    override fun compareTo(other: AttoInstant): Int {
-        return value.compareTo(other.value)
-    }
+    override fun compareTo(other: AttoInstant): Int = value.compareTo(other.value)
 
-    fun toEpochMilliseconds(): Long {
-        return value.toEpochMilliseconds()
-    }
+    fun toEpochMilliseconds(): Long = value.toEpochMilliseconds()
 
     override fun toString(): String = value.toString()
 }
