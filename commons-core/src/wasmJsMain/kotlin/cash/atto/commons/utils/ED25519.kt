@@ -1,4 +1,5 @@
 @file:JsModule("@stablelib/ed25519")
+@file:OptIn(ExperimentalWasmJsInterop::class)
 
 package cash.atto.commons.utils
 

@@ -54,6 +54,7 @@ kotlin {
             freeCompilerArgs.addAll(
                 // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
                 "-Xir-per-file",
+                "-Xes-long-as-bigint",
             )
         }
     }

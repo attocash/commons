@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package cash.atto.commons.utils
 
 import org.khronos.webgl.ArrayBuffer

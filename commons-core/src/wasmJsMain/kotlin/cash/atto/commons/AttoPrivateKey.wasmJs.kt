@@ -9,6 +9,7 @@ internal object AttoPrivateKeyHolder
 actual class HmacSha512 actual constructor(
     secretKey: ByteArray,
 ) {
+    @OptIn(ExperimentalWasmJsInterop::class)
     private val hmac = HMAC(SHA512Algorithm, secretKey.toUint8Array())
 
     actual fun update(

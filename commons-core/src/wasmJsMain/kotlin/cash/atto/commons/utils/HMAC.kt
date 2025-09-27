@@ -1,4 +1,5 @@
 @file:JsModule("@stablelib/hmac")
+@file:OptIn(ExperimentalWasmJsInterop::class)
 
 package cash.atto.commons.utils
 

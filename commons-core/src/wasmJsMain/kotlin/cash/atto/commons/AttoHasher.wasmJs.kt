@@ -7,6 +7,7 @@ actual object AttoHasher {
         size: Int,
         vararg byteArrays: ByteArray,
     ): ByteArray {
+        @OptIn(ExperimentalWasmJsInterop::class)
         val hasher = BLAKE2b(size)
 
         for (byteArray in byteArrays) {

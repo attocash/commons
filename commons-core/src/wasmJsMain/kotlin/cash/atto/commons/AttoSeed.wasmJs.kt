@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package cash.atto.commons
 
 import cash.atto.commons.utils.getSubtleCryptoInstance

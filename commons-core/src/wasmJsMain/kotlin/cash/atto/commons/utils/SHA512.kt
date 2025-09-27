@@ -1,4 +1,5 @@
 @file:JsModule("@stablelib/sha512")
+@file:OptIn(ExperimentalWasmJsInterop::class)
 
 package cash.atto.commons.utils
 
