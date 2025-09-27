@@ -1,16 +1,22 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazer.AttoAddressAsByteArraySerializer
 import cash.atto.commons.utils.Base32
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 import kotlinx.io.writeUByte
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.js.JsName
 
 private const val SCHEMA = "atto://"
 
-private fun ByteArray.toAddress(): String {
+private fun ByteArray.toAddressPath(): String {
     require(this.size == 38) { "ByteArray should have 38 bytes" }
     return Base32.encode(this).replace("=", "").lowercase()
 }
@@ -20,13 +26,13 @@ private fun String.fromAddress(): ByteArray {
 }
 
 @JsExportForJs
-@Serializable(with = AttoAddressAsByteArraySerializer::class)
+@Serializable(with = AttoAddressAsStringSerializer::class)
 data class AttoAddress(
     val algorithm: AttoAlgorithm,
     val publicKey: AttoPublicKey,
 ) {
     val schema = SCHEMA
-    val path = toAddress(algorithm, publicKey)
+    val path = toAddressPath(algorithm, publicKey)
     val value = schema + path
 
     companion object {
@@ -79,7 +85,7 @@ data class AttoAddress(
             return isValid(value)
         }
 
-        fun toAddress(
+        fun toAddressPath(
             algorithm: AttoAlgorithm,
             publicKey: AttoPublicKey,
         ): String {
@@ -87,7 +93,7 @@ data class AttoAddress(
             val publicKey = publicKey.value
             val checksum = checksum(algorithm, publicKey)
 
-            return (algorithm + publicKey + checksum).toAddress()
+            return (algorithm + publicKey + checksum).toAddressPath()
         }
 
         @JsName("parseSerialized")
@@ -121,3 +127,31 @@ data class AttoAddress(
 }
 
 fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)
+
+object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoAddress", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoAddress,
+    ) {
+        encoder.encodeString(value.path)
+    }
+
+    override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parsePath(decoder.decodeString())
+}
+
+
+object AttoAddressAsByteArraySerializer : KSerializer<AttoAddress> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoAddress", PrimitiveKind.BYTE)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoAddress,
+    ) {
+        encoder.encodeSerializableValue(ByteArraySerializer(), value.toBuffer().readByteArray())
+    }
+
+    override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parse(decoder.decodeSerializableValue(ByteArraySerializer()))
+}
+
