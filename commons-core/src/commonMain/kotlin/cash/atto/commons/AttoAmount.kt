@@ -21,7 +21,7 @@ enum class AttoUnit(
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
-@Serializable(with = AttoAmountSerializer::class)
+@Serializable(with = AttoAmountAsULongSerializer::class)
 data class AttoAmount(
     val raw: ULong,
 ) : Comparable<AttoAmount> {
@@ -107,7 +107,7 @@ fun ULong.toAttoAmount(): AttoAmount = AttoAmount(this)
 
 fun String.toAttoAmount(): AttoAmount = AttoAmount(this.toULong())
 
-object AttoAmountSerializer : KSerializer<AttoAmount> {
+object AttoAmountAsULongSerializer : KSerializer<AttoAmount> {
     override val descriptor = ULong.serializer().descriptor
 
     override fun serialize(
