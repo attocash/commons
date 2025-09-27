@@ -1,0 +1,3 @@
+cash.atto.commons.spring.conversion.AttoConversionsAutoConfiguration
+cash.atto.commons.spring.conversion.AttoR2dbcCustomConversionsAutoConfiguration
+cash.atto.commons.spring.schema.AttoSpringDocOpenApiAutoConfiguration
