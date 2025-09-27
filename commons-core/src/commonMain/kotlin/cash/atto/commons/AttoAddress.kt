@@ -136,7 +136,7 @@ object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
         encoder: Encoder,
         value: AttoAddress,
     ) {
-        encoder.encodeString(value.path)
+        encoder.encodeString(value.toString())
     }
 
     override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parsePath(decoder.decodeString())
