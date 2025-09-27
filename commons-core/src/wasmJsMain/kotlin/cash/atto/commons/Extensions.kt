@@ -24,6 +24,7 @@ fun ByteArray.toUint8Array(): Uint8Array {
     return output
 }
 
+@OptIn(ExperimentalWasmJsInterop::class)
 internal suspend fun <T : JsAny> Promise<T>.await() =
     suspendCoroutine { continuation ->
         then(

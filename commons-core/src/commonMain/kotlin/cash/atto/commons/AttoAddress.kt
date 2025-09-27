@@ -13,6 +13,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.js.JsName
 
 private const val SCHEMA = "atto://"
@@ -26,6 +28,7 @@ private fun String.fromAddress(): ByteArray {
     return Base32.decode(this.substring(SCHEMA.length).uppercase() + "===")
 }
 
+@OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 @Serializable(with = AttoAddressAsStringSerializer::class)
 data class AttoAddress(
@@ -118,6 +121,7 @@ data class AttoAddress(
         }
     }
 
+    @JsExport.Ignore
     fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeUByte(algorithm.code)

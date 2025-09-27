@@ -3,6 +3,7 @@ package cash.atto.commons.utils
 import cash.atto.commons.toByteArray
 import org.khronos.webgl.Uint8Array
 
+@OptIn(ExperimentalWasmJsInterop::class)
 private fun randomByteArray(uint8Array: Uint8Array): Unit = js("{ crypto.getRandomValues(uint8Array); }")
 
 actual object SecureRandom {

@@ -2,6 +2,8 @@ package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.Serializable
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 @JsExportForJs
 @Serializable
@@ -17,6 +19,8 @@ enum class AttoAlgorithm(
     companion object {
         private val map = AttoAlgorithm.entries.associateBy(AttoAlgorithm::code)
 
+        @OptIn(ExperimentalJsExport::class)
+        @JsExport.Ignore
         fun from(code: UByte): AttoAlgorithm = map[code] ?: throw IllegalArgumentException("Unsupported algorithm $code code")
     }
 }

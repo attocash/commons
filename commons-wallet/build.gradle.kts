@@ -43,6 +43,20 @@ kotlin {
         nodejs()
 
         generateTypeScriptDefinitions()
+
+        compilations["main"].packageJson {
+            customField("name", "@attocash/commons-wallet")
+        }
+
+        compilerOptions {
+            target = "es2015"
+            useEsClasses = true
+            freeCompilerArgs.addAll(
+                // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
+                "-Xir-per-file",
+                "-Xes-long-as-bigint",
+            )
+        }
     }
 
     @OptIn(ExperimentalWasmDsl::class)
