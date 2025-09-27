@@ -3,13 +3,15 @@ package cash.atto.commons
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 
-@Serializable(with = AttoSignatureSerializer::class)
+@Serializable(with = AttoSignatureAsStringSerializer::class)
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 data class AttoSignature(
@@ -52,7 +54,7 @@ fun AttoSignature.isValid(
     return isValid(publicKey, challenge)
 }
 
-object AttoSignatureSerializer : KSerializer<AttoSignature> {
+object AttoSignatureAsStringSerializer : KSerializer<AttoSignature> {
     override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.STRING)
 
     override fun serialize(
@@ -63,4 +65,17 @@ object AttoSignatureSerializer : KSerializer<AttoSignature> {
     }
 
     override fun deserialize(decoder: Decoder): AttoSignature = AttoSignature.parse(decoder.decodeString())
+}
+
+object AttoSignatureAsByteArraySerializer : KSerializer<AttoSignature> {
+    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoSignature,
+    ) {
+        encoder.encodeSerializableValue(ByteArraySerializer(), value.value)
+    }
+
+    override fun deserialize(decoder: Decoder): AttoSignature = AttoSignature(decoder.decodeSerializableValue(ByteArraySerializer()))
 }

@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.JsName
@@ -141,9 +142,8 @@ object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
     override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parsePath(decoder.decodeString())
 }
 
-
 object AttoAddressAsByteArraySerializer : KSerializer<AttoAddress> {
-    override val descriptor = PrimitiveSerialDescriptor("AttoAddress", PrimitiveKind.BYTE)
+    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
@@ -154,4 +154,3 @@ object AttoAddressAsByteArraySerializer : KSerializer<AttoAddress> {
 
     override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parse(decoder.decodeSerializableValue(ByteArraySerializer()))
 }
-

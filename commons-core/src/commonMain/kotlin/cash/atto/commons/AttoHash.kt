@@ -4,13 +4,15 @@ import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @JsExportForJs
-@Serializable(with = AttoHashSerializer::class)
+@Serializable(with = AttoHashAsStringSerializer::class)
 data class AttoHash(
     val value: ByteArray,
 ) {
@@ -61,7 +63,7 @@ interface AttoHashable {
     val hash: AttoHash
 }
 
-object AttoHashSerializer : KSerializer<AttoHash> {
+object AttoHashAsStringSerializer : KSerializer<AttoHash> {
     override val descriptor = PrimitiveSerialDescriptor("AttoHash", PrimitiveKind.STRING)
 
     override fun serialize(
@@ -72,4 +74,17 @@ object AttoHashSerializer : KSerializer<AttoHash> {
     }
 
     override fun deserialize(decoder: Decoder): AttoHash = AttoHash.parse(decoder.decodeString())
+}
+
+object AttoHashAsByteArraySerializer : KSerializer<AttoHash> {
+    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoHash,
+    ) {
+        encoder.encodeSerializableValue(ByteArraySerializer(), value.value)
+    }
+
+    override fun deserialize(decoder: Decoder): AttoHash = AttoHash(decoder.decodeSerializableValue(ByteArraySerializer()))
 }

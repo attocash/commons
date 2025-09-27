@@ -297,8 +297,11 @@ data class AttoOpenBlock(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     override val height = AttoHeight(1UL)
 
-    val address by lazy { AttoAddress(algorithm, publicKey) }
-    val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val address = AttoAddress(algorithm, publicKey)
+
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoOpenBlock? {

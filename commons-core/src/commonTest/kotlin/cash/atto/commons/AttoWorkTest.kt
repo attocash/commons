@@ -49,8 +49,8 @@ internal class AttoWorkTest {
         val expectedJson = "\"883175A7421F3696\""
 
         // when
-        val work = Json.decodeFromString(AttoWorkSerializer, expectedJson)
-        val json = Json.encodeToString(AttoWorkSerializer, work)
+        val work = Json.decodeFromString(AttoWorkAsStringSerializer, expectedJson)
+        val json = Json.encodeToString(AttoWorkAsStringSerializer, work)
 
         // then
         assertEquals(expectedJson, json)

@@ -4,7 +4,13 @@ import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 
 @OptIn(ExperimentalJsExport::class)
@@ -87,4 +93,18 @@ fun AttoSignedVote.Companion.fromBuffer(buffer: Buffer): AttoSignedVote {
         vote = vote,
         signature = buffer.readAttoSignature(),
     )
+}
+
+object AttoSignedVoteAsByteArraySerializer : KSerializer<AttoSignedVote> {
+    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoSignedVote,
+    ) {
+        encoder.encodeSerializableValue(ByteArraySerializer(), value.toBuffer().readByteArray())
+    }
+
+    override fun deserialize(decoder: Decoder): AttoSignedVote =
+        AttoSignedVote.fromBuffer(decoder.decodeSerializableValue(ByteArraySerializer()).toBuffer())
 }

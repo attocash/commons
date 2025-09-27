@@ -2,8 +2,14 @@ package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.builtins.ByteArraySerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @JsExportForJs
 @Serializable
@@ -77,4 +83,18 @@ data class AttoTransaction(
     }
 
     override fun toString(): String = "AttoTransaction(hash=$hash, block=$block, signature=$signature, work=$work, hash=$hash)"
+}
+
+object AttoTransactionAsByteArraySerializer : KSerializer<AttoTransaction> {
+    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoTransaction,
+    ) {
+        encoder.encodeSerializableValue(ByteArraySerializer(), value.toBuffer().readByteArray())
+    }
+
+    override fun deserialize(decoder: Decoder): AttoTransaction =
+        AttoTransaction.fromBuffer(decoder.decodeSerializableValue(ByteArraySerializer()).toBuffer())!!
 }

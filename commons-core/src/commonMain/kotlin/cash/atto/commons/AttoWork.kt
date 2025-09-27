@@ -11,8 +11,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
@@ -85,7 +87,7 @@ fun AttoWork.Companion.isValid(
 }
 
 @JsExportForJs
-@Serializable(with = AttoWorkSerializer::class)
+@Serializable(with = AttoWorkAsStringSerializer::class)
 data class AttoWork(
     val value: ByteArray,
 ) {
@@ -128,7 +130,7 @@ data class AttoWork(
     override fun toString(): String = value.toHex()
 }
 
-object AttoWorkSerializer : KSerializer<AttoWork> {
+object AttoWorkAsStringSerializer : KSerializer<AttoWork> {
     override val descriptor = PrimitiveSerialDescriptor("AttoWork", PrimitiveKind.STRING)
 
     override fun serialize(
@@ -139,4 +141,17 @@ object AttoWorkSerializer : KSerializer<AttoWork> {
     }
 
     override fun deserialize(decoder: Decoder): AttoWork = AttoWork.parse(decoder.decodeString())
+}
+
+object AttoWorkAsByteArraySerializer : KSerializer<AttoWork> {
+    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoWork,
+    ) {
+        encoder.encodeSerializableValue(ByteArraySerializer(), value.value)
+    }
+
+    override fun deserialize(decoder: Decoder): AttoWork = AttoWork(decoder.decodeSerializableValue(ByteArraySerializer()))
 }
