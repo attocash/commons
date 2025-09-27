@@ -139,7 +139,13 @@ object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
         encoder.encodeString(value.toString())
     }
 
-    override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parsePath(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): AttoAddress {
+        val address = decoder.decodeString()
+        if (address.startsWith("atto://")) {
+            return AttoAddress.parse(address)
+        }
+        return AttoAddress.parsePath(address)
+    }
 }
 
 object AttoAddressAsByteArraySerializer : KSerializer<AttoAddress> {
