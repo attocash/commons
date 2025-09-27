@@ -1,7 +1,6 @@
 package cash.atto.commons.gatekeeper
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import cash.atto.commons.AttoInstant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
@@ -9,12 +8,12 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.Duration
 
 data class AttoJWT(
-    val expiresAt: Instant,
+    val expiresAt: AttoInstant,
     val encoded: String,
 ) {
     companion object {}
 
-    fun isExpired(leeway: Duration): Boolean = expiresAt < Clock.System.now().minus(leeway)
+    fun isExpired(leeway: Duration): Boolean = expiresAt < AttoInstant.now().minus(leeway)
 }
 
 @Serializable
@@ -48,7 +47,7 @@ fun AttoJWT.Companion.decode(encoded: String): AttoJWT {
             ?: throw IllegalArgumentException("No exp field found in JWT payload")
 
     return AttoJWT(
-        expiresAt = Instant.fromEpochMilliseconds(expMillis),
+        expiresAt = AttoInstant.fromEpochMilliseconds(expMillis),
         encoded = encoded,
     )
 }

@@ -1,6 +1,7 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.getTarget
@@ -11,8 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import java.util.concurrent.ConcurrentHashMap
 
 private class AttoWorkerCache(
@@ -60,7 +59,7 @@ private class AttoWorkerCache(
 
     override suspend fun work(
         network: AttoNetwork,
-        timestamp: Instant,
+        timestamp: AttoInstant,
         target: ByteArray,
     ): AttoWork {
         val deferred =
@@ -90,7 +89,7 @@ private class AttoWorkerCache(
         cache.remove(Target(block.getTarget()))
 
         delegateWork(Target(block.getTarget())) {
-            delegate.work(block.network, Clock.System.now(), block.hash.value)
+            delegate.work(block.network, AttoInstant.now(), block.hash.value)
         }
 
         if (work.isValid(block)) {

@@ -1,6 +1,7 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import kotlinx.coroutines.CoroutineScope
@@ -8,7 +9,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.future.future
-import kotlinx.datetime.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 
@@ -29,11 +29,11 @@ private class AttoWorkerJavaImpl(
 
     override fun work(
         network: AttoNetwork,
-        timestamp: String,
+        timestamp: AttoInstant,
         target: ByteArray,
     ): CompletableFuture<AttoWork> =
         scope.future {
-            worker.work(network, Instant.parse(timestamp), target)
+            worker.work(network, timestamp, target)
         }
 
     override fun work(block: AttoBlock): CompletableFuture<AttoWork> = scope.future { worker.work(block) }

@@ -1,9 +1,6 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
@@ -58,7 +55,7 @@ sealed interface AttoBlock :
     val publicKey: AttoPublicKey
     override val height: AttoHeight
     val balance: AttoAmount
-    val timestamp: Instant
+    val timestamp: AttoInstant
 
     override fun toBuffer(): Buffer
 
@@ -95,7 +92,7 @@ sealed interface AttoBlock :
 
     fun isValid(): Boolean {
         return version <= maxVersion &&
-            timestamp <= Clock.System.now() + 1.minutes
+            timestamp <= AttoInstant.now() + 1.minutes
     }
 }
 
@@ -127,8 +124,7 @@ data class AttoSendBlock(
     override val publicKey: AttoPublicKey,
     override val height: AttoHeight,
     override val balance: AttoAmount,
-    @Serializable(with = InstantMillisSerializer::class)
-    override val timestamp: Instant,
+    override val timestamp: AttoInstant,
     override val previous: AttoHash,
     val receiverAlgorithm: AttoAlgorithm,
     val receiverPublicKey: AttoPublicKey,
@@ -206,8 +202,7 @@ data class AttoReceiveBlock(
     override val publicKey: AttoPublicKey,
     override val height: AttoHeight,
     override val balance: AttoAmount,
-    @Serializable(with = InstantMillisSerializer::class)
-    override val timestamp: Instant,
+    override val timestamp: AttoInstant,
     override val previous: AttoHash,
     override val sendHashAlgorithm: AttoAlgorithm,
     override val sendHash: AttoHash,
@@ -280,8 +275,7 @@ data class AttoOpenBlock(
     override val algorithm: AttoAlgorithm,
     override val publicKey: AttoPublicKey,
     override val balance: AttoAmount,
-    @Serializable(with = InstantMillisSerializer::class)
-    override val timestamp: Instant,
+    override val timestamp: AttoInstant,
     override val sendHashAlgorithm: AttoAlgorithm,
     override val sendHash: AttoHash,
     override val representativeAlgorithm: AttoAlgorithm,
@@ -362,8 +356,7 @@ data class AttoChangeBlock(
     override val publicKey: AttoPublicKey,
     override val height: AttoHeight,
     override val balance: AttoAmount,
-    @Serializable(with = InstantMillisSerializer::class)
-    override val timestamp: Instant,
+    override val timestamp: AttoInstant,
     override val previous: AttoHash,
     override val representativeAlgorithm: AttoAlgorithm,
     override val representativePublicKey: AttoPublicKey,

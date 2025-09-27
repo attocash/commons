@@ -1,7 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
@@ -13,13 +11,13 @@ class AttoReceivableTest {
         // given
         val expectedReceivable =
             AttoReceivable(
-                hash = AttoHash(Random.Default.nextBytes(32)),
+                hash = AttoHash(Random.nextBytes(32)),
                 version = 0U.toAttoVersion(),
                 algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                publicKey = AttoPublicKey(Random.nextBytes(32)),
+                timestamp = AttoInstant.now(),
                 receiverAlgorithm = AttoAlgorithm.V1,
-                receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                receiverPublicKey = AttoPublicKey(Random.nextBytes(32)),
                 amount = AttoAmount.MAX,
             )
 

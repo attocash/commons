@@ -5,6 +5,7 @@ import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
@@ -13,7 +14,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.function.Consumer
@@ -33,7 +33,7 @@ private class AttoNodeOperationsJavaImpl(
 
     override fun transaction(hash: AttoHash): CompletableFuture<AttoTransaction> = scope.future { delegate.transaction(hash) }
 
-    override fun now(): CompletableFuture<Instant> = scope.future { delegate.now() }
+    override fun now(): CompletableFuture<AttoInstant> = scope.future { delegate.now() }
 
     override fun publish(transaction: AttoTransaction): CompletableFuture<Unit> =
         scope.future<Unit> {

@@ -1,7 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
@@ -22,7 +20,7 @@ class AttoAccountEntryTest {
                 subjectPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
                 previousBalance = AttoAmount(0U),
                 balance = AttoAmount(100U),
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                timestamp = AttoInstant.now(),
             )
 
         // when

@@ -1,8 +1,6 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @JsExportForJs
@@ -12,8 +10,7 @@ data class AttoReceivable(
     val version: AttoVersion,
     val algorithm: AttoAlgorithm,
     val publicKey: AttoPublicKey,
-    @Serializable(with = InstantMillisSerializer::class)
-    val timestamp: Instant,
+    val timestamp: AttoInstant,
     val receiverAlgorithm: AttoAlgorithm,
     val receiverPublicKey: AttoPublicKey,
     val amount: AttoAmount,

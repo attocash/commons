@@ -7,6 +7,7 @@ import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlockType
 import cash.atto.commons.AttoHash
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoPublicKey
@@ -39,8 +40,6 @@ import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -238,7 +237,7 @@ class AttoWalletManagerTest {
             height = 1U.toAttoHeight(),
             balance = AttoAmount(ULong.MAX_VALUE / 2U),
             lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
-            lastTransactionTimestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            lastTransactionTimestamp = AttoInstant.now(),
             representativeAlgorithm = AttoAlgorithm.V1,
             representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
         )
@@ -255,7 +254,7 @@ class AttoWalletManagerTest {
             subjectPublicKey = publicKey,
             previousBalance = AttoAmount.MIN,
             balance = AttoAmount.MAX,
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            timestamp = AttoInstant.now(),
         )
     }
 
@@ -268,10 +267,10 @@ class AttoWalletManagerTest {
                 publicKey = publicKey,
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.nextBytes(ByteArray(32))),
                 sendHashAlgorithm = AttoAlgorithm.V1,
-                sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
+                sendHash = AttoHash(Random.nextBytes(ByteArray(32))),
             )
 
         return AttoTransaction(
@@ -283,11 +282,11 @@ class AttoWalletManagerTest {
 
     private fun AttoReceivable.Companion.sample(): AttoReceivable =
         AttoReceivable(
-            hash = AttoHash(Random.Default.nextBytes(32)),
+            hash = AttoHash(Random.nextBytes(32)),
             version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
             publicKey = AttoPublicKey(Random.nextBytes(32)),
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            timestamp = AttoInstant.now(),
             receiverAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = publicKey,
             amount = 1000UL.toAttoAmount(),

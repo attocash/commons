@@ -1,10 +1,9 @@
 package cash.atto.commons.worker
 
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.toHex
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 interface AttoWorkerOperations : AttoWorker {
@@ -12,7 +11,7 @@ interface AttoWorkerOperations : AttoWorker {
 
     override suspend fun work(
         network: AttoNetwork,
-        timestamp: Instant,
+        timestamp: AttoInstant,
         target: ByteArray,
     ): AttoWork {
         val request = Request(network, timestamp, target.toHex())
@@ -23,8 +22,7 @@ interface AttoWorkerOperations : AttoWorker {
     @Serializable
     data class Request(
         val network: AttoNetwork,
-        @Serializable(with = InstantMillisSerializer::class)
-        val timestamp: Instant,
+        val timestamp: AttoInstant,
         val target: String,
     )
 

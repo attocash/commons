@@ -1,7 +1,8 @@
 package cash.atto.commons.gatekeeper
 
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.node.randomPort
-import cash.atto.commons.serialiazer.InstantMillisSerializer
+import cash.atto.commons.toAtto
 import cash.atto.commons.toHex
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -14,8 +15,6 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respond
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import kotlinx.datetime.Instant
-import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.Serializable
 import java.security.KeyPairGenerator
 import java.security.interfaces.ECPrivateKey
@@ -47,7 +46,7 @@ fun generateJwt(): AttoJWT {
 
     val decodedJWT = JWT.decode(jwt)
 
-    return AttoJWT(decodedJWT.expiresAtAsInstant.toKotlinInstant(), jwt)
+    return AttoJWT(decodedJWT.expiresAtAsInstant.toAtto(), jwt)
 }
 
 class AttoMockGatekeeper(
@@ -92,8 +91,7 @@ class AttoMockGatekeeper(
 
     @Serializable
     data class AttoWorkRequest(
-        @Serializable(with = InstantMillisSerializer::class)
-        val timestamp: Instant,
+        val timestamp: AttoInstant,
         val target: String,
     )
 }

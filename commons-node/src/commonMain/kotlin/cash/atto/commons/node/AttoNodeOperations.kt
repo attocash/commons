@@ -6,14 +6,14 @@ import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
+import cash.atto.commons.AttoInstant
+import cash.atto.commons.AttoInstantAsStringSerializer
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -66,11 +66,11 @@ interface AttoNodeOperations {
 
     fun transactionStream(search: HeightSearch): Flow<AttoTransaction>
 
-    suspend fun now(currentTime: Instant): TimeDifferenceResponse
+    suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse
 
-    suspend fun now(): Instant {
-        val difference = now(Clock.System.now()).differenceMillis
-        return Clock.System.now().plus(difference.milliseconds)
+    suspend fun now(): AttoInstant {
+        val difference = now(AttoInstant.now()).differenceMillis
+        return AttoInstant.now().plus(difference.milliseconds)
     }
 
     suspend fun publish(transaction: AttoTransaction)
@@ -80,8 +80,10 @@ interface AttoNodeOperations {
 @Serializable
 @JsExportForJs
 data class TimeDifferenceResponse(
-    val clientInstant: Instant,
-    val serverInstant: Instant,
+    @Serializable(AttoInstantAsStringSerializer::class)
+    val clientInstant: AttoInstant,
+    @Serializable(AttoInstantAsStringSerializer::class)
+    val serverInstant: AttoInstant,
     val differenceMillis: Long,
 )
 

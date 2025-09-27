@@ -3,9 +3,6 @@ package cash.atto.commons
 import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.cpu
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
@@ -23,7 +20,7 @@ class AttoTransactionTest {
             publicKey = publicKey,
             height = 2U.toAttoHeight(),
             balance = AttoAmount.MAX,
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            timestamp = AttoInstant.now(),
             previous = AttoHash(Random.nextBytes(ByteArray(32))),
             sendHashAlgorithm = AttoAlgorithm.V1,
             sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),

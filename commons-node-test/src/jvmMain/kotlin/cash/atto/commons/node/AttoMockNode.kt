@@ -3,6 +3,8 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAlgorithm
+import cash.atto.commons.AttoInstant
+import cash.atto.commons.AttoInstantAsStringSerializer
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoSignature
@@ -31,8 +33,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.net.ServerSocket
@@ -237,8 +237,8 @@ class AttoMockNode(
                 }
 
                 get("/instants/{instant}") {
-                    val clientInstant = Instant.parse(call.parameters["instant"]!!)
-                    val serverInstant = Clock.System.now()
+                    val clientInstant = AttoInstant.fromIso(call.parameters["instant"]!!)
+                    val serverInstant = AttoInstant.now()
                     val differenceMillis = serverInstant.minus(clientInstant).inWholeMilliseconds
 
                     val response = InstantResponse(clientInstant, serverInstant, differenceMillis)
@@ -262,8 +262,10 @@ class AttoMockNode(
 
     @Serializable
     data class InstantResponse(
-        val clientInstant: Instant,
-        val serverInstant: Instant,
+        @Serializable(with = AttoInstantAsStringSerializer::class)
+        val clientInstant: AttoInstant,
+        @Serializable(with = AttoInstantAsStringSerializer::class)
+        val serverInstant: AttoInstant,
         val differenceMillis: Long,
     )
 

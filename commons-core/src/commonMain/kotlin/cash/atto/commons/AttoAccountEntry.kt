@@ -1,8 +1,6 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @JsExportForJs
@@ -17,9 +15,8 @@ data class AttoAccountEntry(
     val subjectPublicKey: AttoPublicKey,
     val previousBalance: AttoAmount,
     val balance: AttoAmount,
-    @Serializable(with = InstantMillisSerializer::class)
-    val timestamp: Instant,
+    val timestamp: AttoInstant,
 ) : HeightSupport {
-    val address by lazy { AttoAddress(algorithm, publicKey) }
-    val subjectAddress by lazy { AttoAddress(subjectAlgorithm, subjectPublicKey) }
+    val address = AttoAddress(algorithm, publicKey)
+    val subjectAddress = AttoAddress(subjectAlgorithm, subjectPublicKey)
 }

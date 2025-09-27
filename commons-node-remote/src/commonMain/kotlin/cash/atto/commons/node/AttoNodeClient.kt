@@ -6,6 +6,7 @@ import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
@@ -35,7 +36,6 @@ import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -232,7 +232,7 @@ private class AttoNodeClient(
         return fetchStream("accounts/transactions/stream", search)
     }
 
-    override suspend fun now(currentTime: Instant): TimeDifferenceResponse {
+    override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse {
         val uri = "$baseUrl/instants/$currentTime"
         val headers = headerProvider.invoke()
 

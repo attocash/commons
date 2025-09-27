@@ -1,7 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.datetime.Instant
-
 interface AttoSigner {
     companion object {}
 
@@ -21,7 +19,7 @@ interface AttoSigner {
 
     suspend fun sign(
         challenge: AttoChallenge,
-        timestamp: Instant,
+        timestamp: AttoInstant,
     ): AttoSignature = sign(AttoHash.hash(64, publicKey.value, challenge.value, timestamp.toByteArray()))
 
     suspend fun checkPublicKey(publicKey: AttoPublicKey) {

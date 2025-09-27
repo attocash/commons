@@ -5,8 +5,6 @@ import cash.atto.commons.AttoNetwork.Companion.INITIAL_DATE
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_LIVE_THRESHOLD
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.KSerializer
@@ -20,7 +18,10 @@ import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.math.pow
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
     val cache = mutableMapOf<AttoNetwork, Map<Int, ULong>>()
     for (network in AttoNetwork.entries) {
@@ -44,15 +45,16 @@ private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
 
 private val thresholdCache = initializeThresholdCache()
 
+@OptIn(ExperimentalTime::class)
 fun AttoWork.Companion.getThreshold(
     network: AttoNetwork,
-    timestamp: Instant,
+    timestamp: AttoInstant,
 ): ULong {
     if (timestamp < INITIAL_INSTANT) {
         throw IllegalArgumentException("Timestamp($timestamp) lower than initialInstant(${AttoNetwork.INITIAL_INSTANT})")
     }
 
-    return thresholdCache[network]!![timestamp.toLocalDateTime(TimeZone.UTC).year]!!
+    return thresholdCache[network]!![timestamp.value.toLocalDateTime(TimeZone.UTC).year]!!
 }
 
 fun AttoBlock.getTarget(): ByteArray {
@@ -76,7 +78,7 @@ fun AttoWork.Companion.isValid(
 
 fun AttoWork.Companion.isValid(
     network: AttoNetwork,
-    timestamp: Instant,
+    timestamp: AttoInstant,
     target: ByteArray,
     work: ByteArray,
 ): Boolean {
@@ -96,7 +98,7 @@ data class AttoWork(
 
         fun threshold(
             network: AttoNetwork,
-            timestamp: Instant,
+            timestamp: AttoInstant,
         ): ULong {
             return getThreshold(network, timestamp)
         }

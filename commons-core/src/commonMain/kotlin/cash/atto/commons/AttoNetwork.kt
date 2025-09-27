@@ -1,10 +1,10 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlin.time.ExperimentalTime
 
 @JsExportForJs
 enum class AttoNetwork(
@@ -21,8 +21,10 @@ enum class AttoNetwork(
 
     companion object {
         val INITIAL_LIVE_THRESHOLD = 8589934591UL
-        val INITIAL_DATE: LocalDate = LocalDate(2024, 1, 1)
-        val INITIAL_INSTANT: Instant = INITIAL_DATE.atStartOfDayIn(TimeZone.UTC)
+        val INITIAL_DATE = LocalDate(2024, 1, 1)
+
+        @OptIn(ExperimentalTime::class)
+        val INITIAL_INSTANT = AttoInstant.fromEpochMilliseconds(INITIAL_DATE.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds())
         val DOUBLING_PERIOD = 2.0
 
         private val map = entries.associateBy { it.code }

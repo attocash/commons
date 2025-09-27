@@ -3,11 +3,11 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChallenge
 import cash.atto.commons.AttoHash
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoVote
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -25,13 +25,12 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -63,7 +62,7 @@ internal class HttpSignerRemote(
     }
 
     private suspend fun getPublicKey(): AttoPublicKey {
-        while (coroutineContext.isActive) {
+        while (currentCoroutineContext().isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -91,7 +90,7 @@ internal class HttpSignerRemote(
 
     override suspend fun sign(
         challenge: AttoChallenge,
-        timestamp: Instant,
+        timestamp: AttoInstant,
     ): AttoSignature {
         val uri = "$url/challenges"
 
@@ -101,7 +100,7 @@ internal class HttpSignerRemote(
                 timestamp = timestamp,
             )
 
-        while (coroutineContext.isActive) {
+        while (currentCoroutineContext().isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -136,7 +135,7 @@ internal class HttpSignerRemote(
                 target = block,
             )
 
-        while (coroutineContext.isActive) {
+        while (currentCoroutineContext().isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -171,7 +170,7 @@ internal class HttpSignerRemote(
                 target = vote,
             )
 
-        while (coroutineContext.isActive) {
+        while (currentCoroutineContext().isActive) {
             try {
                 val headers = headerProvider.invoke()
 
@@ -221,8 +220,7 @@ internal class HttpSignerRemote(
     @Serializable
     data class ChallengeSignatureRequest(
         override val target: AttoChallenge,
-        @Serializable(with = InstantMillisSerializer::class)
-        val timestamp: Instant,
+        val timestamp: AttoInstant,
     ) : SignatureRequest<AttoChallenge>
 
     @Serializable

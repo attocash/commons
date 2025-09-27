@@ -1,8 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
@@ -22,14 +19,14 @@ class AttoAccountTest {
                 receiverAlgorithm = AttoAlgorithm.V1,
                 receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
                 amount = 1000UL.toAttoAmount(),
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds() - 10000L),
+                timestamp = AttoInstant.now() - 10.seconds,
                 hash = AttoHash(Random.Default.nextBytes(32)),
             )
 
         val representativeAlgorithm = AttoAlgorithm.V1
         val representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32))
         val network = AttoNetwork.LOCAL
-        val timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+        val timestamp = AttoInstant.now()
 
         // when
         val (openBlock, newAccount) =
@@ -196,7 +193,7 @@ class AttoAccountTest {
                 height = 1U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
-                lastTransactionTimestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                lastTransactionTimestamp = AttoInstant.now(),
                 representativeAlgorithm = AttoAlgorithm.V1,
                 representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
             )
@@ -245,7 +242,7 @@ class AttoAccountTest {
             height = 1U.toAttoHeight(),
             balance = AttoAmount(ULong.MAX_VALUE / 2U),
             lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
-            lastTransactionTimestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            lastTransactionTimestamp = AttoInstant.now(),
             representativeAlgorithm = AttoAlgorithm.V1,
             representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
         )

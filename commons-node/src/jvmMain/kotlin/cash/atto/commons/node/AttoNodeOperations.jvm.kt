@@ -5,11 +5,11 @@ import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import kotlinx.coroutines.Job
-import kotlinx.datetime.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
@@ -33,7 +33,7 @@ interface AttoNodeOperationsJava {
 
     fun transaction(hash: AttoHash): CompletableFuture<AttoTransaction>
 
-    fun now(): CompletableFuture<Instant>
+    fun now(): CompletableFuture<AttoInstant>
 
     fun publish(transaction: AttoTransaction): CompletableFuture<Unit>
 

@@ -1,7 +1,6 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
@@ -31,7 +30,7 @@ data class AttoHash(
         fun hashVote(
             blockHash: AttoHash,
             algorithm: AttoAlgorithm,
-            timestamp: Instant,
+            timestamp: AttoInstant,
         ): AttoHash {
             return hash(
                 32,

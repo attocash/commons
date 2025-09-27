@@ -5,6 +5,7 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChallenge
 import cash.atto.commons.AttoHash
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
@@ -19,8 +20,6 @@ import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoVersion
 import cash.atto.commons.toByteArray
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -72,7 +71,7 @@ class SignerRemoteTest {
         runBlocking {
             // given
             val challenge = AttoChallenge.generate()
-            val timestamp = Clock.System.now()
+            val timestamp = AttoInstant.now()
 
             // when
             val signature = signer.sign(challenge, timestamp)
@@ -89,7 +88,7 @@ class SignerRemoteTest {
             publicKey = signer.publicKey,
             blockAlgorithm = AttoAlgorithm.V1,
             blockHash = AttoHash(Random.nextBytes(ByteArray(32))),
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            timestamp = AttoInstant.now(),
         )
 
     private fun AttoBlock.Companion.sample(): AttoBlock =
@@ -100,7 +99,7 @@ class SignerRemoteTest {
             publicKey = signer.publicKey,
             height = 2U.toAttoHeight(),
             balance = AttoAmount.MAX,
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            timestamp = AttoInstant.now(),
             previous = AttoHash(Random.nextBytes(ByteArray(32))),
             sendHashAlgorithm = AttoAlgorithm.V1,
             sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
@@ -112,7 +111,7 @@ class SignerRemoteTest {
             version = 0U.toAttoVersion(),
             algorithm = AttoAlgorithm.V1,
             publicKey = AttoPublicKey(Random.nextBytes(32)),
-            timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+            timestamp = AttoInstant.now(),
             receiverAlgorithm = AttoAlgorithm.V1,
             receiverPublicKey = signer.publicKey,
             amount = 1000UL.toAttoAmount(),

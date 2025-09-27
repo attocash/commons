@@ -1,6 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.readLongLe
@@ -61,13 +60,13 @@ fun Buffer.readAttoAmount(): AttoAmount {
     return AttoAmount(this.readULongLe())
 }
 
-fun Buffer.writeInstant(instant: Instant): Buffer {
+fun Buffer.writeInstant(instant: AttoInstant): Buffer {
     this.writeLongLe(instant.toEpochMilliseconds())
     return this
 }
 
-fun Buffer.readInstant(): Instant {
-    return Instant.fromEpochMilliseconds(this.readLongLe())
+fun Buffer.readInstant(): AttoInstant {
+    return AttoInstant.fromEpochMilliseconds(this.readLongLe())
 }
 
 fun Buffer.writeAttoHash(hash: AttoHash): Buffer {

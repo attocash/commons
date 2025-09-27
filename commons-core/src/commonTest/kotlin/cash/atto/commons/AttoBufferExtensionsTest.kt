@@ -1,7 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlin.random.Random
 import kotlin.test.Test
@@ -27,7 +25,7 @@ internal class AttoBufferExtensionsTest {
         val expectedHeight = ULong.MAX_VALUE.toAttoHeight()
         buffer.writeAttoHeight(expectedHeight)
 
-        val expectedInstant = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+        val expectedInstant = AttoInstant.now()
         buffer.writeInstant(expectedInstant)
 
         val expectedBlockType = AttoBlockType.SEND

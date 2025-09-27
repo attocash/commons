@@ -1,11 +1,11 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.getTarget
 import cash.atto.commons.getThreshold
-import kotlinx.datetime.Instant
 
 interface AttoWorker : AutoCloseable {
     companion object {}
@@ -17,7 +17,7 @@ interface AttoWorker : AutoCloseable {
 
     suspend fun work(
         network: AttoNetwork,
-        timestamp: Instant,
+        timestamp: AttoInstant,
         target: ByteArray,
     ): AttoWork {
         val threshold = AttoWork.getThreshold(network, timestamp)

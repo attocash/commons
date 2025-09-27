@@ -3,17 +3,14 @@
 
 package cash.atto.commons
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-
 data class AccountUpdate(
     val account: AttoAccount,
     val block: AttoBlock,
 )
 
-private fun String?.toInstant(): Instant {
-    if (this == null) return Clock.System.now()
-    return Instant.parse(this)
+private fun String?.toInstant(): AttoInstant {
+    if (this == null) return AttoInstant.now()
+    return AttoInstant.fromIso(this)
 }
 
 private fun Pair<AttoBlock, AttoAccount>.toAccountUpdate(): AccountUpdate {

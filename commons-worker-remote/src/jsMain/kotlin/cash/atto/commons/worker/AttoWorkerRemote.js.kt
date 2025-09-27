@@ -1,12 +1,12 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.promise
-import kotlinx.datetime.Instant
 import kotlin.js.Promise
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -27,7 +27,7 @@ private class AttoWorkerJsPromiseImpl(
         target: ByteArray,
     ): Promise<AttoWork> =
         GlobalScope.promise {
-            worker.work(network, Instant.parse(timestamp), target)
+            worker.work(network, AttoInstant.fromIso(timestamp), target)
         }
 
     override fun workBlock(block: AttoBlock): Promise<AttoWork> = GlobalScope.promise { worker.work(block) }

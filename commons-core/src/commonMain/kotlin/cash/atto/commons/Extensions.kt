@@ -1,7 +1,6 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.readULongLe
@@ -29,7 +28,7 @@ fun ByteArray.checkLength(size: Int) {
     require(this.size == size) { "Byte array contains ${this.size} characters but should contains $size" }
 }
 
-fun Instant.toByteArray(): ByteArray {
+fun AttoInstant.toByteArray(): ByteArray {
     val buffer = Buffer()
     buffer.writeInstant(this)
     return buffer.readByteArray()

@@ -5,6 +5,7 @@ import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChangeBlock
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoOpenBlock
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoSendBlock
@@ -21,6 +22,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,9 +30,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 class AttoWalletManager(
@@ -65,10 +64,10 @@ class AttoWalletManager(
     }
 
     private suspend fun work(
-        timestamp: Instant,
+        timestamp: AttoInstant,
         target: ByteArray,
     ): AttoWork {
-        while (coroutineContext.isActive) {
+        while (currentCoroutineContext().isActive) {
             try {
                 val work = workCache.get()
                 if (work?.isValid(timestamp, target) == true) {
@@ -90,7 +89,7 @@ class AttoWalletManager(
         scope.launch {
             accountFlow.collect {
                 mutex.withLock {
-                    work(Clock.System.now(), it.lastTransactionHash.value)
+                    work(AttoInstant.now(), it.lastTransactionHash.value)
                 }
             }
         }
@@ -160,7 +159,7 @@ class AttoWalletManager(
 
     suspend fun receive(
         receivable: AttoReceivable,
-        timestamp: Instant? = null,
+        timestamp: AttoInstant? = null,
     ): AttoBlock {
         requireReady()
 
@@ -184,7 +183,7 @@ class AttoWalletManager(
     suspend fun send(
         receiverAddress: AttoAddress,
         amount: AttoAmount,
-        timestamp: Instant? = null,
+        timestamp: AttoInstant? = null,
     ): AttoSendBlock {
         requireReady()
         require(receiverAddress.publicKey != publicKey) { "You can't send $amount to yourself" }
@@ -207,7 +206,7 @@ class AttoWalletManager(
 
     suspend fun change(
         representativeAddress: AttoAddress,
-        timestamp: Instant? = null,
+        timestamp: AttoInstant? = null,
     ): AttoChangeBlock {
         requireReady()
 
@@ -229,7 +228,7 @@ class AttoWalletManager(
     }
 
     private fun AttoWork.isValid(
-        timestamp: Instant,
+        timestamp: AttoInstant,
         target: ByteArray,
     ): Boolean =
         AttoWork.isValid(

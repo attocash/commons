@@ -4,7 +4,6 @@ import cash.atto.commons.utils.generateKeyPairFromSeed
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.promise
-import kotlinx.datetime.Instant
 import kotlin.js.Promise
 
 @OptIn(ExperimentalJsExport::class)
@@ -43,7 +42,7 @@ private class AttoSignerJsImpl(
     override fun signChallenge(
         challenge: AttoChallenge,
         timestamp: String,
-    ): Promise<AttoSignature> = GlobalScope.promise { signer.sign(challenge, Instant.parse(timestamp)) }
+    ): Promise<AttoSignature> = GlobalScope.promise { signer.sign(challenge, AttoInstant.fromIso(timestamp)) }
 
     override fun checkPublicKey(publicKey: AttoPublicKey): Promise<Unit> = GlobalScope.promise { signer.checkPublicKey(publicKey) }
 }

@@ -1,8 +1,6 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Instant
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.serialization.KSerializer
@@ -22,14 +20,13 @@ data class AttoVote(
     val publicKey: AttoPublicKey,
     val blockAlgorithm: AttoAlgorithm,
     val blockHash: AttoHash,
-    @Serializable(with = InstantMillisSerializer::class)
-    val timestamp: Instant,
+    val timestamp: AttoInstant,
 ) : AttoHashable,
     AttoSerializable {
     override val hash by lazy { toBuffer().hash() }
 
     companion object {
-        val finalTimestamp = Instant.fromEpochMilliseconds(Long.MAX_VALUE)
+        val finalTimestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE)
     }
 
     fun isFinal(): Boolean {

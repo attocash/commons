@@ -1,6 +1,7 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import java.util.concurrent.CompletableFuture
@@ -13,7 +14,7 @@ interface AttoWorkerJava {
 
     fun work(
         network: AttoNetwork,
-        timestamp: String,
+        timestamp: AttoInstant,
         target: ByteArray,
     ): CompletableFuture<AttoWork>
 

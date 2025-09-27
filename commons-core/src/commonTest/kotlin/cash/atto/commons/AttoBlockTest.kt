@@ -2,8 +2,6 @@
 
 package cash.atto.commons
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
@@ -73,7 +71,7 @@ class AttoBlockTest {
                 algorithm = AttoAlgorithm.V1,
                 publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
                 balance = AttoAmount.MAX,
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                timestamp = AttoInstant.now(),
                 sendHashAlgorithm = AttoAlgorithm.V1,
                 sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
                 representativeAlgorithm = AttoAlgorithm.V1,
@@ -88,7 +86,7 @@ class AttoBlockTest {
                 publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount(1U),
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.Default.nextBytes(ByteArray(32))),
                 receiverAlgorithm = AttoAlgorithm.V1,
                 receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
@@ -103,7 +101,7 @@ class AttoBlockTest {
                 publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.nextBytes(ByteArray(32))),
                 sendHashAlgorithm = AttoAlgorithm.V1,
                 sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
@@ -117,7 +115,7 @@ class AttoBlockTest {
                 publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
-                timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
+                timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.nextBytes(ByteArray(32))),
                 representativeAlgorithm = AttoAlgorithm.V1,
                 representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
@@ -127,16 +125,7 @@ class AttoBlockTest {
             arrayOf(
                 sendBlock,
                 receiveBlock,
-                receiveBlock.copy(
-                    timestamp =
-                        Instant.fromEpochMilliseconds(
-                            Clock
-                                .System
-                                .now()
-                                .plus(1.minutes)
-                                .toEpochMilliseconds(),
-                        ),
-                ),
+                receiveBlock.copy(timestamp = AttoInstant.now() + 1.minutes),
                 openBlock,
                 changeBlock,
             )
@@ -146,7 +135,7 @@ class AttoBlockTest {
                 // unknown version
                 sendBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock,
                 // future timestamp
-                receiveBlock.copy(timestamp = Clock.System.now().plus(1.days)) as AttoBlock,
+                receiveBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock,
                 // invalid height
                 sendBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
                 // invalid height
@@ -207,7 +196,9 @@ class AttoBlockTest {
                "sendHash":"4DC7257C0F492B8C7AC2D8DE4A6DC4078B060BB42FDB6F8032A839AAA9048DB0",
                "representativeAlgorithm":"V1",
                "representativePublicKey":"69C010A8A74924D083D1FC8234861B4B357530F42341484B4EBDA6B99F047105",
-               "height":1
+               "height":1,
+               "address":"aakwewsighepcmjpdw2bkugq7vwhgd6mewnm4d7yrnia5klhqorurxntbiiim",
+               "representativeAddress":"abu4aefiu5esjued2h6ienegdnftk5jq6qrucsclj262nom7aryql4esxmsae"
             }
             """,
                 """

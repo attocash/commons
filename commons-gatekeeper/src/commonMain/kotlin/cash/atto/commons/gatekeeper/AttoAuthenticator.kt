@@ -2,6 +2,7 @@ package cash.atto.commons.gatekeeper
 
 import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoChallenge
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
@@ -9,7 +10,6 @@ import cash.atto.commons.AttoSigner
 import cash.atto.commons.fromHexToByteArray
 import cash.atto.commons.node.AttoNodeOperations
 import cash.atto.commons.node.custom
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.remote
 import io.ktor.client.HttpClient
@@ -23,8 +23,6 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
@@ -80,7 +78,7 @@ private class WalletGatekeeperClient(
                 }.body<TokenInitResponse>()
 
         val challenge = AttoChallenge(initResponse.challenge.fromHexToByteArray())
-        val timestamp = Clock.System.now()
+        val timestamp = AttoInstant.now()
 
         val signature = signer.sign(challenge, timestamp)
 
@@ -111,8 +109,7 @@ private class WalletGatekeeperClient(
 
     @Serializable
     data class TokenInitAnswer(
-        @Serializable(with = InstantMillisSerializer::class)
-        val timestamp: Instant,
+        val timestamp: AttoInstant,
         val signature: AttoSignature,
     )
 }

@@ -1,9 +1,6 @@
 package cash.atto.commons
 
-import cash.atto.commons.serialiazer.InstantMillisSerializer
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
@@ -19,8 +16,7 @@ data class AttoAccount(
     override val height: AttoHeight,
     val balance: AttoAmount,
     val lastTransactionHash: AttoHash,
-    @Serializable(with = InstantMillisSerializer::class)
-    val lastTransactionTimestamp: Instant,
+    val lastTransactionTimestamp: AttoInstant,
     val representativeAlgorithm: AttoAlgorithm,
     val representativePublicKey: AttoPublicKey,
 ) : HeightSupport {
@@ -34,7 +30,7 @@ data class AttoAccount(
             representativePublicKey: AttoPublicKey,
             receivable: AttoReceivable,
             network: AttoNetwork,
-            timestamp: Instant = Clock.System.now(),
+            timestamp: AttoInstant = AttoInstant.now(),
         ): Pair<AttoOpenBlock, AttoAccount> {
             val block =
                 AttoOpenBlock(
@@ -71,7 +67,7 @@ data class AttoAccount(
         receiverAlgorithm: AttoAlgorithm,
         receiverPublicKey: AttoPublicKey,
         amount: AttoAmount,
-        timestamp: Instant = Clock.System.now(),
+        timestamp: AttoInstant = AttoInstant.now(),
     ): Pair<AttoSendBlock, AttoAccount> {
         if (receiverPublicKey == publicKey) {
             throw IllegalArgumentException("You can't send money to yourself")
@@ -105,7 +101,7 @@ data class AttoAccount(
     @JsExport.Ignore
     fun receive(
         receivable: AttoReceivable,
-        timestamp: Instant = Clock.System.now(),
+        timestamp: AttoInstant = AttoInstant.now(),
     ): Pair<AttoReceiveBlock, AttoAccount> {
         require(timestamp > receivable.timestamp) { "Timestamp can't be before receivable timestamp" }
 
@@ -140,7 +136,7 @@ data class AttoAccount(
     fun change(
         representativeAlgorithm: AttoAlgorithm,
         representativePublicKey: AttoPublicKey,
-        timestamp: Instant = Clock.System.now(),
+        timestamp: AttoInstant = AttoInstant.now(),
     ): Pair<AttoChangeBlock, AttoAccount> {
         val newHeight = height + 1U.toAttoHeight()
         val block =
