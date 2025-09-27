@@ -136,8 +136,11 @@ data class AttoSendBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    val address by lazy { AttoAddress(algorithm, publicKey) }
-    val receiverAddress by lazy { AttoAddress(receiverAlgorithm, receiverPublicKey) }
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val address = AttoAddress(algorithm, publicKey)
+
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val receiverAddress = AttoAddress(receiverAlgorithm, receiverPublicKey)
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoSendBlock? {
@@ -214,7 +217,8 @@ data class AttoReceiveBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    val address by lazy { AttoAddress(algorithm, publicKey) }
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val address = AttoAddress(algorithm, publicKey)
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoReceiveBlock? {
@@ -368,8 +372,11 @@ data class AttoChangeBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    val address by lazy { AttoAddress(algorithm, publicKey) }
-    val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val address = AttoAddress(algorithm, publicKey)
+
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoChangeBlock? {
