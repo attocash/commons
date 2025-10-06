@@ -53,7 +53,7 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     testRuntimeOnly("io.r2dbc:r2dbc-h2")
-    testImplementation("io.mockk:mockk:1.14.5")
+    testImplementation("io.mockk:mockk:1.14.6")
 }
 
 tasks.test { useJUnitPlatform() }
