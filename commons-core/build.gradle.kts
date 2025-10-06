@@ -97,7 +97,7 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+                implementation("org.bouncycastle:bcprov-jdk18on:1.82")
                 implementation("io.swagger.core.v3:swagger-annotations-jakarta:2.2.37")
             }
         }
