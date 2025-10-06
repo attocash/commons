@@ -7,7 +7,8 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.ByteArraySerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
@@ -86,7 +87,7 @@ data class AttoTransaction(
 }
 
 object AttoTransactionAsByteArraySerializer : KSerializer<AttoTransaction> {
-    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+    override val descriptor = PrimitiveSerialDescriptor("AttoTransactionAsByteArray", PrimitiveKind.BYTE)
 
     override fun serialize(
         encoder: Encoder,

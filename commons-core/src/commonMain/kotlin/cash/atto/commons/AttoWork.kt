@@ -12,7 +12,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
@@ -133,7 +132,7 @@ data class AttoWork(
 }
 
 object AttoWorkAsStringSerializer : KSerializer<AttoWork> {
-    override val descriptor = PrimitiveSerialDescriptor("AttoWork", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("AttoWorkAsString", PrimitiveKind.STRING)
 
     override fun serialize(
         encoder: Encoder,
@@ -146,7 +145,7 @@ object AttoWorkAsStringSerializer : KSerializer<AttoWork> {
 }
 
 object AttoWorkAsByteArraySerializer : KSerializer<AttoWork> {
-    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+    override val descriptor = PrimitiveSerialDescriptor("AttoWorkAsByteArray", PrimitiveKind.BYTE)
 
     override fun serialize(
         encoder: Encoder,

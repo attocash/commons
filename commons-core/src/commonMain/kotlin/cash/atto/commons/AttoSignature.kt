@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
@@ -55,7 +54,7 @@ fun AttoSignature.isValid(
 }
 
 object AttoSignatureAsStringSerializer : KSerializer<AttoSignature> {
-    override val descriptor = PrimitiveSerialDescriptor("AttoSignature", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("AttoSignatureAsString", PrimitiveKind.STRING)
 
     override fun serialize(
         encoder: Encoder,
@@ -68,7 +67,7 @@ object AttoSignatureAsStringSerializer : KSerializer<AttoSignature> {
 }
 
 object AttoSignatureAsByteArraySerializer : KSerializer<AttoSignature> {
-    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+    override val descriptor = PrimitiveSerialDescriptor("AttoSignatureAsByteArray", PrimitiveKind.BYTE)
 
     override fun serialize(
         encoder: Encoder,

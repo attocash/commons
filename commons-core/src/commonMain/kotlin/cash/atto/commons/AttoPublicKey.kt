@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
@@ -42,7 +41,7 @@ data class AttoPublicKey(
 expect fun AttoPrivateKey.toPublicKey(): AttoPublicKey
 
 object AttoPublicKeyAsStringSerializer : KSerializer<AttoPublicKey> {
-    override val descriptor = PrimitiveSerialDescriptor("AttoPublicKey", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("AttoPublicKeyAsString", PrimitiveKind.STRING)
 
     override fun serialize(
         encoder: Encoder,
@@ -55,7 +54,7 @@ object AttoPublicKeyAsStringSerializer : KSerializer<AttoPublicKey> {
 }
 
 object AttoPublicKeyAsByteArraySerializer : KSerializer<AttoPublicKey> {
-    override val descriptor: SerialDescriptor = ByteArraySerializer().descriptor
+    override val descriptor = PrimitiveSerialDescriptor("AttoPublicKeyAsByteArray", PrimitiveKind.BYTE)
 
     override fun serialize(
         encoder: Encoder,

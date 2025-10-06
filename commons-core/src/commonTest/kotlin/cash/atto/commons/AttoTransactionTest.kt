@@ -3,7 +3,13 @@ package cash.atto.commons
 import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.cpu
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.protobuf.ProtoNumber
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -63,4 +69,33 @@ class AttoTransactionTest {
             // then
             assertEquals(expectedTransaction, transaction)
         }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun `should serialize protobuf`() =
+        runTest {
+            // given
+            val expectedTransaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = privateKey.sign(receiveBlock.hash),
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
+            val expectedWrapper = ProtobufWrapper(expectedTransaction)
+
+            // when
+            val protobuf = ProtoBuf.encodeToByteArray(expectedWrapper)
+            val wrapper = ProtoBuf.decodeFromByteArray<ProtobufWrapper>(protobuf)
+
+            // then
+            assertEquals(expectedWrapper, wrapper)
+        }
+
+    @Serializable
+    @OptIn(ExperimentalSerializationApi::class)
+    private data class ProtobufWrapper(
+        @ProtoNumber(1)
+        @Serializable(with = AttoTransactionAsByteArraySerializer::class)
+        val transaction: AttoTransaction,
+    )
 }
