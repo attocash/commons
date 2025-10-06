@@ -75,17 +75,17 @@ class AttoSpringDocOpenApiAutoConfiguration {
             }
 
             fun setPropDesc(
-                owner: Schema<*>,
+                schema: Schema<*>,
                 prop: String,
                 desc: String,
                 example: Any? = null,
             ) {
-                owner.properties?.get(prop)?.let { s ->
+                schema.properties?.get(prop)?.let { s ->
                     s.description = desc
                     if (example != null) s.example = example
                     return
                 }
-                owner.allOf?.forEach { part ->
+                schema.allOf?.forEach { part ->
                     val refName = part.`$ref`?.substringAfterLast('/')?.let { schemas[it] }
                     val target = (refName ?: part).properties?.get(prop)
                     if (target != null) {
@@ -97,15 +97,28 @@ class AttoSpringDocOpenApiAutoConfiguration {
             }
 
             fun removeProps(
-                schemaName: KClass<*>,
+                schema: Schema<*>,
                 vararg props: String,
             ) {
-                val s = schemas[schemaName.simpleName!!] ?: return
-                s.properties?.keys?.removeAll(props.toSet())
-                s.allOf?.forEach { part ->
-                    val ref = part.`$ref`?.substringAfterLast('/')?.let { schemas[it] }
-                    (ref ?: part).properties?.keys?.removeAll(props.toSet())
+                val names = props.toSet()
+
+                fun deref(s: Schema<*>): Schema<*> {
+                    val ref = s.`$ref`?.substringAfterLast('/')
+                    return if (ref != null) (schemas[ref] ?: s) else s
                 }
+
+                fun prune(target: Schema<*>) {
+                    target.properties?.keys?.removeAll(names)
+                    target.required = target.required?.filterNot { it in names }?.toMutableList()
+
+                    if (target is ComposedSchema) {
+                        target.allOf?.forEach { part -> prune(deref(part)) }
+                        target.oneOf?.forEach { part -> prune(deref(part)) }
+                        target.anyOf?.forEach { part -> prune(deref(part)) }
+                    }
+                }
+
+                prune(schema)
             }
 
             AttoSchemas.primitiveMap.forEach { (clazz, schema) ->
@@ -133,6 +146,7 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 setPropDesc(s, "receiverAlgorithm", "Algorithm of the receiver", "V1")
                 setPropDesc(s, "receiverPublicKey", "Public key of the receiver (hex)")
                 setPropDesc(s, "amount", "Amount being sent (raw uint64)", "1")
+                removeProps(s, "isValid", "hash")
             }
 
             findSchema(AttoReceiveBlock::class)?.let { s ->
@@ -140,6 +154,7 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 setPropDesc(s, "previous", "Hash of the previous block (hex)")
                 setPropDesc(s, "sendHashAlgorithm", "Algorithm of the send block", "V1")
                 setPropDesc(s, "sendHash", "Hash of the send block (hex)")
+                removeProps(s, "isValid", "hash")
             }
 
             findSchema(AttoOpenBlock::class)?.let { s ->
@@ -147,6 +162,7 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 setPropDesc(s, "sendHash", "Hash of the send block (hex)")
                 setPropDesc(s, "representativeAlgorithm", "Algorithm of the representative", "V1")
                 setPropDesc(s, "representativePublicKey", "Public key of the representative (hex)")
+                removeProps(s, "isValid", "hash")
             }
 
             findSchema(AttoChangeBlock::class)?.let { s ->
@@ -154,21 +170,16 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 setPropDesc(s, "previous", "Hash of the previous block (hex)")
                 setPropDesc(s, "representativeAlgorithm", "Algorithm of the representative", "V1")
                 setPropDesc(s, "representativePublicKey", "Public key of the representative (hex)")
+                removeProps(s, "isValid", "hash")
             }
 
-            removeProps(
-                AttoBlock::class,
-                "isValid",
-                "hash",
-            )
+            findSchema(AttoBlock::class)?.let { s ->
+                removeProps(s, "isValid", "hash")
+            }
 
-            removeProps(
-                AttoTransaction::class,
-                "height",
-                "isValid",
-                "hash",
-                "totalSize",
-            )
+            findSchema(AttoTransaction::class)?.let { s ->
+                removeProps(s, "height", "isValid", "hash", "totalSize")
+            }
 
             findSchema(AttoReceivable::class)?.let { s ->
                 setPropDesc(
