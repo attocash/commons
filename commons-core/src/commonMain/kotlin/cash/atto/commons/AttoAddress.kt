@@ -108,7 +108,7 @@ data class AttoAddress(
 
         fun parse(value: String): AttoAddress {
             val address = if (value.startsWith(SCHEMA)) value else SCHEMA + value
-            require(isValid(address)) { "$address is invalid" }
+            require(isValid(address)) { "$value is invalid" }
 
             val (algorithm, publicKey) = toAlgorithmPublicKey(address)
 
