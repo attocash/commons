@@ -107,16 +107,17 @@ data class AttoAddress(
         }
 
         fun parse(value: String): AttoAddress {
-            require(isValid(value)) { "$value is invalid" }
+            val address = if (value.startsWith(SCHEMA)) value else SCHEMA + value
+            require(isValid(address)) { "$address is invalid" }
 
-            val (algorithm, publicKey) = toAlgorithmPublicKey(value)
+            val (algorithm, publicKey) = toAlgorithmPublicKey(address)
 
             return AttoAddress(algorithm, publicKey)
         }
 
+        @Deprecated("Use parse instead", ReplaceWith("parse(path)"))
         fun parsePath(path: String): AttoAddress {
-            val value = SCHEMA + path
-            return parse(value)
+            return parse(path)
         }
     }
 
@@ -143,11 +144,7 @@ object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
     }
 
     override fun deserialize(decoder: Decoder): AttoAddress {
-        val address = decoder.decodeString()
-        if (address.startsWith("atto://")) {
-            return AttoAddress.parse(address)
-        }
-        return AttoAddress.parsePath(address)
+        return AttoAddress.parse(decoder.decodeString())
     }
 }
 
