@@ -116,9 +116,7 @@ data class AttoAddress(
         }
 
         @Deprecated("Use parse instead", ReplaceWith("parse(path)"))
-        fun parsePath(path: String): AttoAddress {
-            return parse(path)
-        }
+        fun parsePath(path: String): AttoAddress = parse(path)
     }
 
     @JsExport.Ignore
@@ -143,9 +141,20 @@ object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
         encoder.encodeString(value.toString())
     }
 
-    override fun deserialize(decoder: Decoder): AttoAddress {
-        return AttoAddress.parse(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parse(decoder.decodeString())
+}
+
+object AttoAddressAsPathStringSerializer : KSerializer<AttoAddress> {
+    override val descriptor = PrimitiveSerialDescriptor("AttoAddressAsPathString", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: AttoAddress,
+    ) {
+        encoder.encodeString(value.path)
     }
+
+    override fun deserialize(decoder: Decoder): AttoAddress = AttoAddress.parse(decoder.decodeString())
 }
 
 object AttoAddressAsByteArraySerializer : KSerializer<AttoAddress> {
