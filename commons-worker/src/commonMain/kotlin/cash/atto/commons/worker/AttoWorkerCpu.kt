@@ -59,12 +59,12 @@ private class WorkerController(
     }
 
     suspend fun calculate(): AttoWork {
-        val rangeSize = ULong.MAX_VALUE / parallelism.toULong() + 1UL
+        val rangeSize = ULong.MAX_VALUE / parallelism.toULong()
 
         repeat(parallelism.toInt()) { i ->
             scope.launch {
                 val start = i.toULong() * rangeSize
-                val end = if (i == parallelism.toInt() - 1) 0UL else start + rangeSize
+                val end = start + rangeSize
                 val work = start.toByteArray()
                 var current = start
                 while (current != end && isActive) {
