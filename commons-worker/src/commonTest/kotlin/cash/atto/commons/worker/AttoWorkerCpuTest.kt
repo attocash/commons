@@ -9,7 +9,7 @@ class AttoWorkerCpuTest {
     private val hash = AttoHash("0000000000000000000000000000000000000000000000000000000000000000".fromHexToByteArray())
 
     companion object {
-        private val worker = AttoWorker.cpu(1U)
+        private val worker = AttoWorker.cpu()
     }
 
     @Test

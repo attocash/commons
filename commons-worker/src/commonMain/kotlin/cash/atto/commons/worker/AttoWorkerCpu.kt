@@ -3,120 +3,86 @@ package cash.atto.commons.worker
 import cash.atto.commons.AttoWork
 import cash.atto.commons.isValid
 import cash.atto.commons.toByteArray
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlin.concurrent.Volatile
+import kotlin.coroutines.CoroutineContext
 
-fun AttoWorker.Companion.cpu(count: UShort): AttoWorker = AttoWorkerCpu(count)
+fun AttoWorker.Companion.cpu(parallelism: UShort): AttoWorker = AttoWorkerCpu(parallelism)
 
 expect fun AttoWorker.Companion.cpu(): AttoWorker
 
 internal class AttoWorkerCpu(
-    val count: UShort,
+    val parallelism: UShort,
 ) : AttoWorker {
-    private val dispatcher = Dispatchers.Default.limitedParallelism(count.toInt())
+    private val supervisorJob = SupervisorJob()
+    private val dispatcher = Dispatchers.Default.limitedParallelism(parallelism.toInt())
 
     override suspend fun work(
         threshold: ULong,
         target: ByteArray,
-    ): AttoWork =
-        coroutineScope {
-            val controller = WorkerController()
-            val rangeSize = ULong.MAX_VALUE / count
-
-            val jobs =
-                (0U until count.toUInt()).map { i ->
-                    launch(dispatcher) {
-                        val worker =
-                            Worker(
-                                controller,
-                                threshold,
-                                target,
-                                i * rangeSize,
-                                rangeSize,
-                            )
-                        worker.work()
-                    }
-                }
-
-            jobs.joinAll()
-
-            controller.get()
-        }
+    ): AttoWork {
+        val controller = WorkerController(dispatcher + supervisorJob + Job(), parallelism, threshold, target)
+        return controller.calculate()
+    }
 
     override fun close() {
-        dispatcher.cancel()
+        supervisorJob.cancel()
     }
 }
 
-private class WorkerController {
-    @Volatile
-    private var work: AttoWork? = null
-    private val mutex = Mutex()
-
-    suspend fun isEmpty(): Boolean =
-        mutex.withLock {
-            work == null
-        }
-
-    suspend fun add(work: ByteArray) {
-        mutex.withLock {
-            if (this.work == null) {
-                this.work = AttoWork(work)
-            }
-        }
-    }
-
-    suspend fun get(): AttoWork =
-        mutex.withLock {
-            while (work == null) {
-                mutex.unlock()
-                delay(10)
-                mutex.lock()
-            }
-            return work!!
-        }
-}
-
-private class Worker(
-    val controller: WorkerController,
-    val threshold: ULong,
-    val target: ByteArray,
-    val startWork: ULong,
-    val size: ULong,
+private class WorkerController(
+    context: CoroutineContext,
+    private val parallelism: UShort,
+    private val threshold: ULong,
+    private val target: ByteArray,
 ) {
-    suspend fun work() {
-        var tries = 0UL
-        val work = startWork.toByteArray()
-        while (tries < size) {
-            if (AttoWork.isValid(threshold, target, work)) {
-                controller.add(work)
-                return
-            }
-            if (!controller.isEmpty()) {
-                return
-            }
+    private val scope = CoroutineScope(context)
 
-            incrementByteArray(work)
-
-            tries++
+    private val result = CompletableDeferred<AttoWork>().apply {
+        this.invokeOnCompletion {
+            scope.cancel()
         }
     }
 
-    fun incrementByteArray(byteArray: ByteArray) {
-        var carry: Byte = 1
+    private fun tryComplete(work: ByteArray): Boolean {
+        if (!AttoWork.isValid(threshold, target, work)) {
+            return false
+        }
+        return result.complete(AttoWork(work.copyOf()))
+    }
+
+    suspend fun calculate(): AttoWork {
+        val rangeSize = ULong.MAX_VALUE / parallelism.toULong() + 1UL
+
+        repeat(parallelism.toInt()) { i ->
+            scope.launch {
+                val start = i.toULong() * rangeSize
+                val end = if (i == parallelism.toInt() - 1) 0UL else start + rangeSize
+                val work = start.toByteArray()
+                var current = start
+                while (current != end && isActive) {
+                    if (tryComplete(work)) return@launch
+                    incrementByteArray(work)
+                    current++
+                }
+            }
+        }
+        return result.await()
+    }
+
+    private fun incrementByteArray(byteArray: ByteArray) {
+        var carry = 1
         for (i in byteArray.indices) {
-            val oldByte = byteArray[i]
-            val newByte = (oldByte + carry).toByte()
-            byteArray[i] = newByte
-            carry = if (newByte < oldByte) 1 else 0
-            if (carry == 0.toByte()) break
+            val sum = (byteArray[i].toInt() and 0xFF) + carry
+            byteArray[i] = sum.toByte()
+            carry = if (sum > 0xFF) 1 else 0
+            if (carry == 0) break
         }
     }
 }

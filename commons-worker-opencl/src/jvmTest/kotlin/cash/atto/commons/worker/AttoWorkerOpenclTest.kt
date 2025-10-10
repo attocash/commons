@@ -10,7 +10,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class AttoWorkerTest {
+class AttoWorkerOpenclTest {
     private val hash = AttoHash("0000000000000000000000000000000000000000000000000000000000000000".fromHexToByteArray())
 
     companion object {
