@@ -44,11 +44,12 @@ private class WorkerController(
 ) {
     private val scope = CoroutineScope(context)
 
-    private val result = CompletableDeferred<AttoWork>().apply {
-        this.invokeOnCompletion {
-            scope.cancel()
+    private val result =
+        CompletableDeferred<AttoWork>().apply {
+            this.invokeOnCompletion {
+                scope.cancel()
+            }
         }
-    }
 
     private fun tryComplete(work: ByteArray): Boolean {
         if (!AttoWork.isValid(threshold, target, work)) {
