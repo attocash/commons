@@ -50,24 +50,34 @@ data class AttoTransaction(
         }
     }
 
-    /**
-     * Minimal block validation. This method doesn't check this transaction against the ledger so further validations are required.
-     */
-    fun isValid(): Boolean {
-        if (!block.isValid()) {
-            return false
+    fun validate(): AttoValidation {
+        when (val blockValidation = block.validate()) {
+            is AttoValidation.Ok -> Unit
+            is AttoValidation.Error -> return blockValidation
         }
 
+
         if (!work.isValid(block)) {
-            return false
+            return AttoValidation.Error(
+                "Work is invalid"
+            )
         }
 
         if (!signature.isValid(block.publicKey, block.hash)) {
-            return false
+            return AttoValidation.Error(
+                "Signature is invalid: publicKey=${block.publicKey}, hash=${block.hash}"
+            )
         }
 
-        return true
+        return AttoValidation.Ok
     }
+
+
+    /**
+     * Minimal block validation. This method doesn't check this transaction against the ledger so further validations are required.
+     */
+    fun isValid(): Boolean = validate().isValid
+
 
     /**
      * Return the transaction and block size

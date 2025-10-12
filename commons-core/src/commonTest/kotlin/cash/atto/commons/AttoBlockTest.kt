@@ -23,7 +23,9 @@ class AttoBlockTest {
     @Test
     fun `should not validate`() {
         invalidBlocks.forEach {
-            assertFalse(it.toString()) { it.isValid() }
+            assertFalse(it.toString()) { it.key.isValid() }
+            val error = it.key.validate().getError()!!
+            assertTrue(error) { error.startsWith(it.value) }
         }
     }
 
@@ -69,13 +71,13 @@ class AttoBlockTest {
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
                 algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),
                 sendHashAlgorithm = AttoAlgorithm.V1,
-                sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
+                sendHash = AttoHash(Random.nextBytes(ByteArray(32))),
                 representativeAlgorithm = AttoAlgorithm.V1,
-                representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+                representativePublicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
             )
 
         val sendBlock =
@@ -83,13 +85,13 @@ class AttoBlockTest {
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
                 algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount(1U),
                 timestamp = AttoInstant.now(),
-                previous = AttoHash(Random.Default.nextBytes(ByteArray(32))),
+                previous = AttoHash(Random.nextBytes(ByteArray(32))),
                 receiverAlgorithm = AttoAlgorithm.V1,
-                receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+                receiverPublicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
                 amount = AttoAmount(1U),
             )
 
@@ -98,13 +100,13 @@ class AttoBlockTest {
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
                 algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.nextBytes(ByteArray(32))),
                 sendHashAlgorithm = AttoAlgorithm.V1,
-                sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
+                sendHash = AttoHash(Random.nextBytes(ByteArray(32))),
             )
 
         val changeBlock =
@@ -112,13 +114,13 @@ class AttoBlockTest {
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
                 algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.nextBytes(ByteArray(32))),
                 representativeAlgorithm = AttoAlgorithm.V1,
-                representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+                representativePublicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
             )
 
         val validBlocks =
@@ -131,23 +133,28 @@ class AttoBlockTest {
             )
 
         val invalidBlocks =
-            arrayOf(
+            mapOf(
                 // unknown version
-                sendBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock,
+                sendBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock to "Invalid version: version=65535 > max=0",
+                receiveBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock to "Invalid version: version=65535 > max=0",
+                changeBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock to "Invalid version: version=65535 > max=0",
+                openBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock to "Invalid version: version=65535 > max=0",
                 // future timestamp
-                receiveBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock,
+                sendBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock to "Timestamp too far in the future",
+                receiveBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock to "Timestamp too far in the future",
+                changeBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock to "Timestamp too far in the future",
+                openBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock to "Timestamp too far in the future",
                 // invalid height
-                sendBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
-                // invalid height
-                receiveBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
-                // invalid height
-                changeBlock.copy(height = 0U.toAttoHeight()) as AttoBlock,
-                // zero amount
-                sendBlock.copy(amount = AttoAmount.MIN) as AttoBlock,
+                sendBlock.copy(height = 0U.toAttoHeight()) as AttoBlock to "Height must be greater than 1: height=0",
+                receiveBlock.copy(height = 1U.toAttoHeight()) as AttoBlock to "Height must be greater than 1: height=1",
+                changeBlock.copy(height = 1U.toAttoHeight()) as AttoBlock to "Height must be greater than 1: height=1",
+                // send zero amount
+                sendBlock.copy(amount = AttoAmount.MIN) as AttoBlock to "Amount must be greater than 0",
                 // self send
-                sendBlock.copy(receiverPublicKey = sendBlock.publicKey) as AttoBlock,
-                // zero balance
-                receiveBlock.copy(balance = AttoAmount.MIN) as AttoBlock,
+                sendBlock.copy(receiverPublicKey = sendBlock.publicKey) as AttoBlock to "Receiver public key must be different from public key",
+                // receive zero balance
+                receiveBlock.copy(balance = AttoAmount.MIN) as AttoBlock to "Balance must be greater than 0",
+                openBlock.copy(balance = AttoAmount.MIN) as AttoBlock to "Balance must be greater than 0",
             )
 
         val validJsonBlocks =

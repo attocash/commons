@@ -13,6 +13,8 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AttoTransactionTest {
     val privateKey = AttoPrivateKey.generate()
@@ -31,6 +33,76 @@ class AttoTransactionTest {
             sendHashAlgorithm = AttoAlgorithm.V1,
             sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
         )
+
+    @Test
+    fun `should validate`() =
+        runTest {
+            // given
+            val transaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = privateKey.sign(receiveBlock.hash),
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
+
+            assertTrue { transaction.isValid() }
+        }
+
+    @Test
+    fun `should return error when block is invalid`() =
+        runTest {
+            // given
+            val transaction =
+                AttoTransaction(
+                    block = receiveBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()),
+                    signature = privateKey.sign(receiveBlock.hash),
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
+
+            assertFalse { transaction.isValid() }
+            val error = transaction.validate().getError()!!
+            assertTrue(error) { error.startsWith("Invalid version: version=65535 > max=0") }
+        }
+
+    @Test
+    fun `should return error when work is invalid`() =
+        runTest {
+            // given
+            val invalidWork = run {
+                var work: AttoWork
+                do {
+                    work = AttoWork(Random.nextBytes(8))
+                } while (work.isValid(receiveBlock))
+                return@run work
+            }
+            val transaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = privateKey.sign(receiveBlock.hash),
+                    work = invalidWork,
+                )
+
+            assertFalse { transaction.isValid() }
+            val error = transaction.validate().getError()!!
+            assertTrue(error) { error.startsWith("Work is invalid") }
+        }
+
+    @Test
+    fun `should return error when signature is invalid`() =
+        runTest {
+            // given
+            val invalidSignature = AttoSignature(Random.nextBytes(64))
+            val transaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = invalidSignature,
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
+
+            assertFalse { transaction.isValid() }
+            val error = transaction.validate().getError()!!
+            assertTrue(error) { error.startsWith("Signature is invalid") }
+        }
 
     @Test
     fun `should serialize buffer`() =

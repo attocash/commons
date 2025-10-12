@@ -93,10 +93,59 @@ sealed interface AttoBlock :
         }
     }
 
-    fun isValid(): Boolean {
-        return version <= maxVersion &&
-            timestamp <= AttoInstant.now() + 1.minutes
+
+    fun validate(): AttoValidation {
+        if (version > maxVersion) {
+            return AttoValidation.Error("Invalid version: version=$version > max=$maxVersion")
+        }
+
+        val now = AttoInstant.now()
+        if (timestamp > now + 1.minutes) {
+            return AttoValidation.Error(
+                "Timestamp too far in the future: timestamp=$timestamp, now=$now, tolerance=1m"
+            )
+        }
+
+        if (algorithm.publicKeySize != publicKey.value.size) {
+            return AttoValidation.Error(
+                "Public key size does not match algorithm: algorithm.publicKeySize=${algorithm.publicKeySize}, publicKey.size=${publicKey.value.size}"
+            )
+        }
+
+        if (this is PreviousSupport && previous.value.size != algorithm.hashSize) {
+            return AttoValidation.Error(
+                "Previous hash size does not match algorithm: algorithm.hashSize=${algorithm.hashSize}, previous.size=${previous.value.size}"
+            )
+        }
+
+        if (this is ReceiveSupport && sendHash.value.size != sendHashAlgorithm.hashSize) {
+            return AttoValidation.Error(
+                "Send hash size does not match algorithm: sendHash.size=${sendHash.value.size}, sendHashAlgorithm.hashSize=${sendHashAlgorithm.hashSize}"
+            )
+        }
+
+        if (this is ReceiveSupport && balance == AttoAmount.MIN) {
+            return AttoValidation.Error(
+                "Balance must be greater than 0"
+            )
+        }
+
+        if (this !is AttoOpenBlock && height <= AttoHeight.MIN) {
+            return AttoValidation.Error("Height must be greater than 1: height=$height")
+        }
+
+        if (this is RepresentativeSupport &&
+            representativeAlgorithm.publicKeySize != representativePublicKey.value.size
+        ) {
+            return AttoValidation.Error(
+                "Representative public key size does not match representative algorithm: representativeAlgorithm.publicKeySize=${representativeAlgorithm.publicKeySize}, representativePublicKey.size=${representativePublicKey.value.size}"
+            )
+        }
+
+        return AttoValidation.Ok
     }
+
+    fun isValid(): Boolean = validate().isValid
 }
 
 @JsExportForJs
@@ -189,12 +238,29 @@ data class AttoSendBlock(
         }
     }
 
-    override fun isValid(): Boolean {
-        return super.isValid() &&
-            height > AttoHeight(1u) &&
-            amount.raw > 0u &&
-            receiverPublicKey != publicKey &&
-            receiverAlgorithm.publicKeySize == receiverPublicKey.value.size
+    override fun validate(): AttoValidation {
+        when (val parent = super.validate()) {
+            is AttoValidation.Ok -> Unit
+            is AttoValidation.Error -> return parent
+        }
+
+        if (amount == AttoAmount.MIN) {
+            return AttoValidation.Error("Amount must be greater than ${AttoAmount.MIN}")
+        }
+
+        if (receiverPublicKey == publicKey) {
+            return AttoValidation.Error(
+                "Receiver public key must be different from public key: receiverPublicKey=$receiverPublicKey, publicKey=$publicKey"
+            )
+        }
+
+        if (receiverAlgorithm.publicKeySize != receiverPublicKey.value.size) {
+            return AttoValidation.Error(
+                "Receiver public key size does not match receiver algorithm: receiverAlgorithm.publicKeySize=${receiverAlgorithm.publicKeySize}, receiverPublicKey.size=${receiverPublicKey.value.size}"
+            )
+        }
+
+        return AttoValidation.Ok
     }
 }
 
@@ -263,13 +329,6 @@ data class AttoReceiveBlock(
             this.writeAttoAlgorithm(sendHashAlgorithm)
             this.writeAttoHash(sendHash)
         }
-    }
-
-    override fun isValid(): Boolean {
-        return super.isValid() &&
-            height > AttoHeight(1u) &&
-            balance > AttoAmount.MIN &&
-            sendHash.value.size == sendHashAlgorithm.hashSize
     }
 }
 
@@ -345,12 +404,6 @@ data class AttoOpenBlock(
             this.writeAttoPublicKey(representativePublicKey)
         }
     }
-
-    override fun isValid(): Boolean {
-        return super.isValid() &&
-            balance > AttoAmount.MIN &&
-            sendHash.value.size == sendHashAlgorithm.hashSize
-    }
 }
 
 @JsExportForJs
@@ -421,6 +474,4 @@ data class AttoChangeBlock(
             this.writeAttoAlgorithm(representativeAlgorithm)
             this.writeAttoPublicKey(representativePublicKey)
         }
-
-    override fun isValid(): Boolean = super.isValid() && height > AttoHeight(1u)
 }
