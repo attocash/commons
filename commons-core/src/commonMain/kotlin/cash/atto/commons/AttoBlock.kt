@@ -93,7 +93,6 @@ sealed interface AttoBlock :
         }
     }
 
-
     fun validate(): AttoValidation {
         if (version > maxVersion) {
             return AttoValidation.Error("Invalid version: version=$version > max=$maxVersion")
@@ -102,31 +101,34 @@ sealed interface AttoBlock :
         val now = AttoInstant.now()
         if (timestamp > now + 1.minutes) {
             return AttoValidation.Error(
-                "Timestamp too far in the future: timestamp=$timestamp, now=$now, tolerance=1m"
+                "Timestamp too far in the future: timestamp=$timestamp, now=$now, tolerance=1m",
             )
         }
 
         if (algorithm.publicKeySize != publicKey.value.size) {
             return AttoValidation.Error(
-                "Public key size does not match algorithm: algorithm.publicKeySize=${algorithm.publicKeySize}, publicKey.size=${publicKey.value.size}"
+                "Public key size does not match algorithm: algorithm.publicKeySize=${algorithm.publicKeySize}, " +
+                    "publicKey.size=${publicKey.value.size}",
             )
         }
 
         if (this is PreviousSupport && previous.value.size != algorithm.hashSize) {
             return AttoValidation.Error(
-                "Previous hash size does not match algorithm: algorithm.hashSize=${algorithm.hashSize}, previous.size=${previous.value.size}"
+                "Previous hash size does not match algorithm: algorithm.hashSize=${algorithm.hashSize}, " +
+                    "previous.size=${previous.value.size}",
             )
         }
 
         if (this is ReceiveSupport && sendHash.value.size != sendHashAlgorithm.hashSize) {
             return AttoValidation.Error(
-                "Send hash size does not match algorithm: sendHash.size=${sendHash.value.size}, sendHashAlgorithm.hashSize=${sendHashAlgorithm.hashSize}"
+                "Send hash size does not match algorithm: sendHash.size=${sendHash.value.size}, " +
+                    "sendHashAlgorithm.hashSize=${sendHashAlgorithm.hashSize}",
             )
         }
 
         if (this is ReceiveSupport && balance == AttoAmount.MIN) {
             return AttoValidation.Error(
-                "Balance must be greater than 0"
+                "Balance must be greater than 0",
             )
         }
 
@@ -138,7 +140,9 @@ sealed interface AttoBlock :
             representativeAlgorithm.publicKeySize != representativePublicKey.value.size
         ) {
             return AttoValidation.Error(
-                "Representative public key size does not match representative algorithm: representativeAlgorithm.publicKeySize=${representativeAlgorithm.publicKeySize}, representativePublicKey.size=${representativePublicKey.value.size}"
+                "Representative public key size does not match representative algorithm: " +
+                    "representativeAlgorithm.publicKeySize=${representativeAlgorithm.publicKeySize}, " +
+                    "representativePublicKey.size=${representativePublicKey.value.size}",
             )
         }
 
@@ -250,13 +254,15 @@ data class AttoSendBlock(
 
         if (receiverPublicKey == publicKey) {
             return AttoValidation.Error(
-                "Receiver public key must be different from public key: receiverPublicKey=$receiverPublicKey, publicKey=$publicKey"
+                "Receiver public key must be different from public key: receiverPublicKey=$receiverPublicKey, publicKey=$publicKey",
             )
         }
 
         if (receiverAlgorithm.publicKeySize != receiverPublicKey.value.size) {
             return AttoValidation.Error(
-                "Receiver public key size does not match receiver algorithm: receiverAlgorithm.publicKeySize=${receiverAlgorithm.publicKeySize}, receiverPublicKey.size=${receiverPublicKey.value.size}"
+                "Receiver public key size does not match receiver algorithm: " +
+                    "receiverAlgorithm.publicKeySize=${receiverAlgorithm.publicKeySize}, " +
+                    "receiverPublicKey.size=${receiverPublicKey.value.size}",
             )
         }
 

@@ -68,13 +68,14 @@ class AttoTransactionTest {
     fun `should return error when work is invalid`() =
         runTest {
             // given
-            val invalidWork = run {
-                var work: AttoWork
-                do {
-                    work = AttoWork(Random.nextBytes(8))
-                } while (work.isValid(receiveBlock))
-                return@run work
-            }
+            val invalidWork =
+                run {
+                    var work: AttoWork
+                    do {
+                        work = AttoWork(Random.nextBytes(8))
+                    } while (work.isValid(receiveBlock))
+                    return@run work
+                }
             val transaction =
                 AttoTransaction(
                     block = receiveBlock,

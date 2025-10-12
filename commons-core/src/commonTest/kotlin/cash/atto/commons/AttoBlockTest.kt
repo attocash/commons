@@ -151,7 +151,8 @@ class AttoBlockTest {
                 // send zero amount
                 sendBlock.copy(amount = AttoAmount.MIN) as AttoBlock to "Amount must be greater than 0",
                 // self send
-                sendBlock.copy(receiverPublicKey = sendBlock.publicKey) as AttoBlock to "Receiver public key must be different from public key",
+                sendBlock.copy(receiverPublicKey = sendBlock.publicKey) as AttoBlock to
+                    "Receiver public key must be different from public key",
                 // receive zero balance
                 receiveBlock.copy(balance = AttoAmount.MIN) as AttoBlock to "Balance must be greater than 0",
                 openBlock.copy(balance = AttoAmount.MIN) as AttoBlock to "Balance must be greater than 0",
