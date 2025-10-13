@@ -26,11 +26,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: java
 
       - run: |
           ./gradlew --info build -x ktlintCheck
 
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
