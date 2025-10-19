@@ -56,14 +56,6 @@ fun AttoWork.Companion.getThreshold(
     return thresholdCache[network]!![timestamp.value.toLocalDateTime(TimeZone.UTC).year]!!
 }
 
-fun AttoBlock.getTarget(): ByteArray {
-    return when (this) {
-        is AttoOpenBlock -> this.publicKey.value
-        is PreviousSupport -> this.previous.value
-        else -> throw IllegalArgumentException("Unsupported block type $this")
-    }
-}
-
 @OptIn(ExperimentalJsExport::class)
 @JsExport.Ignore
 fun AttoWork.Companion.isValid(
@@ -75,18 +67,6 @@ fun AttoWork.Companion.isValid(
     return difficult <= threshold
 }
 
-fun AttoWork.Companion.isValid(
-    network: AttoNetwork,
-    timestamp: AttoInstant,
-    target: ByteArray,
-    work: ByteArray,
-): Boolean {
-    if (timestamp < INITIAL_INSTANT) {
-        return false
-    }
-    return isValid(AttoWork.getThreshold(network, timestamp), target, work)
-}
-
 @JsExportForJs
 @Serializable(with = AttoWorkAsStringSerializer::class)
 data class AttoWork(
@@ -94,13 +74,6 @@ data class AttoWork(
 ) {
     companion object {
         const val SIZE = 8
-
-        fun threshold(
-            network: AttoNetwork,
-            timestamp: AttoInstant,
-        ): ULong {
-            return getThreshold(network, timestamp)
-        }
 
         fun parse(value: String): AttoWork {
             return AttoWork(value.fromHexToByteArray())
@@ -112,11 +85,7 @@ data class AttoWork(
     }
 
     fun isValid(block: AttoBlock): Boolean {
-        if (block is AttoOpenBlock) {
-            return isValid(block.network, block.timestamp, block.publicKey.value, value)
-        }
-        block as PreviousSupport
-        return isValid(block.network, block.timestamp, block.previous.value, value)
+        return isValid(block.network, block.timestamp, block.getTarget(), value)
     }
 
     override fun equals(other: Any?): Boolean {
