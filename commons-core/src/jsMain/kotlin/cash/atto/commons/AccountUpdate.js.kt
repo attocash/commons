@@ -18,7 +18,6 @@ private fun Pair<AttoBlock, AttoAccount>.toAccountUpdate(): AccountUpdate {
 }
 
 fun attoAccountOpen(
-    network: AttoNetwork,
     representativeAddress: AttoAddress,
     receivable: AttoReceivable,
     timestamp: String? = null,
@@ -28,7 +27,6 @@ fun attoAccountOpen(
             representativeAddress.algorithm,
             representativeAddress.publicKey,
             receivable,
-            network,
             timestamp.toInstant(),
         )
     return update.toAccountUpdate()
