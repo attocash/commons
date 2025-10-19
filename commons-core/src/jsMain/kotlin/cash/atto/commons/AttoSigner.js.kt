@@ -57,7 +57,9 @@ fun AttoPrivateKey.toSignerJs(): AttoSignerJs {
 actual class InMemorySigner actual constructor(
     internal actual val privateKey: AttoPrivateKey,
 ) : AttoSigner {
+    actual override val algorithm: AttoAlgorithm = AttoAlgorithm.V1
     actual override val publicKey: AttoPublicKey = privateKey.toPublicKey()
+    actual override val address: AttoAddress = publicKey.toAddress(AttoAlgorithm.V1)
 
     private val keyPair = generateKeyPairFromSeed(privateKey.value.toUint8Array())
 

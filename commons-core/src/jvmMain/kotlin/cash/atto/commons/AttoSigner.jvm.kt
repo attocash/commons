@@ -7,7 +7,9 @@ import org.bouncycastle.crypto.signers.Ed25519Signer
 actual class InMemorySigner actual constructor(
     internal actual val privateKey: AttoPrivateKey,
 ) : AttoSigner {
+    actual override val algorithm: AttoAlgorithm = AttoAlgorithm.V1
     actual override val publicKey: AttoPublicKey = privateKey.toPublicKey()
+    actual override val address: AttoAddress = publicKey.toAddress(algorithm)
 
     actual override suspend fun sign(hash: AttoHash): AttoSignature {
         val parameters = Ed25519PrivateKeyParameters(privateKey.value, 0)

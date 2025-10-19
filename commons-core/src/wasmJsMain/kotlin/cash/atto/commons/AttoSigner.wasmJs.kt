@@ -7,7 +7,9 @@ internal object InMemorySignerHolder
 actual class InMemorySigner actual constructor(
     internal actual val privateKey: AttoPrivateKey,
 ) : AttoSigner {
+    actual override val algorithm: AttoAlgorithm = AttoAlgorithm.V1
     actual override val publicKey: AttoPublicKey = privateKey.toPublicKey()
+    actual override val address: AttoAddress = publicKey.toAddress(algorithm)
 
     private val keyPair = generateKeyPairFromSeed(privateKey.value.toUint8Array())
 

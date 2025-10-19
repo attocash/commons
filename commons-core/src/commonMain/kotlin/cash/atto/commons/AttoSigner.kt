@@ -3,7 +3,9 @@ package cash.atto.commons
 interface AttoSigner {
     companion object {}
 
+    val algorithm: AttoAlgorithm
     val publicKey: AttoPublicKey
+    val address: AttoAddress
 
     suspend fun sign(hash: AttoHash): AttoSignature
 
@@ -32,12 +34,21 @@ interface AttoSigner {
 expect class InMemorySigner(
     privateKey: AttoPrivateKey,
 ) : AttoSigner {
+    override val algorithm: AttoAlgorithm
     override val publicKey: AttoPublicKey
+    override val address: AttoAddress
+
     internal val privateKey: AttoPrivateKey
 
     override suspend fun sign(hash: AttoHash): AttoSignature
 }
 
 fun AttoPrivateKey.toSigner(): AttoSigner = InMemorySigner(this)
+
+fun AttoSeed.toSigner(index: AttoKeyIndex): AttoSigner = toPrivateKey(index).toSigner()
+
+fun AttoSeed.toSigner(index: UInt): AttoSigner = toPrivateKey(index).toSigner()
+
+fun AttoSeed.toSigner(index: Int): AttoSigner = toPrivateKey(index).toSigner()
 
 suspend fun AttoPrivateKey.sign(hash: AttoHash): AttoSignature = this.toSigner().sign(hash)
