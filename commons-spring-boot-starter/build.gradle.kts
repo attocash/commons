@@ -44,6 +44,8 @@ dependencies {
 
     compileOnly("org.springframework.data:spring-data-r2dbc")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito")
     }
