@@ -9,18 +9,20 @@ import org.springframework.http.codec.json.KotlinSerializationJsonEncoder
 
 @Configuration
 class AttoAutoConfiguration {
-
     @Bean
     fun kotlinxCodecCustomizer(): CodecCustomizer {
-        val json = Json {
-            ignoreUnknownKeys = true
-            explicitNulls = false
-            encodeDefaults = true
-        }
+        val json =
+            Json {
+                ignoreUnknownKeys = true
+                explicitNulls = false
+                encodeDefaults = true
+            }
         return CodecCustomizer { configurer ->
-            configurer.defaultCodecs()
+            configurer
+                .defaultCodecs()
                 .kotlinSerializationJsonDecoder(KotlinSerializationJsonDecoder(json))
-            configurer.defaultCodecs()
+            configurer
+                .defaultCodecs()
                 .kotlinSerializationJsonEncoder(KotlinSerializationJsonEncoder(json))
         }
     }
