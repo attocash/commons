@@ -29,12 +29,11 @@ data class AttoAccount(
             representativeAlgorithm: AttoAlgorithm,
             representativePublicKey: AttoPublicKey,
             receivable: AttoReceivable,
-            network: AttoNetwork,
             timestamp: AttoInstant = AttoInstant.now(),
         ): Pair<AttoOpenBlock, AttoAccount> {
             val block =
                 AttoOpenBlock(
-                    network = network,
+                    network = receivable.network,
                     version = receivable.version,
                     algorithm = receivable.receiverAlgorithm,
                     publicKey = receivable.receiverPublicKey,
@@ -48,7 +47,7 @@ data class AttoAccount(
             val account =
                 AttoAccount(
                     publicKey = receivable.receiverPublicKey,
-                    network = network,
+                    network = receivable.network,
                     version = receivable.version,
                     algorithm = receivable.receiverAlgorithm,
                     height = block.height,

@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 @JsExportForJs
 @Serializable
 data class AttoReceivable(
+    val network: AttoNetwork,
     val hash: AttoHash,
     val version: AttoVersion,
     val algorithm: AttoAlgorithm,
@@ -21,6 +22,7 @@ data class AttoReceivable(
 
 fun AttoSendBlock.toReceivable(): AttoReceivable =
     AttoReceivable(
+        network = this.network,
         hash = this.hash,
         version = this.version,
         algorithm = this.algorithm,
