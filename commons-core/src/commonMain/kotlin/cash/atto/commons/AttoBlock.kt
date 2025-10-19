@@ -481,3 +481,20 @@ data class AttoChangeBlock(
             this.writeAttoPublicKey(representativePublicKey)
         }
 }
+
+fun AttoOpenBlock.Companion.createGenesis(
+    network: AttoNetwork,
+    address: AttoAddress,
+): AttoOpenBlock =
+    AttoOpenBlock(
+        version = 0U.toAttoVersion(),
+        network = network,
+        algorithm = address.algorithm,
+        publicKey = address.publicKey,
+        balance = AttoAmount.MAX,
+        timestamp = AttoInstant.now(),
+        sendHashAlgorithm = address.algorithm,
+        sendHash = AttoHash(ByteArray(32)),
+        representativeAlgorithm = address.algorithm,
+        representativePublicKey = address.publicKey,
+    )
