@@ -3,6 +3,7 @@ package cash.atto.commons.worker
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
+import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.fromHexToByteArray
 import cash.atto.commons.isValid
 import kotlinx.coroutines.runBlocking
@@ -23,7 +24,7 @@ class AttoWorkerOpenclTest {
         runBlocking {
             val network = AttoNetwork.LOCAL
             val timestamp = AttoNetwork.INITIAL_INSTANT
-            val work = worker.work(network, timestamp, hash.value)
-            assertTrue(AttoWork.isValid(network, timestamp, hash.value, work.value))
+            val work = worker.work(network, timestamp, AttoWorkTarget(hash.value))
+            assertTrue(AttoWork.isValid(network, timestamp, AttoWorkTarget(hash.value), work.value))
         }
 }

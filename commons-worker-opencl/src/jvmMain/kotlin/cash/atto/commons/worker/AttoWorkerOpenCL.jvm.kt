@@ -1,6 +1,7 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoWork
+import cash.atto.commons.AttoWorkTarget
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.writeULongLe
@@ -104,14 +105,15 @@ actual class AttoWorkerOpenCL actual constructor(
 
     override suspend fun work(
         threshold: ULong,
-        target: ByteArray,
+        target: AttoWorkTarget,
     ): AttoWork {
         val resultHostData = LongArray(1)
         val foundHostData = IntArray(1)
         val bufResult = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Sizeof.cl_long.toLong(), null, null)
         val bufFound =
             clCreateBuffer(context, CL_MEM_READ_WRITE or CL_MEM_COPY_HOST_PTR, Sizeof.cl_int.toLong(), Pointer.to(foundHostData), null)
-        val bufHash = clCreateBuffer(context, CL_MEM_READ_ONLY or CL_MEM_COPY_HOST_PTR, target.size.toLong(), Pointer.to(target), null)
+        val bufHash =
+            clCreateBuffer(context, CL_MEM_READ_ONLY or CL_MEM_COPY_HOST_PTR, target.value.size.toLong(), Pointer.to(target.value), null)
 
         clSetKernelArg(kernel, 0, Sizeof.cl_mem.toLong(), Pointer.to(bufResult))
         clSetKernelArg(kernel, 1, Sizeof.cl_mem.toLong(), Pointer.to(bufHash))
