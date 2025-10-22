@@ -62,9 +62,6 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        compilerOptions {
-            freeCompilerArgs.add("-Xwasm-attach-js-exception")
-        }
         browser {
             testTask {
                 useKarma {
@@ -72,6 +69,7 @@ kotlin {
                 }
             }
         }
+        nodejs()
     }
 
     applyDefaultHierarchyTemplate()
