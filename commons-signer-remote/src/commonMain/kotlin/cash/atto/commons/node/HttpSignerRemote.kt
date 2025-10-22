@@ -1,5 +1,7 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoAddress
+import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChallenge
 import cash.atto.commons.AttoHash
@@ -55,11 +57,13 @@ internal class HttpSignerRemote(
 ) : AttoSigner {
     private val logger = KotlinLogging.logger {}
 
+    override val algorithm: AttoAlgorithm = AttoAlgorithm.V1
     override val publicKey: AttoPublicKey by lazy {
         runBlocking {
             getPublicKey()
         }
     }
+    override val address: AttoAddress by lazy { AttoAddress(algorithm, publicKey) }
 
     private suspend fun getPublicKey(): AttoPublicKey {
         while (currentCoroutineContext().isActive) {
