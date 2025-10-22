@@ -1,6 +1,7 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoWork
+import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.isValid
 import cash.atto.commons.toByteArray
 import kotlinx.coroutines.CompletableDeferred
@@ -25,9 +26,9 @@ internal class AttoWorkerCpu(
 
     override suspend fun work(
         threshold: ULong,
-        target: ByteArray,
+        target: AttoWorkTarget,
     ): AttoWork {
-        val controller = WorkerController(dispatcher + supervisorJob + Job(), parallelism, threshold, target)
+        val controller = WorkerController(dispatcher + supervisorJob + Job(), parallelism, threshold, target.value)
         return controller.calculate()
     }
 
