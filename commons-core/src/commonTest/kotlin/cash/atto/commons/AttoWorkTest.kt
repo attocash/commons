@@ -22,7 +22,7 @@ internal class AttoWorkTest {
     @Test
     fun `should return threshold`() {
         thresholdMap.forEach { (timestamp, expectedThreshold) ->
-            val threshold = AttoWork.threshold(AttoNetwork.LIVE, timestamp)
+            val threshold = AttoWork.getThreshold(AttoNetwork.LIVE, timestamp)
             assertEquals(expectedThreshold.toULong(), threshold)
         }
     }
@@ -61,7 +61,7 @@ internal class AttoWorkTest {
     @Test
     fun `should validate work`() {
         val work = AttoWork("576887B000000000".fromHexToByteArray())
-        assertTrue(AttoWork.isValid(AttoNetwork.LIVE, AttoNetwork.INITIAL_INSTANT, hash.value, work.value))
+        assertTrue(AttoWork.isValid(AttoNetwork.LIVE, AttoNetwork.INITIAL_INSTANT, AttoWorkTarget(hash.value), work.value))
     }
 
     @OptIn(ExperimentalTime::class)
@@ -75,7 +75,7 @@ internal class AttoWorkTest {
                 .atTime(LocalTime.fromSecondOfDay(0))
                 .toInstant(TimeZone.UTC)
                 .toAtto()
-        assertTrue(AttoWork.isValid(AttoNetwork.LIVE, timestamp, hash.value, work.value))
+        assertTrue(AttoWork.isValid(AttoNetwork.LIVE, timestamp, AttoWorkTarget(hash.value), work.value))
     }
 
     @OptIn(ExperimentalTime::class)
@@ -89,7 +89,7 @@ internal class AttoWorkTest {
                 .atTime(LocalTime.fromSecondOfDay(0))
                 .toInstant(TimeZone.UTC)
                 .toAtto()
-        assertFalse(AttoWork.isValid(AttoNetwork.LIVE, timestamp, hash.value, work.value))
+        assertFalse(AttoWork.isValid(AttoNetwork.LIVE, timestamp, AttoWorkTarget(hash.value), work.value))
     }
 
     @OptIn(ExperimentalTime::class)
@@ -97,6 +97,6 @@ internal class AttoWorkTest {
     fun `should not validate when timestamp is before initial date`() {
         val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
         val timestamp = AttoNetwork.INITIAL_INSTANT.minus(1.seconds)
-        assertFalse(AttoWork.isValid(AttoNetwork.LIVE, timestamp, hash.value, work.value))
+        assertFalse(AttoWork.isValid(AttoNetwork.LIVE, timestamp, AttoWorkTarget(hash.value), work.value))
     }
 }
