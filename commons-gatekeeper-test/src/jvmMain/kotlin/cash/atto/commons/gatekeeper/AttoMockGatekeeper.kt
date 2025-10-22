@@ -1,7 +1,6 @@
 package cash.atto.commons.gatekeeper
 
 import cash.atto.commons.AttoInstant
-import cash.atto.commons.node.randomPort
 import cash.atto.commons.toAtto
 import cash.atto.commons.toHex
 import com.auth0.jwt.JWT
@@ -16,9 +15,16 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
+import java.net.ServerSocket
 import java.security.KeyPairGenerator
 import java.security.interfaces.ECPrivateKey
 import kotlin.time.Duration.Companion.days
+
+private fun randomPort(): Int {
+    ServerSocket(0).use { socket ->
+        return socket.localPort
+    }
+}
 
 private val jwtAlgorithm by lazy {
     val keyPairGenerator = KeyPairGenerator.getInstance("EC")

@@ -35,7 +35,7 @@ kotlin {
             dependencies {
                 api(project(":commons-core"))
                 api(project(":commons-gatekeeper"))
-                api(project(":commons-node-test"))
+                api(project(":commons-test"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
                 implementation("io.github.oshai:kotlin-logging:7.0.7")
