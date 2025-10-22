@@ -13,6 +13,7 @@ class AttoAccountTest {
         // given
         val receivable =
             AttoReceivable(
+                network = AttoNetwork.LOCAL,
                 version = 0U.toAttoVersion(),
                 algorithm = AttoAlgorithm.V1,
                 publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
@@ -25,7 +26,6 @@ class AttoAccountTest {
 
         val representativeAlgorithm = AttoAlgorithm.V1
         val representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32))
-        val network = AttoNetwork.LOCAL
         val timestamp = AttoInstant.now()
 
         // when
@@ -34,7 +34,6 @@ class AttoAccountTest {
                 representativeAlgorithm = representativeAlgorithm,
                 representativePublicKey = representativePublicKey,
                 receivable = receivable,
-                network = network,
                 timestamp = timestamp,
             )
 
@@ -79,6 +78,7 @@ class AttoAccountTest {
         val account = AttoAccount.sample()
         val receivable =
             AttoReceivable(
+                network = AttoNetwork.LOCAL,
                 hash = AttoHash(Random.Default.nextBytes(32)),
                 version = 0U.toAttoVersion(),
                 algorithm = AttoAlgorithm.V1,
@@ -111,6 +111,7 @@ class AttoAccountTest {
         val receivableTimestamp = account.lastTransactionTimestamp.plus(5.seconds)
         val receivable =
             AttoReceivable(
+                network = AttoNetwork.LOCAL,
                 hash = AttoHash(Random.Default.nextBytes(32)),
                 version = 0U.toAttoVersion(),
                 algorithm = account.algorithm,

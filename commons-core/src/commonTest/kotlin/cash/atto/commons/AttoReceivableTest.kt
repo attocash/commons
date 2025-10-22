@@ -11,6 +11,7 @@ class AttoReceivableTest {
         // given
         val expectedReceivable =
             AttoReceivable(
+                network = AttoNetwork.LOCAL,
                 hash = AttoHash(Random.nextBytes(32)),
                 version = 0U.toAttoVersion(),
                 algorithm = AttoAlgorithm.V1,
@@ -35,6 +36,7 @@ class AttoReceivableTest {
         val expectedJson =
             """
             {
+               "network":"LOCAL",
                "hash":"0AF0F63BFE4DBC588F95FC3B154DE848AA9A5DD5604BAC99AE9E21C5EA8B4F64",
                "version":0,
                "algorithm":"V1",
