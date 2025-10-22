@@ -8,8 +8,8 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.fromHexToByteArray
-import cash.atto.commons.node.AttoNodeOperations
-import cash.atto.commons.node.custom
+import cash.atto.commons.node.AttoNodeClient
+import cash.atto.commons.node.remote
 import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.remote
 import io.ktor.client.HttpClient
@@ -139,12 +139,12 @@ fun AttoAuthenticator.toHeaderProvider(): suspend () -> Map<String, String> {
 /**
  * Creates a AttoClient using Atto backend
  */
-fun AttoNodeOperations.Companion.attoBackend(
+fun AttoNodeClient.Companion.attoBackend(
     network: AttoNetwork,
     authenticator: AttoAuthenticator,
-): AttoNodeOperations {
+): AttoNodeClient {
     val gatekeeperUrl = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"
-    return AttoNodeOperations.custom(network, gatekeeperUrl, authenticator.toHeaderProvider())
+    return AttoNodeClient.remote(gatekeeperUrl, authenticator.toHeaderProvider())
 }
 
 internal fun AttoWorker.Companion.attoBackend(
