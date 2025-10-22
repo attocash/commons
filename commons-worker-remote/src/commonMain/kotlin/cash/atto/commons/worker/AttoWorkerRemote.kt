@@ -1,6 +1,7 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoWork
+import cash.atto.commons.AttoWorkTarget
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
@@ -36,7 +37,7 @@ private class WorkerRemote(
 ) : AttoWorkerOperations {
     override suspend fun work(
         threshold: ULong,
-        target: ByteArray,
+        target: AttoWorkTarget,
     ): AttoWork = throw NotImplementedError()
 
     override suspend fun work(request: AttoWorkerOperations.Request): AttoWorkerOperations.Response {
