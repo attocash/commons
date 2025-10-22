@@ -61,9 +61,6 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        compilerOptions {
-            freeCompilerArgs.add("-Xwasm-attach-js-exception")
-        }
         browser {
             testTask {
                 useKarma {
@@ -71,6 +68,7 @@ kotlin {
                 }
             }
         }
+        nodejs()
     }
 
     applyDefaultHierarchyTemplate()
@@ -80,6 +78,8 @@ kotlin {
             dependencies {
                 api(project(":commons-core"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+
+                implementation("io.github.oshai:kotlin-logging:7.0.7")
             }
         }
         val commonTest by getting {
