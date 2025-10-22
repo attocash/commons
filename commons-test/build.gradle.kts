@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     kotlin("plugin.serialization")
 
@@ -27,15 +29,47 @@ kotlin {
 
     jvm()
 
+    js(IR) {
+        binaries.library()
+
+        nodejs()
+
+        generateTypeScriptDefinitions()
+
+        compilations["main"].packageJson {
+            customField("name", "@attocash/commons-test")
+        }
+
+        compilerOptions {
+            target = "es2015"
+            useEsClasses = true
+            freeCompilerArgs.addAll(
+                // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
+                "-Xir-per-file",
+                "-Xes-long-as-bigint",
+            )
+        }
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        nodejs()
+    }
+
     applyDefaultHierarchyTemplate()
 
     sourceSets {
         val ktorVersion = "3.2.0"
         val commonMain by getting {
             dependencies {
+
                 api(project(":commons-core"))
-                api(project(":commons-node"))
+                api(project(":commons-node-remote"))
+                api(project(":commons-worker-remote"))
+                api(kotlin("test"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+
 
                 implementation("io.github.oshai:kotlin-logging:7.0.7")
 
@@ -50,7 +84,23 @@ kotlin {
 
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-server-cio:$ktorVersion")
+                implementation("org.testcontainers:junit-jupiter:1.20.4")
+                implementation("org.testcontainers:mysql:1.20.4")
+                implementation("com.mysql:mysql-connector-j:8.4.0")
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                implementation(npm("testcontainers", "11.7.1"))
+                implementation(npm("@testcontainers/mysql", "11.7.1"))
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(npm("testcontainers", "11.7.1"))
+                implementation(npm("@testcontainers/mysql", "11.7.1"))
             }
         }
     }
@@ -66,10 +116,8 @@ publishing {
         artifact(javadocJar)
 
         pom {
-            name.set("Atto Commons Wallet")
-            description.set(
-                "Atto Commons Node provides mock node implementation.",
-            )
+            name.set("Atto Commons Test")
+            description.set("Test utilities and mock implementations for the Atto node and work server.")
             url.set("https://github.com/attocash/commons")
 
             organization {
