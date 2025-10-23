@@ -8,7 +8,6 @@ import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoInstantAsStringSerializer
-import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
@@ -20,8 +19,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 interface AttoNodeOperations {
     companion object {}
-
-    val network: AttoNetwork
 
     suspend fun account(publicKey: AttoPublicKey): AttoAccount?
 
