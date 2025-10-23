@@ -16,7 +16,7 @@ data class AttoAccountEntry(
     val previousBalance: AttoAmount,
     val balance: AttoAmount,
     val timestamp: AttoInstant,
-) : HeightSupport {
-    val address = AttoAddress(algorithm, publicKey)
+) : HeightSupport, AddressSupport {
+    override val address = AttoAddress(algorithm, publicKey)
     val subjectAddress = AttoAddress(subjectAlgorithm, subjectPublicKey)
 }
