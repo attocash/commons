@@ -44,9 +44,15 @@ interface HeightSupport {
 }
 
 @JsExportForJs
+interface AddressSupport {
+    val address: AttoAddress
+}
+
+@JsExportForJs
 @Serializable
 sealed interface AttoBlock :
     HeightSupport,
+    AddressSupport,
     AttoHashable,
     AttoSerializable {
     override val hash: AttoHash
@@ -193,7 +199,7 @@ data class AttoSendBlock(
     override val hash by lazy { toBuffer().hash() }
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val address = AttoAddress(algorithm, publicKey)
+    override val address = AttoAddress(algorithm, publicKey)
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val receiverAddress = AttoAddress(receiverAlgorithm, receiverPublicKey)
@@ -293,7 +299,7 @@ data class AttoReceiveBlock(
     override val hash by lazy { toBuffer().hash() }
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val address = AttoAddress(algorithm, publicKey)
+    override val address = AttoAddress(algorithm, publicKey)
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoReceiveBlock? {
@@ -364,7 +370,7 @@ data class AttoOpenBlock(
     override val height = AttoHeight(1UL)
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val address = AttoAddress(algorithm, publicKey)
+    override val address = AttoAddress(algorithm, publicKey)
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)
@@ -435,7 +441,7 @@ data class AttoChangeBlock(
     override val hash by lazy { toBuffer().hash() }
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val address = AttoAddress(algorithm, publicKey)
+    override val address = AttoAddress(algorithm, publicKey)
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)

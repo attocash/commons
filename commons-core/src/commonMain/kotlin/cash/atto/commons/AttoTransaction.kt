@@ -19,11 +19,16 @@ data class AttoTransaction(
     val signature: AttoSignature,
     val work: AttoWork,
 ) : HeightSupport,
+    AddressSupport,
     AttoSerializable {
     val hash by lazy { block.hash }
 
     @Transient
-    override val height = block.height
+    override val height: AttoHeight
+        get() = block.height
+
+    override val address: AttoAddress
+        get() = block.address
 
     companion object {
         const val SIZE = 72

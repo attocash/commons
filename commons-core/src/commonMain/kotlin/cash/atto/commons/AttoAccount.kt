@@ -19,8 +19,9 @@ data class AttoAccount(
     val lastTransactionTimestamp: AttoInstant,
     val representativeAlgorithm: AttoAlgorithm,
     val representativePublicKey: AttoPublicKey,
-) : HeightSupport {
-    val address by lazy { AttoAddress(algorithm, publicKey) }
+) : HeightSupport,
+    AddressSupport {
+    override val address by lazy { AttoAddress(algorithm, publicKey) }
     val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
 
     companion object {
