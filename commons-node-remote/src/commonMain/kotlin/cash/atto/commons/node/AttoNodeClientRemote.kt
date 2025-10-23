@@ -7,11 +7,9 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
-import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
@@ -37,6 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
+import kotlin.jvm.JvmSynthetic
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,15 +53,10 @@ private val httpClient =
         expectSuccess = true
     }
 
-private class AttoNodeClient(
-    override val network: AttoNetwork,
+private class AttoNodeClientRemote(
     private val baseUrl: String,
     private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
-) : AttoNodeOperations {
-    private val logger = KotlinLogging.logger {}
-
-    private val retryDelay = 10.seconds
-
+) : AttoNodeClient {
     override suspend fun account(publicKey: AttoPublicKey): AttoAccount? {
         val uri = "$baseUrl/accounts/$publicKey"
         val headers = headerProvider.invoke()
@@ -273,8 +267,8 @@ private class AttoNodeClient(
     }
 }
 
-fun AttoNodeOperations.Companion.custom(
-    network: AttoNetwork,
+@JvmSynthetic
+fun AttoNodeClient.Companion.remote(
     baseUrl: String,
     headerProvider: suspend () -> Map<String, String> = { emptyMap() },
-): AttoNodeOperations = AttoNodeClient(network, baseUrl, headerProvider)
+): AttoNodeClient = AttoNodeClientRemote(baseUrl, headerProvider)
