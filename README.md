@@ -9,6 +9,7 @@ NOTE: The API is evolving and may include breaking changes between releases.
 - commons-core — primitives: mnemonic/seed, keys, addresses, blocks/transactions, serialization, utilities.
 - commons-node — node operations and monitors (account membership, transactions, account entries).
 - commons-node-remote — remote HTTP/WebSocket client for talking to a node.
+- commons-signer-remote — remote signer client for external key management.
 - commons-wallet — simple wallet utilities built on top of node + worker.
 - commons-worker — CPU proof‑of‑work implementation.
 - commons-worker-opencl — OpenCL proof‑of‑work implementation (JVM only).
@@ -103,9 +104,10 @@ For full examples and advanced flows (auto-receive, account-entry monitor, OpenC
 - commons-core/README.md — primitives and serialization examples
 - commons-wallet/README.md — wallet setup, send/receive, auto-receiver, monitors
 - commons-node/README.md — node client and monitors
+- commons-node-remote/README.md — remote node client
+- commons-signer-remote/README.md — remote signer client
 - commons-worker/README.md — CPU PoW
 - commons-worker-opencl/README.md — OpenCL PoW
-- commons-node-remote/README.md — remote node client
 - commons-worker-remote/README.md — remote worker client
 - commons-spring-boot-starter/README.md — Spring Boot integration
 - commons-js/README.md — JS/TS usage
