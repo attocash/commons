@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutorService
 
 actual class AttoAccountEntryMonitorAsyncBuilder actual constructor(
     private val nodeClient: AttoNodeClientAsync,
-    private val accountMonitor: AttoAccountMonitorAsync
+    private val accountMonitor: AttoAccountMonitorAsync,
 ) {
     actual var heightProvider: (AttoAddress) -> AttoHeight = { AttoHeight.MIN }
 

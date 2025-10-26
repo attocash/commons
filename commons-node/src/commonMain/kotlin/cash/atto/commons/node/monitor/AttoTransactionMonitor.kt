@@ -15,7 +15,8 @@ class AttoTransactionMonitor(
     override fun stream(search: HeightSearch): Flow<AttoTransaction> = nodeClient.transactionStream(search)
 }
 
-
-fun AttoAccountMonitor.toTransactionMonitor(heightProvider: (AttoAddress) -> AttoHeight = { AttoHeight.MIN }): AttoTransactionMonitor {
-    return AttoTransactionMonitor(client, this, heightProvider)
-}
+fun AttoAccountMonitor.toTransactionMonitor(
+    heightProvider: (AttoAddress) -> AttoHeight = {
+        AttoHeight.MIN
+    },
+): AttoTransactionMonitor = AttoTransactionMonitor(client, this, heightProvider)

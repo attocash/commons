@@ -253,6 +253,7 @@ class AttoWallet(
         suspend fun add(account: Account) = add(listOf(account))
 
         suspend fun contains(index: AttoKeyIndex) = mutex.withLock { accountIndexMap.containsKey(index) }
+
         suspend fun contains(address: AttoAddress) = mutex.withLock { accountAddressMap.containsKey(address) }
 
         suspend fun get(index: AttoKeyIndex): Account =

@@ -65,6 +65,4 @@ actual class AttoNodeMock actual constructor(
         mysql.close()
         network.close()
     }
-
-
 }

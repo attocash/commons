@@ -11,7 +11,7 @@ actual class AttoAccountMonitorAsyncBuilder actual constructor(
 ) {
     fun build(dispatcher: CoroutineDispatcher): AttoAccountMonitorAsync {
         val monitor = nodeClient.client.createAccountMonitor()
-        return AttoAccountMonitorAsync(monitor,dispatcher, )
+        return AttoAccountMonitorAsync(monitor, dispatcher)
     }
 
     fun build(executorService: ExecutorService): AttoAccountMonitorAsync = build(executorService.asCoroutineDispatcher())

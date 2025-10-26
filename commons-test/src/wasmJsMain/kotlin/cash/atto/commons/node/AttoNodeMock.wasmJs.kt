@@ -8,7 +8,6 @@ actual class AttoNodeMock actual constructor(
     actual val baseUrl: String
         get() = TODO("Not yet implemented")
 
-
     actual val genesisTransaction: AttoTransaction
         get() = TODO("Not yet implemented")
 
@@ -21,5 +20,4 @@ actual class AttoNodeMock actual constructor(
     }
 
     actual companion object
-
 }

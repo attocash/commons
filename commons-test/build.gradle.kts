@@ -70,7 +70,6 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 
-
                 implementation("io.github.oshai:kotlin-logging:7.0.7")
 
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")

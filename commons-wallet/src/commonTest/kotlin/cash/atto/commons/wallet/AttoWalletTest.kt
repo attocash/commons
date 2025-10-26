@@ -50,16 +50,20 @@ class AttoWalletTest {
                     val client = AttoNodeClient.remote(node.baseUrl)
                     val accountMonitor = client.createAccountMonitor()
 
-                    val initialHeights = mapOf(
-                        node.genesisTransaction.address to node.genesisTransaction.block.height + 1U, // skip genesis
-                    )
+                    val initialHeights =
+                        mapOf(
+                            // skip genesis
+                            node.genesisTransaction.address to node.genesisTransaction.block.height + 1U,
+                        )
 
-                    val accountEntryMonitor = accountMonitor.toAccountEntryMonitor {
-                        initialHeights[it] ?: 1U.toAttoHeight()
-                    }
-                    val transactionMonitor = accountMonitor.toTransactionMonitor {
-                        initialHeights[it] ?: 1U.toAttoHeight()
-                    }
+                    val accountEntryMonitor =
+                        accountMonitor.toAccountEntryMonitor {
+                            initialHeights[it] ?: 1U.toAttoHeight()
+                        }
+                    val transactionMonitor =
+                        accountMonitor.toTransactionMonitor {
+                            initialHeights[it] ?: 1U.toAttoHeight()
+                        }
 
                     val wallet = AttoWallet.create(client, worker, seed)
                     val receiverJob =
@@ -75,7 +79,6 @@ class AttoWalletTest {
                     val sendAmount = AttoAmount.from(AttoUnit.ATTO, "1")
                     val sendTransaction1 = wallet.send(genesisAccountIndex, wallet.getAddress(accountIndex2), sendAmount)
                     assertEquals(AttoAmount.MAX - sendAmount, wallet.getAccount(genesisAccountIndex)!!.balance)
-
 
                     val transactionMessage = transactionMonitor.stream().first()
                     transactionMessage.acknowledge()
