@@ -18,8 +18,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 private class AttoWorkerCache(
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val delegate: AttoWorker,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AttoWorker {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
@@ -129,4 +129,4 @@ private class AttoWorkerCache(
     }
 }
 
-fun AttoWorker.cached(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoWorker = AttoWorkerCache(dispatcher, this)
+fun AttoWorker.cached(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoWorker = AttoWorkerCache(this, dispatcher)

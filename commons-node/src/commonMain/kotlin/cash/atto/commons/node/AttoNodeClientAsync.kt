@@ -26,8 +26,8 @@ import kotlin.jvm.JvmOverloads
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 class AttoNodeClientAsync(
+    internal val client: AttoNodeClient,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
-    private val client: AttoNodeClient,
 ) : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
@@ -185,4 +185,4 @@ class AttoNodeClientAsync(
 }
 
 fun AttoNodeClient.toAsync(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoNodeClientAsync =
-    AttoNodeClientAsync(dispatcher, this)
+    AttoNodeClientAsync(this, dispatcher)

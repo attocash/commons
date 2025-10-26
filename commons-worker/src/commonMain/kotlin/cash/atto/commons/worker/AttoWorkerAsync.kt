@@ -14,8 +14,8 @@ import kotlin.js.JsName
 
 @JsExportForJs
 class AttoWorkerAsync(
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val worker: AttoWorker,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
@@ -36,4 +36,4 @@ class AttoWorkerAsync(
     fun work(block: AttoBlock): AttoFuture<AttoWork> = scope.submit { worker.work(block) }
 }
 
-fun AttoWorker.toAsync(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoWorkerAsync = AttoWorkerAsync(dispatcher, this)
+fun AttoWorker.toAsync(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoWorkerAsync = AttoWorkerAsync(this, dispatcher)
