@@ -1,5 +1,6 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoTransaction
 import cash.atto.commons.toHex
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MySQLContainer
@@ -9,7 +10,7 @@ import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.images.PullPolicy
 
 actual class AttoNodeMock actual constructor(
-    configuration: AttoNodeMockConfiguration,
+    private val configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
     actual companion object {}
 
@@ -51,6 +52,9 @@ actual class AttoNodeMock actual constructor(
             return "http://${node.host}:${node.getMappedPort(8080)}"
         }
 
+    actual val genesisTransaction: AttoTransaction
+        get() = configuration.genesisTransaction
+
     actual suspend fun start() {
         mysql.start()
         node.start()
@@ -61,4 +65,6 @@ actual class AttoNodeMock actual constructor(
         mysql.close()
         network.close()
     }
+
+
 }

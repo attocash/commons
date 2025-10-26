@@ -1,8 +1,15 @@
 package cash.atto.commons.node
 
-actual class AttoNodeMock actual constructor(configuration: AttoNodeMockConfiguration) :
-    AutoCloseable {
+import cash.atto.commons.AttoTransaction
+
+actual class AttoNodeMock actual constructor(
+    configuration: AttoNodeMockConfiguration,
+) : AutoCloseable {
     actual val baseUrl: String
+        get() = TODO("Not yet implemented")
+
+
+    actual val genesisTransaction: AttoTransaction
         get() = TODO("Not yet implemented")
 
     actual suspend fun start() {
@@ -14,4 +21,5 @@ actual class AttoNodeMock actual constructor(configuration: AttoNodeMockConfigur
     }
 
     actual companion object
+
 }

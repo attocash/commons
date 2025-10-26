@@ -15,6 +15,7 @@ expect class AttoNodeMock internal constructor(
     companion object
 
     val baseUrl: String
+    val genesisTransaction: AttoTransaction
 
     suspend fun start()
 
@@ -25,7 +26,8 @@ data class AttoNodeMockConfiguration(
     val genesisTransaction: AttoTransaction,
     val privateKey: AttoPrivateKey,
     val name: String = "node",
-    val image: String = "ghcr.io/attocash/node:main", // TODO: change to live
+    // TODO: change to live
+    val image: String = "ghcr.io/attocash/node:main",
     val mysqlImage: String = "mysql:8.4",
     val dbName: String = "node",
     val dbUser: String = "root",
