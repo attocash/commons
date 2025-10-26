@@ -8,7 +8,10 @@ import cash.atto.commons.AttoTransaction
 import cash.atto.commons.toBuffer
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsName
 
@@ -54,3 +57,22 @@ fun ByteArray.toBlockJson(): String {
 expect class AttoFuture<T>
 
 expect fun <T> CoroutineScope.submit(block: suspend () -> T): AttoFuture<T>
+
+internal inline fun <T> CoroutineScope.consumeStream(
+    stream: Flow<T>,
+    crossinline onEach: suspend (T) -> Unit,
+    noinline onCancel: (Exception?) -> Unit,
+): AttoJob =
+    AttoJob(
+        launch {
+            try {
+                stream.collect { onEach(it) }
+                onCancel(null)
+            } catch (e: CancellationException) {
+                onCancel(null)
+                throw e
+            } catch (e: Exception) {
+                onCancel(e)
+            }
+        },
+    )
