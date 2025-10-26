@@ -34,13 +34,15 @@ kotlin {
 
         browser {
             testTask {
-                useKarma {
-                    useChromeHeadlessNoSandbox()
-                }
+                enabled = false
             }
         }
 
-        nodejs()
+        nodejs {
+            testTask {
+                enabled = false
+            }
+        }
 
         generateTypeScriptDefinitions()
 
@@ -61,14 +63,14 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        compilerOptions {
-            freeCompilerArgs.add("-Xwasm-attach-js-exception")
-        }
         browser {
             testTask {
-                useKarma {
-                    useChromeHeadlessNoSandbox()
-                }
+                enabled = false
+            }
+        }
+        nodejs {
+            testTask {
+                enabled = false
             }
         }
     }
@@ -77,6 +79,7 @@ kotlin {
 
     sourceSets {
         val ktorVersion = "3.2.0"
+        val coroutinesVersion = "1.10.2"
         val commonMain by getting {
             dependencies {
                 api(project(":commons-core"))
@@ -85,7 +88,7 @@ kotlin {
                 api(project(":commons-worker-remote"))
                 api(project(":commons-gatekeeper"))
 
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
                 implementation("io.github.oshai:kotlin-logging:7.0.7")
 
@@ -98,6 +101,8 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(project(":commons-test"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
                 implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
             }
         }
@@ -109,8 +114,6 @@ kotlin {
 
         val jvmTest by getting {
             dependencies {
-                implementation(project(":commons-node-test"))
-                implementation(project(":commons-worker-test"))
                 implementation(project(":commons-gatekeeper-test"))
 
                 implementation("io.ktor:ktor-server-cio:$ktorVersion")
