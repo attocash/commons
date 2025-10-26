@@ -41,8 +41,7 @@ allprojects {
             dependsOn(tasks.named("signKotlinMultiplatformPublication"))
             dependsOn(tasks.named("signJvmPublication"))
             if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl" &&
-                project.name != "commons-gatekeeper-test" && project.name != "commons-node-test" &&
-                project.name != "commons-worker-test"
+                project.name != "commons-gatekeeper-test"
             ) {
                 dependsOn(tasks.named("signJsPublication"))
                 dependsOn(tasks.named("signWasmJsPublication"))
@@ -56,8 +55,7 @@ allprojects {
 
         dependsOn(tasks.named("signJvmPublication"))
         if (project.name != "commons-signer-remote" && project.name != "commons-worker-opencl" &&
-            project.name != "commons-gatekeeper-test" && project.name != "commons-node-test" &&
-            project.name != "commons-worker-test"
+            project.name != "commons-gatekeeper-test"
         ) {
             dependsOn(tasks.named("signJsPublication"))
             dependsOn(tasks.named("signWasmJsPublication"))
