@@ -3,6 +3,7 @@ package cash.atto.commons.wallet
 import cash.atto.commons.AttoWork
 import kotlinx.coroutines.flow.MutableStateFlow
 
+@Deprecated("Use AttoWorkerCache instead")
 interface AttoWorkCache : AutoCloseable {
     companion object {}
 

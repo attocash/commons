@@ -9,6 +9,7 @@ import cash.atto.commons.node.AttoNodeOperations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
+@Deprecated("Use AttoAccountMonitor instead")
 class AttoWalletViewer(
     val publicKey: AttoPublicKey,
     private val client: AttoNodeOperations,
@@ -31,7 +33,7 @@ class AttoWalletViewer(
 
     private val retryDelay = 10.seconds
 
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val accountState = MutableStateFlow<AttoAccount?>(null)
     val accountFlow = accountState.asSharedFlow().filterNotNull()

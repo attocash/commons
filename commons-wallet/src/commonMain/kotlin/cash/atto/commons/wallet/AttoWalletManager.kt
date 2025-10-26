@@ -6,12 +6,14 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChangeBlock
 import cash.atto.commons.AttoInstant
+import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoOpenBlock
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoSendBlock
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoWork
+import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.PreviousSupport
 import cash.atto.commons.isValid
 import cash.atto.commons.node.AttoNodeOperations
@@ -21,6 +23,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -32,7 +35,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.seconds
 
+@Deprecated("Use AttoWallet instead")
 class AttoWalletManager(
+    private val network: AttoNetwork,
     private val viewer: AttoWalletViewer,
     private val signer: AttoSigner,
     private val client: AttoNodeOperations,
@@ -44,7 +49,7 @@ class AttoWalletManager(
 
     private val retryDelay = 10.seconds
 
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val _readyState = MutableStateFlow(false)
     val readyState = _readyState.asStateFlow()
@@ -64,17 +69,18 @@ class AttoWalletManager(
     }
 
     private suspend fun work(
+        network: AttoNetwork,
         timestamp: AttoInstant,
         target: ByteArray,
     ): AttoWork {
         while (currentCoroutineContext().isActive) {
             try {
                 val work = workCache.get()
-                if (work?.isValid(timestamp, target) == true) {
+                if (work?.isValid(network, timestamp, target) == true) {
                     return work
                 }
 
-                val newWork = worker.work(client.network, timestamp, target)
+                val newWork = worker.work(network, timestamp, AttoWorkTarget(target))
                 workCache.save(newWork)
                 return newWork
             } catch (e: Exception) {
@@ -89,7 +95,7 @@ class AttoWalletManager(
         scope.launch {
             accountFlow.collect {
                 mutex.withLock {
-                    work(AttoInstant.now(), it.lastTransactionHash.value)
+                    work(it.network, AttoInstant.now(), it.lastTransactionHash.value)
                 }
             }
         }
@@ -148,7 +154,7 @@ class AttoWalletManager(
             AttoTransaction(
                 block = block,
                 signature = signer.sign(block),
-                work = work(block.timestamp, target),
+                work = work(block.network, block.timestamp, target),
             )
 
         client.publish(transaction)
@@ -169,7 +175,7 @@ class AttoWalletManager(
             val (block, newAccount) =
                 if (account == null) {
                     val algorithmPublicKey = representativeProvider.invoke()
-                    AttoAccount.open(algorithmPublicKey.algorithm, algorithmPublicKey.publicKey, receivable, client.network, blockTimestamp)
+                    AttoAccount.open(algorithmPublicKey.algorithm, algorithmPublicKey.publicKey, receivable, blockTimestamp)
                 } else {
                     account.receive(receivable, blockTimestamp)
                 }
@@ -228,13 +234,14 @@ class AttoWalletManager(
     }
 
     private fun AttoWork.isValid(
+        network: AttoNetwork,
         timestamp: AttoInstant,
         target: ByteArray,
     ): Boolean =
         AttoWork.isValid(
-            client.network,
+            network,
             timestamp,
-            target,
+            AttoWorkTarget(target),
             this.value,
         )
 }
