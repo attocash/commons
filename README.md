@@ -1,111 +1,111 @@
 # Atto Commons
 
-## Overview
+A multiplatform library of building blocks for Atto applications. It provides primitives (mnemonics, keys, addresses, blocks), client tooling to talk to a node, wallet utilities, and proof‑of‑work workers (CPU/OpenCL/remote). Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm are supported where applicable.
 
-The `commons` project is a Kotlin library that provides utilities and common functionality for working cryptocurrency accounts, transactions, mnemonics, and more. It includes support for cryptographic operations, address generation, seed management, and proof-of-work computation, among other features.
+NOTE: The API is evolving and may include breaking changes between releases.
 
-**NOTE: This library is in active development, and frequent major releases may introduce breaking changes. We appreciate your understanding and tolerance as the API evolves during this phase.**
+## Modules
 
-## Features
+- commons-core — primitives: mnemonic/seed, keys, addresses, blocks/transactions, serialization, utilities.
+- commons-node — node operations and monitors (account membership, transactions, account entries).
+- commons-node-remote — remote HTTP/WebSocket client for talking to a node.
+- commons-wallet — simple wallet utilities built on top of node + worker.
+- commons-worker — CPU proof‑of‑work implementation.
+- commons-worker-opencl — OpenCL proof‑of‑work implementation (JVM only).
+- commons-worker-remote — talk to a remote worker service.
+- commons-spring-boot-starter — Spring Boot integrations for Atto services.
+- commons-js — JavaScript/TypeScript bindings packaged as `@attocash/commons-js`.
 
-- Generate and validate Atto cryptocurrency accounts and addresses.
-- Manage private keys, public keys, and mnemonics.
-- Serialize and deserialize Atto transactions and other data structures.
-- Perform proof-of-work calculations using CPU or OpenCL.
+Each module has its own README with detailed examples based on tests. Start here for a quick taste.
 
-## Getting Started
+## Installation
 
-To include `commons` in your Kotlin project, add the following dependency to your `build.gradle.kts`:
+Gradle coordinates vary per module, for example:
 
 ```kotlin
 dependencies {
-    implementation("cash.atto:commons:${attoVersion}")
+  // Core primitives
+  implementation("cash.atto:commons-core:<version>")
+  // Node client (remote over HTTP/WebSocket)
+  implementation("cash.atto:commons-node-remote:<version>")
+  // Wallet utilities
+  implementation("cash.atto:commons-wallet:<version>")
+  // CPU worker (pure Kotlin)
+  implementation("cash.atto:commons-worker:<version>")
+  // OpenCL worker (JVM)
+  runtimeOnly("cash.atto:commons-worker-opencl:<version>")
 }
 ```
 
-### Example Usage
-
-#### Generate a New Account, Seed, and Keys
-
-You can generate a mnemonic, derive a seed, and create private and public keys:
-
-```kotlin
-import cash.atto.commons.AttoMnemonic
-import cash.atto.commons.toHex
-
-fun main() {
-    val mnemonic = AttoMnemonic.generate()
-    println("Created mnemonic: \${mnemonic.words}")
-
-    val seed = mnemonic.toSeed()
-    println("Created seed: \${seed.value.toHex()}")
-
-    val privateKey = seed.toPrivateKey(0U)
-    println("Created privateKey: \${privateKey.value.toHex()}")
-
-    val publicKey = privateKey.toPublicKey()
-    println("Created publicKey: \${publicKey.value.toHex()}")
-}
-```
-
-#### Sign a Transaction
-
-To sign a transaction, use the following example:
-
-```kotlin
-val privateKey = AttoPrivateKey.generate()
-val publicKey = privateKey.toPublicKey()
-
-val receiveBlock = AttoReceiveBlock(
-    version = 0U.toAttoVersion(),
-    network = AttoNetwork.LOCAL,
-    algorithm = AttoAlgorithm.V1,
-    publicKey = publicKey,
-    height = 2U.toAttoHeight(),
-    balance = AttoAmount.MAX,
-    timestamp = Clock.System.now(),
-    previous = AttoHash(Random.nextBytes(ByteArray(32))),
-    sendHashAlgorithm = AttoAlgorithm.V1,
-    sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32)))
-)
-
-val signedTransaction = AttoTransaction(
-    block = receiveBlock,
-    signature = privateKey.sign(receiveBlock.hash),
-    work = AttoWorker.cpu().work(receiveBlock)
-)
-
-println("Signed Transaction: \${signedTransaction}")
-```
-
-#### Proof-of-Work Calculation
-
-The library also includes utilities for performing proof-of-work calculations:
-
-```kotlin
-import cash.atto.commons.AttoWork
-
-val worker = AttoWorker.opencl()
-
-
-val work = worker.work(receiveBlock)
-println("Proof of Work: \${work}")
-```
-
-### Benchmarks
-
-This project also includes a set of benchmarks to test the performance of key operations like address generation, hashing, and proof-of-work calculation. You can find these benchmarks in the `src/benchmarks` directory.
-
-To run the benchmarks:
+On JS/Node you can use the NPM package:
 
 ```sh
-./gradlew benchmark
+npm i @attocash/commons-js
 ```
 
-## Contributing
+## Quick start
 
-Contributions are welcome! Please feel free to open issues or submit pull requests.
+- Generate a mnemonic and derive a seed (suspend):
 
-## License
+```kotlin
+val mnemonic = AttoMnemonic.generate()
+val seed = mnemonic.toSeed()
+```
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+- Derive keys and address:
+
+```kotlin
+val privateKey = seed.toPrivateKey(0U)
+val publicKey = privateKey.toPublicKey()
+val address = AttoAddress(AttoAlgorithm.V1, publicKey)
+```
+
+- Connect to a node and a worker (remote services):
+
+```kotlin
+val client = AttoNodeClient.remote("http://localhost:8080")
+val worker = AttoWorker.remote("http://localhost:8085")
+```
+
+- Create a wallet, open accounts, and send funds (based on tests):
+
+```kotlin
+val wallet = AttoWallet.create(client, worker, seed)
+
+// Open index 0 (often the genesis in tests) and a few more
+wallet.openAccount(0U.toAttoIndex())
+wallet.openAccount(1U.toAttoIndex(), 3U.toAttoIndex())
+
+// Query balances
+val balance0 = wallet.getAccount(0U.toAttoIndex())!!.balance
+
+// Send 1 ATTO from account 0 to account 2
+val amount = AttoAmount.from(AttoUnit.ATTO, "1")
+val toAddress = wallet.getAddress(2U.toAttoIndex())
+val tx = wallet.send(0U.toAttoIndex(), toAddress, amount)
+```
+
+- Listen to node monitors and acknowledge progress:
+
+```kotlin
+val accountMonitor = client.createAccountMonitor()
+val txnMonitor = accountMonitor.toTransactionMonitor { 1U.toAttoHeight() }
+
+// Collect first message
+val msg = txnMonitor.stream().first()
+msg.acknowledge()
+```
+
+For full examples and advanced flows (auto-receive, account-entry monitor, OpenCL), see the module READMEs below.
+
+## Module READMEs
+
+- commons-core/README.md — primitives and serialization examples
+- commons-wallet/README.md — wallet setup, send/receive, auto-receiver, monitors
+- commons-node/README.md — node client and monitors
+- commons-worker/README.md — CPU PoW
+- commons-worker-opencl/README.md — OpenCL PoW
+- commons-node-remote/README.md — remote node client
+- commons-worker-remote/README.md — remote worker client
+- commons-spring-boot-starter/README.md — Spring Boot integration
+- commons-js/README.md — JS/TS usage
