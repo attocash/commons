@@ -5,11 +5,11 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 actual class AttoWorkerAsyncBuilder actual constructor(
-    actual val url: String,
+    private val url: String,
 ) {
-    actual var cached: Boolean = true
-    actual var headers: Map<String, String> = emptyMap()
-    actual var retryEvery: Duration? = null
+    private var cached: Boolean = true
+    private var headers: Map<String, String> = emptyMap()
+    private var retryEvery: Duration? = null
 
     actual companion object {
         actual fun remote(url: String): AttoWorkerAsyncBuilder = AttoWorkerAsyncBuilder(url)

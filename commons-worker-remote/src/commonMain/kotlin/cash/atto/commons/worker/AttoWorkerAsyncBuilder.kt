@@ -5,11 +5,6 @@ import kotlin.time.Duration
 expect class AttoWorkerAsyncBuilder private constructor(
     url: String,
 ) {
-    val url: String
-    var headers: Map<String, String>
-    var cached: Boolean
-    var retryEvery: Duration?
-
     fun headers(value: Map<String, String>): AttoWorkerAsyncBuilder
 
     fun header(

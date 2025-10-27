@@ -9,11 +9,11 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 
 actual class AttoWorkerAsyncBuilder actual constructor(
-    actual val url: String,
+    private val url: String,
 ) {
-    actual var headers: Map<String, String> = emptyMap()
-    actual var cached: Boolean = true
-    actual var retryEvery: Duration? = null
+    private var headers: Map<String, String> = emptyMap()
+    private var cached: Boolean = true
+    private var retryEvery: Duration? = null
 
     actual companion object {
         @JvmStatic

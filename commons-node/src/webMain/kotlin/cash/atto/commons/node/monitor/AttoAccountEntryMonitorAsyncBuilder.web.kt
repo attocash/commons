@@ -9,7 +9,7 @@ actual class AttoAccountEntryMonitorAsyncBuilder actual constructor(
     private val nodeClient: AttoNodeClientAsync,
     private val accountMonitor: AttoAccountMonitorAsync,
 ) {
-    actual var heightProvider: (AttoAddress) -> AttoHeight = { AttoHeight.MIN }
+    private var heightProvider: (AttoAddress) -> AttoHeight = { AttoHeight.MIN }
 
     actual fun heightProvider(value: (AttoAddress) -> AttoHeight): AttoAccountEntryMonitorAsyncBuilder =
         apply {

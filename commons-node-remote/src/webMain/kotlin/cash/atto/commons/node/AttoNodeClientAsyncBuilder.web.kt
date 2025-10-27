@@ -1,9 +1,9 @@
 package cash.atto.commons.node
 
 actual class AttoNodeClientAsyncBuilder actual constructor(
-    actual val url: String,
+    private val url: String,
 ) {
-    actual var headers: Map<String, String> = emptyMap()
+    private var headers: Map<String, String> = emptyMap()
 
     actual companion object {
         actual fun remote(url: String): AttoNodeClientAsyncBuilder = AttoNodeClientAsyncBuilder(url)

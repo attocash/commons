@@ -8,8 +8,6 @@ expect class AttoAccountEntryMonitorAsyncBuilder private constructor(
     nodeClient: AttoNodeClientAsync,
     accountMonitor: AttoAccountMonitorAsync,
 ) {
-    var heightProvider: (AttoAddress) -> AttoHeight
-
     fun heightProvider(value: (AttoAddress) -> AttoHeight): AttoAccountEntryMonitorAsyncBuilder
 
     fun build(): AttoAccountEntryMonitorAsync

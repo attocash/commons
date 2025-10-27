@@ -6,9 +6,9 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.ExecutorService
 
 actual class AttoNodeClientAsyncBuilder actual constructor(
-    actual val url: String,
+    private val url: String,
 ) {
-    actual var headers: Map<String, String> = emptyMap()
+    private var headers: Map<String, String> = emptyMap()
 
     actual companion object {
         @JvmStatic
