@@ -6,9 +6,11 @@ import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.createGenesis
 import cash.atto.commons.toSigner
+import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.cpu
 
+@JsExportForJs
 expect class AttoNodeMock internal constructor(
     configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
@@ -22,6 +24,7 @@ expect class AttoNodeMock internal constructor(
     override fun close()
 }
 
+@JsExportForJs
 data class AttoNodeMockConfiguration(
     val genesisTransaction: AttoTransaction,
     val privateKey: AttoPrivateKey,
