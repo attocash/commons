@@ -1,6 +1,6 @@
 # commons-node-remote
 
-Remote HTTP/WebSocket implementation of `AttoNodeClient`. Uses Ktor under the hood and streams NDJSON where supported.
+Remote HTTP implementation of `AttoNodeClient`. Uses Ktor under the hood and streams NDJSON where supported.
 
 Highlights:
 - `AttoNodeClient.remote(baseUrl, headerProvider)` convenience

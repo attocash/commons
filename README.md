@@ -8,7 +8,7 @@ NOTE: The API is evolving and may include breaking changes between releases.
 
 - commons-core — primitives: mnemonic/seed, keys, addresses, blocks/transactions, serialization, utilities.
 - commons-node — node operations and monitors (account membership, transactions, account entries).
-- commons-node-remote — remote HTTP/WebSocket client for talking to a node.
+- commons-node-remote — remote HTTP client for talking to a node.
 - commons-signer-remote — remote signer client for external key management.
 - commons-wallet — simple wallet utilities built on top of node + worker.
 - commons-worker — CPU proof‑of‑work implementation.
@@ -27,7 +27,7 @@ Gradle coordinates vary per module, for example:
 dependencies {
   // Core primitives
   implementation("cash.atto:commons-core:<version>")
-  // Node client (remote over HTTP/WebSocket)
+  // Node client (remote over HTTP)
   implementation("cash.atto:commons-node-remote:<version>")
   // Wallet utilities
   implementation("cash.atto:commons-wallet:<version>")
