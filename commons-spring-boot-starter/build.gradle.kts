@@ -58,7 +58,7 @@ dependencies {
 
 tasks.test { useJUnitPlatform() }
 
-val javadocJar by tasks.creating(Jar::class) {
+val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
     from(tasks.named("dokkaHtml"))
 }

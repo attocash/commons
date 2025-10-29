@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("plugin.serialization")
 
@@ -27,7 +29,7 @@ kotlin {
 
     jvm {
         compilerOptions {
-            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+            jvmTarget = JvmTarget.JVM_1_8
         }
     }
 
@@ -62,7 +64,7 @@ kotlin {
     }
 }
 
-val javadocJar by tasks.creating(Jar::class) {
+val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
     from(tasks.named("dokkaHtml"))
 }
