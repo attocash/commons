@@ -8,7 +8,7 @@ import kotlin.js.Promise
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 actual class AttoFuture<T> internal constructor(
-    internal val promise: Promise<T>,
+    private val promise: Promise<T>,
 ) {
     fun asPromise() = promise
 }

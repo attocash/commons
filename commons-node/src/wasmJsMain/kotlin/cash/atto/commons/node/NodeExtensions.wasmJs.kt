@@ -6,7 +6,7 @@ import kotlin.js.Promise
 
 @OptIn(ExperimentalWasmJsInterop::class)
 actual class AttoFuture<T> internal constructor(
-    internal val promise: Promise<JsAny?>,
+    private val promise: Promise<JsAny?>,
 ) {
     @Suppress("UNCHECKED_CAST")
     fun asPromise() = promise as Promise<T>
