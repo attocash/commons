@@ -33,26 +33,27 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
     actual fun genesis(value: AttoTransaction?): AttoNodeMockAsyncBuilder = apply { genesis = value }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoFuture<AttoNodeMockAsync> = GlobalScope.submit {
-        val defaultConfiguration =
-            AttoNodeMockConfiguration(
-                genesisTransaction =
-                    genesis ?: run {
-                        AttoTransaction.createGenesis(privateKey)
-                    },
-                privateKey = privateKey,
-            )
-        val configuration =
-            defaultConfiguration.copy(
-                name = name ?: defaultConfiguration.name,
-                image = image ?: defaultConfiguration.image,
-                mysqlImage = mysqlImage ?: defaultConfiguration.mysqlImage,
-                dbName = dbName ?: defaultConfiguration.dbName,
-                dbUser = dbUser ?: defaultConfiguration.dbUser,
-                dbPassword = dbPassword ?: defaultConfiguration.dbPassword,
-            )
-        return@submit AttoNodeMock(configuration).toAsync(dispatcher)
-    }
+    fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoFuture<AttoNodeMockAsync> =
+        GlobalScope.submit {
+            val defaultConfiguration =
+                AttoNodeMockConfiguration(
+                    genesisTransaction =
+                        genesis ?: run {
+                            AttoTransaction.createGenesis(privateKey)
+                        },
+                    privateKey = privateKey,
+                )
+            val configuration =
+                defaultConfiguration.copy(
+                    name = name ?: defaultConfiguration.name,
+                    image = image ?: defaultConfiguration.image,
+                    mysqlImage = mysqlImage ?: defaultConfiguration.mysqlImage,
+                    dbName = dbName ?: defaultConfiguration.dbName,
+                    dbUser = dbUser ?: defaultConfiguration.dbUser,
+                    dbPassword = dbPassword ?: defaultConfiguration.dbPassword,
+                )
+            return@submit AttoNodeMock(configuration).toAsync(dispatcher)
+        }
 
     actual fun build(): AttoFuture<AttoNodeMockAsync> = build(Dispatchers.Default)
 }

@@ -25,4 +25,3 @@ actual class AttoNodeMockAsync internal actual constructor(
         mock.close()
     }
 }
-

@@ -35,8 +35,8 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
     actual fun genesis(value: AttoTransaction?): AttoNodeMockAsyncBuilder = apply { genesis = value }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoFuture<AttoNodeMockAsync> {
-        return GlobalScope.submit {
+    fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoFuture<AttoNodeMockAsync> =
+        GlobalScope.submit {
             val defaultConfiguration =
                 AttoNodeMockConfiguration(
                     genesisTransaction =
@@ -57,7 +57,6 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
             val mock = AttoNodeMock(configuration)
             AttoNodeMockAsync(mock, dispatcher)
         }
-    }
 
     actual fun build(): AttoFuture<AttoNodeMockAsync> = build(Dispatchers.Default)
 

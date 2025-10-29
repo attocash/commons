@@ -20,12 +20,13 @@ internal actual class AttoWorkerMockAsyncBuilder actual constructor() {
         CompletableFuture.completedFuture(
             run {
                 val defaultConfiguration = AttoWorkerMockConfiguration()
-                val configuration = defaultConfiguration.copy(
-                    name = name ?: defaultConfiguration.name,
-                    image = image ?: defaultConfiguration.image,
-                )
+                val configuration =
+                    defaultConfiguration.copy(
+                        name = name ?: defaultConfiguration.name,
+                        image = image ?: defaultConfiguration.image,
+                    )
                 AttoWorkerMock(configuration).toAsync(dispatcher)
-            }
+            },
         )
 
     actual fun build(): AttoFuture<AttoWorkerMockAsync> = build(Dispatchers.Default)

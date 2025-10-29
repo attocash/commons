@@ -16,12 +16,14 @@ internal actual class AttoWorkerMockAsyncBuilder actual constructor() {
     actual fun image(value: String): AttoWorkerMockAsyncBuilder = apply { this.image = value }
 
     @OptIn(DelicateCoroutinesApi::class)
-    actual fun build(): AttoFuture<AttoWorkerMockAsync> = GlobalScope.submit {
-        val defaultConfiguration = AttoWorkerMockConfiguration()
-        val configuration = defaultConfiguration.copy(
-            name = name ?: defaultConfiguration.name,
-            image = image ?: defaultConfiguration.image,
-        )
-        AttoWorkerMock(configuration).toAsync(Dispatchers.Default)
-    }
+    actual fun build(): AttoFuture<AttoWorkerMockAsync> =
+        GlobalScope.submit {
+            val defaultConfiguration = AttoWorkerMockConfiguration()
+            val configuration =
+                defaultConfiguration.copy(
+                    name = name ?: defaultConfiguration.name,
+                    image = image ?: defaultConfiguration.image,
+                )
+            AttoWorkerMock(configuration).toAsync(Dispatchers.Default)
+        }
 }

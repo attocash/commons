@@ -16,5 +16,4 @@ expect class AttoNodeMockAsync internal constructor(
     override fun close()
 }
 
-fun AttoNodeMock.toAsync(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoNodeMockAsync =
-    AttoNodeMockAsync(this, dispatcher)
+fun AttoNodeMock.toAsync(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoNodeMockAsync = AttoNodeMockAsync(this, dispatcher)
