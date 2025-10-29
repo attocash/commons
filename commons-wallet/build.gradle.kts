@@ -25,9 +25,13 @@ kotlin {
         }
     }
 
-    jvmToolchain(8)
+    jvmToolchain(17)
 
-    jvm()
+    jvm {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+        }
+    }
 
     js(IR) {
         binaries.library()
@@ -41,6 +45,10 @@ kotlin {
         nodejs {
             testTask {
                 enabled = false
+                useMocha {
+                    timeout = "60000"
+                    environment("MOCHA_OPTIONS", "--bail --exit")
+                }
             }
         }
 
