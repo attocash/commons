@@ -128,7 +128,7 @@ kotlin {
 
         val wasmJsMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-browser:0.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-browser:0.5.0")
 
                 implementation(npm("@stablelib/sha256", stablelibVersion))
                 implementation(npm("@stablelib/sha512", stablelibVersion))
