@@ -5,8 +5,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
+@OptIn(ExperimentalJsExport::class)
 @JsExportForJs
-actual class AttoWorkerMockAsync actual constructor(
+actual class AttoWorkerMockAsync internal actual constructor(
     private val mock: AttoWorkerMock,
     dispatcher: CoroutineDispatcher,
 ) : AutoCloseable {
@@ -15,7 +16,7 @@ actual class AttoWorkerMockAsync actual constructor(
     actual val baseUrl: String
         get() = mock.baseUrl
 
-    actual fun start(): AttoFuture<Unit> = scope.submit { mock.start() }
+    actual fun start(): AttoFuture<Any> = scope.submit { mock.start() }
 
     actual override fun close(): Unit = mock.close()
 }

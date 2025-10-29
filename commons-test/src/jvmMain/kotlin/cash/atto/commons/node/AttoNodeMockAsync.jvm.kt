@@ -6,7 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
-actual class AttoNodeMockAsync actual constructor(
+actual class AttoNodeMockAsync internal actual constructor(
     private val mock: AttoNodeMock,
     dispatcher: CoroutineDispatcher,
 ) : AutoCloseable {

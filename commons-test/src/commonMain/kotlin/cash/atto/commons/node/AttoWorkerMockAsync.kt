@@ -9,7 +9,7 @@ expect class AttoWorkerMockAsync internal constructor(
 ) : AutoCloseable {
     val baseUrl: String
 
-    fun start(): AttoFuture<Unit>
+    fun start(): AttoFuture<Any>
 
     override fun close()
 }
