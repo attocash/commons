@@ -44,7 +44,7 @@ kotlin {
                 api(project(":commons-test"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-                implementation("io.github.oshai:kotlin-logging:7.0.7")
+                implementation("io.github.oshai:kotlin-logging:7.0.13")
 
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
