@@ -99,7 +99,7 @@ kotlin {
 
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
-                implementation("io.github.oshai:kotlin-logging:7.0.7")
+                implementation("io.github.oshai:kotlin-logging:7.0.13")
 
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
