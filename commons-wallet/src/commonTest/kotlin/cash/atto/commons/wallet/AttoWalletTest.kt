@@ -5,6 +5,7 @@ import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoMnemonic
 import cash.atto.commons.AttoPublicKey
+import cash.atto.commons.AttoSendBlock
 import cash.atto.commons.AttoUnit
 import cash.atto.commons.node.AttoNodeClient
 import cash.atto.commons.node.AttoNodeMock
@@ -17,11 +18,18 @@ import cash.atto.commons.node.remote
 import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoIndex
 import cash.atto.commons.toPrivateKey
+import cash.atto.commons.toReceivable
 import cash.atto.commons.toSeed
 import cash.atto.commons.worker.AttoWorker
+import cash.atto.commons.worker.cached
 import cash.atto.commons.worker.remote
+import cash.atto.commons.worker.retry
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -46,7 +54,7 @@ class AttoWalletTest {
                     node.start()
                     workServer.start()
 
-                    val worker = AttoWorker.remote(workServer.baseUrl)
+                    val worker = AttoWorker.remote(workServer.baseUrl).retry(1.seconds).cached()
                     val client = AttoNodeClient.remote(node.baseUrl)
                     val accountMonitor = client.createAccountMonitor()
 
@@ -84,26 +92,26 @@ class AttoWalletTest {
                     transactionMessage.acknowledge()
                     assertEquals(sendTransaction1, transactionMessage.value)
 
-//                    val accountEntryMessage = accountEntryMonitor.stream().first()
-//                    accountEntryMessage.acknowledge()
-//                    assertEquals(sendTransaction1.hash, accountEntryMessage.value.hash)
+                    val accountEntryMessage = accountEntryMonitor.stream().first()
+                    accountEntryMessage.acknowledge()
+                    assertEquals(sendTransaction1.hash, accountEntryMessage.value.hash)
 
-                    // TODO: add back when node is released
-//                    val balance = withTimeoutOrNull(5.seconds) {
-//                        while (wallet.getAccount(anotherAccountIndex)?.balance == null) {
-//                            delay(1.seconds)
-//                        }
-//                        wallet.getAccount(anotherAccountIndex)?.balance
-//                    }
-//
-//                    assertEquals(sendAmount, balance)
-//
-//                    receiverJob.cancel()
-//                    val sendTransaction2 = wallet.send(genesisAccountIndex, wallet.getAddress(anotherAccountIndex), sendAmount)
-//                    assertEquals(AttoAmount.MAX - (sendAmount + sendAmount), wallet.getAccount(genesisAccountIndex)!!.balance)
-//
-//                    val receivable = wallet.receivableFlow(minAmount = sendAmount).first()
-//                    assertEquals(receivable, (sendTransaction2.block as AttoSendBlock).toReceivable())
+                    val balance = withContext(Dispatchers.Default) {
+                        withTimeoutOrNull(5.seconds) {
+                            while (wallet.getAccount(accountIndex2)?.balance == null) {
+                                delay(1.seconds)
+                            }
+                            wallet.getAccount(accountIndex2)?.balance
+                        }
+                    }
+                    assertEquals(sendAmount, balance)
+
+                    receiverJob.cancel()
+                    val sendTransaction2 = wallet.send(genesisAccountIndex, wallet.getAddress(accountIndex2), sendAmount)
+                    assertEquals(AttoAmount.MAX - (sendAmount + sendAmount), wallet.getAccount(genesisAccountIndex)!!.balance)
+
+                    val receivable = accountMonitor.receivableStream(minAmount = sendAmount).first()
+                    assertEquals(receivable, (sendTransaction2.block as AttoSendBlock).toReceivable())
                 }
             }
         }

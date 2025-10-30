@@ -40,6 +40,7 @@ actual class AttoNodeMock actual constructor(
             .withEnv("ATTO_GENESIS", configuration.genesisTransaction.toHex())
             .withEnv("ATTO_PRIVATE_KEY", configuration.privateKey.value.toHex())
             .withEnv("ATTO_NODE_FORCE_API", "true")
+            .withEnv("ATTO_NODE_FORCE_HISTORICAL", "true")
             .withImagePullPolicy(PullPolicy.alwaysPull())
             .waitingFor(Wait.forLogMessage(".*started on port 8080 \\(http\\).*\\n", 1))
             .withLogConsumer { frame: OutputFrame ->
