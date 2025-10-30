@@ -18,11 +18,11 @@ class AttoWorkerRetry(
 ) : AttoWorker {
     private val logger = KotlinLogging.logger {}
 
-    private suspend fun <T> retry(block: suspend () -> T): T =
+    private suspend fun <T> retry(worker: suspend () -> T): T =
         coroutineScope {
             while (isActive) {
                 try {
-                    return@coroutineScope block()
+                    return@coroutineScope worker()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (t: Throwable) {
