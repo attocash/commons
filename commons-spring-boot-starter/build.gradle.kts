@@ -32,7 +32,7 @@ kotlin {
 dependencies {
     api(project(":commons-gatekeeper"))
 
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.7"))
 
     compileOnly("org.springframework.boot:spring-boot-autoconfigure")
 
