@@ -96,14 +96,15 @@ class AttoWalletTest {
                     accountEntryMessage.acknowledge()
                     assertEquals(sendTransaction1.hash, accountEntryMessage.value.hash)
 
-                    val balance = withContext(Dispatchers.Default) {
-                        withTimeoutOrNull(5.seconds) {
-                            while (wallet.getAccount(accountIndex2)?.balance == null) {
-                                delay(1.seconds)
+                    val balance =
+                        withContext(Dispatchers.Default) {
+                            withTimeoutOrNull(5.seconds) {
+                                while (wallet.getAccount(accountIndex2)?.balance == null) {
+                                    delay(1.seconds)
+                                }
+                                wallet.getAccount(accountIndex2)?.balance
                             }
-                            wallet.getAccount(accountIndex2)?.balance
                         }
-                    }
                     assertEquals(sendAmount, balance)
 
                     receiverJob.cancel()
