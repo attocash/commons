@@ -7,7 +7,7 @@ plugins {
 
     id("org.jetbrains.dokka") version "2.1.0"
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-    id("org.jlleitschuh.gradle.ktlint") version "12.3.0"
+    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
 }
 
 group = "cash.atto"
