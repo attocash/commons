@@ -71,7 +71,7 @@ kotlin {
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
-    from(tasks.named("dokkaHtml"))
+    from(tasks.named("dokkaGenerateHtml"))
 }
 
 publishing {
