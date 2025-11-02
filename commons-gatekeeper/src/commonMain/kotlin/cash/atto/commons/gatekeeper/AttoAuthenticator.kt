@@ -117,9 +117,7 @@ private class WalletGatekeeperClient(
 fun AttoAuthenticator.Companion.custom(
     url: String,
     signer: AttoSigner,
-): AttoAuthenticator {
-    return WalletGatekeeperClient(url, signer)
-}
+): AttoAuthenticator = WalletGatekeeperClient(url, signer)
 
 fun AttoAuthenticator.Companion.attoBackend(
     network: AttoNetwork,
@@ -129,12 +127,11 @@ fun AttoAuthenticator.Companion.attoBackend(
     return WalletGatekeeperClient(url, signer)
 }
 
-fun AttoAuthenticator.toHeaderProvider(): suspend () -> Map<String, String> {
-    return {
+fun AttoAuthenticator.toHeaderProvider(): suspend () -> Map<String, String> =
+    {
         val jwt = getAuthorization()
         mapOf("Authorization" to "Bearer $jwt")
     }
-}
 
 /**
  * Creates a AttoClient using Atto backend

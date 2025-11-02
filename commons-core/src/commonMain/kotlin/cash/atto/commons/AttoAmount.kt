@@ -45,9 +45,7 @@ data class AttoAmount(
             return result
         }
 
-        private fun scaleFactor(scale: UByte): ULong {
-            return 10UL.pow(scale.toInt())
-        }
+        private fun scaleFactor(scale: UByte): ULong = 10UL.pow(scale.toInt())
 
         fun from(
             unit: AttoUnit,

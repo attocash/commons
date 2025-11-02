@@ -159,9 +159,7 @@ class AttoWallet(
         receiverAddress: AttoAddress,
         amount: AttoAmount,
         timestamp: AttoInstant? = null,
-    ): AttoTransaction {
-        return send(accounts.get(address).index, receiverAddress, amount, timestamp)
-    }
+    ): AttoTransaction = send(accounts.get(address).index, receiverAddress, amount, timestamp)
 
     suspend fun receive(
         receivable: AttoReceivable,
@@ -219,11 +217,10 @@ class AttoWallet(
     ) {
         private val mutex = Mutex()
 
-        suspend fun <T> withLock(action: suspend () -> T): T {
-            return mutex.withLock {
+        suspend fun <T> withLock(action: suspend () -> T): T =
+            mutex.withLock {
                 action.invoke()
             }
-        }
     }
 
     private class WalletAccounts {
@@ -331,8 +328,8 @@ fun AttoWallet.Companion.create(
 fun AttoWallet.bindTo(
     scope: CoroutineScope,
     monitor: AttoAccountMonitor,
-): Job {
-    return addressFlow()
+): Job =
+    addressFlow()
         .runningFold(emptySet<AttoAddress>() to emptySet<AttoAddress>()) { (previous, _), next ->
             next to previous
         }.onEach { (next, previous) ->
@@ -352,7 +349,6 @@ fun AttoWallet.bindTo(
             }
         }.catch { e -> logger.warn(e) { "Bind to monitor failed with $e" } }
         .launchIn(scope)
-}
 
 /**
  * Convenience form of [bindTo] that runs on a dedicated dispatcher.

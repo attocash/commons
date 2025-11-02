@@ -30,16 +30,12 @@ data class AttoVote(
         val finalTimestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE)
     }
 
-    fun isFinal(): Boolean {
-        return timestamp == finalTimestamp
-    }
+    fun isFinal(): Boolean = timestamp == finalTimestamp
 
-    fun isValid(): Boolean {
-        return version.value <= 0U
-    }
+    fun isValid(): Boolean = version.value <= 0U
 
-    override fun toBuffer(): Buffer {
-        return Buffer().apply {
+    override fun toBuffer(): Buffer =
+        Buffer().apply {
             this.writeAttoVersion(version)
             this.writeAttoAlgorithm(algorithm)
             this.writeAttoPublicKey(publicKey)
@@ -47,7 +43,6 @@ data class AttoVote(
             this.writeAttoHash(blockHash)
             this.writeInstant(timestamp)
         }
-    }
 }
 
 data class AttoSignedVote(
@@ -61,21 +56,18 @@ data class AttoSignedVote(
 
     fun isFinal() = vote.isFinal()
 
-    fun isValid(): Boolean {
-        return vote.isValid() && signature.isValid(vote.publicKey, hash)
-    }
+    fun isValid(): Boolean = vote.isValid() && signature.isValid(vote.publicKey, hash)
 
-    override fun toBuffer(): Buffer {
-        return Buffer().apply {
+    override fun toBuffer(): Buffer =
+        Buffer().apply {
             val serializedVote = vote.toBuffer()
             this.write(serializedVote, serializedVote.size)
             this.writeAttoSignature(signature)
         }
-    }
 }
 
-fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote {
-    return AttoVote(
+fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote =
+    AttoVote(
         version = buffer.readAttoVersion(),
         algorithm = buffer.readAttoAlgorithm(),
         publicKey = buffer.readAttoPublicKey(),
@@ -83,7 +75,6 @@ fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote {
         blockHash = buffer.readAttoHash(),
         timestamp = buffer.readInstant(),
     )
-}
 
 fun AttoSignedVote.Companion.fromBuffer(buffer: Buffer): AttoSignedVote {
     val vote = AttoVote.fromBuffer(buffer)

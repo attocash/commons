@@ -32,9 +32,7 @@ enum class AttoBlockType(
     companion object {
         private val map = entries.associateBy(AttoBlockType::code)
 
-        fun from(code: UByte): AttoBlockType {
-            return map[code] ?: UNKNOWN
-        }
+        fun from(code: UByte): AttoBlockType = map[code] ?: UNKNOWN
     }
 }
 
@@ -231,8 +229,8 @@ data class AttoSendBlock(
         }
     }
 
-    override fun toBuffer(): Buffer {
-        return Buffer().apply {
+    override fun toBuffer(): Buffer =
+        Buffer().apply {
             this.writeAttoBlockType(type)
             this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
@@ -246,7 +244,6 @@ data class AttoSendBlock(
             this.writeAttoPublicKey(receiverPublicKey)
             this.writeAttoAmount(amount)
         }
-    }
 
     override fun validate(): AttoValidation {
         when (val parent = super.validate()) {
@@ -327,8 +324,8 @@ data class AttoReceiveBlock(
         }
     }
 
-    override fun toBuffer(): Buffer {
-        return Buffer().apply {
+    override fun toBuffer(): Buffer =
+        Buffer().apply {
             this.writeAttoBlockType(type)
             this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
@@ -341,7 +338,6 @@ data class AttoReceiveBlock(
             this.writeAttoAlgorithm(sendHashAlgorithm)
             this.writeAttoHash(sendHash)
         }
-    }
 }
 
 @JsExportForJs
@@ -401,8 +397,8 @@ data class AttoOpenBlock(
         }
     }
 
-    override fun toBuffer(): Buffer {
-        return Buffer().apply {
+    override fun toBuffer(): Buffer =
+        Buffer().apply {
             this.writeAttoBlockType(type)
             this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
@@ -415,7 +411,6 @@ data class AttoOpenBlock(
             this.writeAttoAlgorithm(representativeAlgorithm)
             this.writeAttoPublicKey(representativePublicKey)
         }
-    }
 }
 
 @JsExportForJs

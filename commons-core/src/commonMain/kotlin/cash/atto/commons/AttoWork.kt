@@ -75,18 +75,14 @@ data class AttoWork(
     companion object {
         const val SIZE = 8
 
-        fun parse(value: String): AttoWork {
-            return AttoWork(value.fromHexToByteArray())
-        }
+        fun parse(value: String): AttoWork = AttoWork(value.fromHexToByteArray())
     }
 
     init {
         value.checkLength(SIZE)
     }
 
-    fun isValid(block: AttoBlock): Boolean {
-        return isValid(block.network, block.timestamp, block.getTarget(), value)
-    }
+    fun isValid(block: AttoBlock): Boolean = isValid(block.network, block.timestamp, block.getTarget(), value)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

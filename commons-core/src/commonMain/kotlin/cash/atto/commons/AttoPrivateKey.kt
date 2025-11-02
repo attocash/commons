@@ -25,9 +25,7 @@ class AttoPrivateKey(
     companion object {
         private val coinType = 1869902945 // "atto".toByteArray().toUInt()
 
-        fun parse(value: String): AttoPrivateKey {
-            return AttoPrivateKey(value.fromHexToByteArray())
-        }
+        fun parse(value: String): AttoPrivateKey = AttoPrivateKey(value.fromHexToByteArray())
 
         fun generate(): AttoPrivateKey {
             val value = SecureRandom.randomByteArray(32U)
@@ -35,22 +33,14 @@ class AttoPrivateKey(
         }
     }
 
-    override fun toString(): String {
-        return "${value.size} bytes"
-    }
+    override fun toString(): String = "${value.size} bytes"
 }
 
-fun AttoSeed.toPrivateKey(index: AttoKeyIndex): AttoPrivateKey {
-    return AttoPrivateKey(this, index)
-}
+fun AttoSeed.toPrivateKey(index: AttoKeyIndex): AttoPrivateKey = AttoPrivateKey(this, index)
 
-fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey {
-    return AttoPrivateKey(this, index)
-}
+fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey = AttoPrivateKey(this, index)
 
-fun AttoSeed.toPrivateKey(index: Int): AttoPrivateKey {
-    return AttoPrivateKey(this, index.toUInt())
-}
+fun AttoSeed.toPrivateKey(index: Int): AttoPrivateKey = AttoPrivateKey(this, index.toUInt())
 
 class AttoAlgorithmPrivateKey(
     val algorithm: AttoAlgorithm,
@@ -71,9 +61,7 @@ class AttoAlgorithmPrivateKey(
         }
     }
 
-    override fun toString(): String {
-        return "${value.size} bytes"
-    }
+    override fun toString(): String = "${value.size} bytes"
 }
 
 expect class HmacSha512(

@@ -15,34 +15,27 @@ data class AttoHash(
     val value: ByteArray,
 ) {
     companion object {
-        fun parse(value: String): AttoHash {
-            return AttoHash(value.fromHexToByteArray())
-        }
+        fun parse(value: String): AttoHash = AttoHash(value.fromHexToByteArray())
 
         fun hash(
             size: Int,
             vararg byteArrays: ByteArray,
-        ): AttoHash {
-            return AttoHash(AttoHasher.hash(size, * byteArrays))
-        }
+        ): AttoHash = AttoHash(AttoHasher.hash(size, * byteArrays))
 
         fun hashVote(
             blockHash: AttoHash,
             algorithm: AttoAlgorithm,
             timestamp: AttoInstant,
-        ): AttoHash {
-            return hash(
+        ): AttoHash =
+            hash(
                 32,
                 blockHash.value,
                 byteArrayOf(algorithm.code.toByte()),
                 timestamp.toByteArray(),
             )
-        }
     }
 
-    override fun hashCode(): Int {
-        return value.contentHashCode()
-    }
+    override fun hashCode(): Int = value.contentHashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

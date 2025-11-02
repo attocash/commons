@@ -19,9 +19,7 @@ data class AttoSignature(
     companion object {
         const val SIZE = 64
 
-        fun parse(value: String): AttoSignature {
-            return AttoSignature(value.fromHexToByteArray())
-        }
+        fun parse(value: String): AttoSignature = AttoSignature(value.fromHexToByteArray())
     }
 
     init {

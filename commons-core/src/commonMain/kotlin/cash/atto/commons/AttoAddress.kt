@@ -23,9 +23,7 @@ private fun ByteArray.toAddressPath(): String {
     return Base32.encode(this).replace("=", "").lowercase()
 }
 
-private fun String.fromAddress(): ByteArray {
-    return Base32.decode(this.substring(SCHEMA.length).uppercase() + "===")
-}
+private fun String.fromAddress(): ByteArray = Base32.decode(this.substring(SCHEMA.length).uppercase() + "===")
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -45,20 +43,17 @@ data class AttoAddress(
         private fun checksum(
             algorithm: ByteArray,
             publicKey: ByteArray,
-        ): ByteArray {
-            return AttoHasher.hash(
+        ): ByteArray =
+            AttoHasher.hash(
                 CHECKSUM_SIZE,
                 algorithm,
                 publicKey,
             )
-        }
 
         private fun checksum(
             algorithm: AttoAlgorithm,
             publicKey: AttoPublicKey,
-        ): ByteArray {
-            return checksum(byteArrayOf(algorithm.code.toByte()), publicKey.value)
-        }
+        ): ByteArray = checksum(byteArrayOf(algorithm.code.toByte()), publicKey.value)
 
         private fun toAlgorithmPublicKey(decoded: ByteArray): Pair<AttoAlgorithm, AttoPublicKey> {
             val algorithm = AttoAlgorithm.from(decoded[0].toUByte())
@@ -67,9 +62,7 @@ data class AttoAddress(
             return algorithm to publicKey
         }
 
-        private fun toAlgorithmPublicKey(value: String): Pair<AttoAlgorithm, AttoPublicKey> {
-            return toAlgorithmPublicKey(value.fromAddress())
-        }
+        private fun toAlgorithmPublicKey(value: String): Pair<AttoAlgorithm, AttoPublicKey> = toAlgorithmPublicKey(value.fromAddress())
 
         fun isValid(value: String): Boolean {
             if (!regex.matches(value)) {

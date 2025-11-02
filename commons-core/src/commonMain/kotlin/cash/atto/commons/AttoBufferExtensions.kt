@@ -11,108 +11,85 @@ import kotlinx.io.writeUByte
 import kotlinx.io.writeULongLe
 import kotlinx.io.writeUShortLe
 
-fun Buffer.hash(): AttoHash {
-    return AttoHash.hash(32, this.copy().readByteArray())
-}
+fun Buffer.hash(): AttoHash = AttoHash.hash(32, this.copy().readByteArray())
 
 fun Buffer.copy(
     start: Long = 0L,
     end: Long = this.size,
-): Buffer {
-    return Buffer().apply {
+): Buffer =
+    Buffer().apply {
         copyTo(this, start, end)
     }
-}
 
 fun Buffer.writeAttoBlockType(blockType: AttoBlockType): Buffer {
     this.writeUByte(blockType.code)
     return this
 }
 
-fun Buffer.readAttoBlockType(): AttoBlockType {
-    return AttoBlockType.from(this.readUByte())
-}
+fun Buffer.readAttoBlockType(): AttoBlockType = AttoBlockType.from(this.readUByte())
 
 fun Buffer.writeAttoAlgorithm(algorithm: AttoAlgorithm): Buffer {
     this.writeUByte(algorithm.code)
     return this
 }
 
-fun Buffer.readAttoAlgorithm(): AttoAlgorithm {
-    return AttoAlgorithm.from(this.readUByte())
-}
+fun Buffer.readAttoAlgorithm(): AttoAlgorithm = AttoAlgorithm.from(this.readUByte())
 
 fun Buffer.writeAttoPublicKey(publicKey: AttoPublicKey): Buffer {
     this.write(publicKey.value)
     return this
 }
 
-fun Buffer.readAttoPublicKey(): AttoPublicKey {
-    return AttoPublicKey(this.readByteArray(32))
-}
+fun Buffer.readAttoPublicKey(): AttoPublicKey = AttoPublicKey(this.readByteArray(32))
 
 fun Buffer.writeAttoAmount(amount: AttoAmount): Buffer {
     this.writeULongLe(amount.raw)
     return this
 }
 
-fun Buffer.readAttoAmount(): AttoAmount {
-    return AttoAmount(this.readULongLe())
-}
+fun Buffer.readAttoAmount(): AttoAmount = AttoAmount(this.readULongLe())
 
 fun Buffer.writeInstant(instant: AttoInstant): Buffer {
     this.writeLongLe(instant.toEpochMilliseconds())
     return this
 }
 
-fun Buffer.readInstant(): AttoInstant {
-    return AttoInstant.fromEpochMilliseconds(this.readLongLe())
-}
+fun Buffer.readInstant(): AttoInstant = AttoInstant.fromEpochMilliseconds(this.readLongLe())
 
 fun Buffer.writeAttoHash(hash: AttoHash): Buffer {
     this.write(hash.value)
     return this
 }
 
-fun Buffer.readAttoHash(): AttoHash {
-    return AttoHash(this.readByteArray(32))
-}
+fun Buffer.readAttoHash(): AttoHash = AttoHash(this.readByteArray(32))
 
 fun Buffer.writeAttoVersion(version: AttoVersion): Buffer {
     this.writeUShortLe(version.value)
     return this
 }
 
-fun Buffer.readAttoVersion(): AttoVersion {
-    return AttoVersion(this.readUShortLe())
-}
+fun Buffer.readAttoVersion(): AttoVersion = AttoVersion(this.readUShortLe())
 
 fun Buffer.writeAttoHeight(height: AttoHeight): Buffer {
     this.writeULongLe(height.value)
     return this
 }
 
-fun Buffer.readAttoHeight(): AttoHeight {
-    return AttoHeight(this.readULongLe())
-}
+fun Buffer.readAttoHeight(): AttoHeight = AttoHeight(this.readULongLe())
 
 fun Buffer.writeAttoSignature(signature: AttoSignature): Buffer {
     this.write(signature.value)
     return this
 }
 
-fun Buffer.readAttoSignature(): AttoSignature {
-    return AttoSignature(this.readByteArray(64))
-}
+fun Buffer.readAttoSignature(): AttoSignature = AttoSignature(this.readByteArray(64))
 
 fun Buffer.writeAttoWork(signature: AttoWork): Buffer {
     this.write(signature.value)
     return this
 }
 
-fun Buffer.readAttoWork(): AttoWork {
-    return AttoWork(this.readByteArray(8))
-}
+fun Buffer.readAttoWork(): AttoWork = AttoWork(this.readByteArray(8))
 
 fun Buffer.writeAttoSocketAddress(socketAddress: AttoSocketAddress): Buffer {
     this.write(socketAddress.address)
@@ -120,9 +97,7 @@ fun Buffer.writeAttoSocketAddress(socketAddress: AttoSocketAddress): Buffer {
     return this
 }
 
-fun Buffer.readAttoSocketAddress(): AttoSocketAddress {
-    return AttoSocketAddress(this.readByteArray(16), this.readUShortLe())
-}
+fun Buffer.readAttoSocketAddress(): AttoSocketAddress = AttoSocketAddress(this.readByteArray(16), this.readUShortLe())
 
 fun Buffer.writeAttoNetwork(network: AttoNetwork): Buffer {
     this.writeUByte(network.code)

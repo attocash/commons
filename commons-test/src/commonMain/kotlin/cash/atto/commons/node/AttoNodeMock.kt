@@ -38,9 +38,7 @@ data class AttoNodeMockConfiguration(
     val dbPassword: String = "root",
 )
 
-fun AttoNodeMock.Companion.create(configuration: AttoNodeMockConfiguration): AttoNodeMock {
-    return AttoNodeMock(configuration)
-}
+fun AttoNodeMock.Companion.create(configuration: AttoNodeMockConfiguration): AttoNodeMock = AttoNodeMock(configuration)
 
 suspend fun AttoTransaction.Companion.createGenesis(privateKey: AttoPrivateKey): AttoTransaction {
     val signer = privateKey.toSigner()

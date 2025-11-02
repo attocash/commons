@@ -16,9 +16,7 @@ data class AttoVersion(
 ) : Comparable<AttoVersion> {
     override operator fun compareTo(other: AttoVersion): Int = value.compareTo(other.value)
 
-    override fun toString(): String {
-        return value.toString()
-    }
+    override fun toString(): String = value.toString()
 }
 
 fun AttoVersion.max(anotherVersion: AttoVersion): AttoVersion {

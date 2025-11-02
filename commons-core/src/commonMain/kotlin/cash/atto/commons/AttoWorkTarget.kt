@@ -25,22 +25,17 @@ data class AttoWorkTarget(
         return true
     }
 
-    override fun hashCode(): Int {
-        return value.contentHashCode()
-    }
+    override fun hashCode(): Int = value.contentHashCode()
 
-    override fun toString(): String {
-        return value.toHex()
-    }
+    override fun toString(): String = value.toHex()
 }
 
-fun AttoBlock.getTarget(): AttoWorkTarget {
-    return when (this) {
+fun AttoBlock.getTarget(): AttoWorkTarget =
+    when (this) {
         is AttoOpenBlock -> AttoWorkTarget(this.publicKey.value)
         is PreviousSupport -> AttoWorkTarget(this.previous.value)
         else -> throw IllegalArgumentException("Unsupported block type $this")
     }
-}
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport.Ignore
@@ -48,9 +43,7 @@ fun AttoWork.Companion.isValid(
     threshold: ULong,
     target: AttoWorkTarget,
     work: ByteArray,
-): Boolean {
-    return isValid(threshold, target.value, work)
-}
+): Boolean = isValid(threshold, target.value, work)
 
 fun AttoWork.Companion.isValid(
     network: AttoNetwork,

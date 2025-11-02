@@ -28,17 +28,13 @@ class AttoAccountMonitor internal constructor(
         state.add(listOf(address))
     }
 
-    suspend fun isMonitored(address: AttoAddress): Boolean {
-        return state.isMonitored(address)
-    }
+    suspend fun isMonitored(address: AttoAddress): Boolean = state.isMonitored(address)
 
     suspend fun stopMonitoring(address: AttoAddress) {
         state.remove(address)
     }
 
-    suspend fun getAccounts(): Collection<AttoAccount> {
-        return client.account(state.getAddresses())
-    }
+    suspend fun getAccounts(): Collection<AttoAccount> = client.account(state.getAddresses())
 
     suspend fun getAccount(address: AttoAddress): AttoAccount? {
         require(state.getAddresses().contains(address)) { "Address $address not found in the monitor" }

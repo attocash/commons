@@ -21,9 +21,7 @@ data class AttoPublicKey(
     }
 
     companion object {
-        fun parse(value: String): AttoPublicKey {
-            return AttoPublicKey(value.fromHexToByteArray())
-        }
+        fun parse(value: String): AttoPublicKey = AttoPublicKey(value.fromHexToByteArray())
     }
 
     override fun equals(other: Any?): Boolean {

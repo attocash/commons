@@ -86,9 +86,7 @@ class AttoMnemonic {
         }
     }
 
-    fun toEntropy(): ByteArray {
-        return toEntropyWithChecksum(words).sliceArray(0 until 33)
-    }
+    fun toEntropy(): ByteArray = toEntropyWithChecksum(words).sliceArray(0 until 33)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -101,8 +101,8 @@ private class AttoNodeClientRemote(
             }.body()
     }
 
-    private inline fun <reified T> fetchStream(urlPath: String): Flow<T> {
-        return flow {
+    private inline fun <reified T> fetchStream(urlPath: String): Flow<T> =
+        flow {
             val headers = headerProvider.invoke()
 
             httpClient
@@ -125,13 +125,12 @@ private class AttoNodeClientRemote(
                     }
                 }
         }
-    }
 
     private inline fun <reified T> fetchStream(
         urlPath: String,
         search: Any,
-    ): Flow<T> {
-        return flow {
+    ): Flow<T> =
+        flow {
             val headers = headerProvider.invoke()
 
             httpClient
@@ -156,33 +155,24 @@ private class AttoNodeClientRemote(
                     }
                 }
         }
-    }
 
-    override fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount> {
-        return fetchStream("accounts/$publicKey/stream")
-    }
+    override fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount> = fetchStream("accounts/$publicKey/stream")
 
-    override fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount> {
-        return fetchStream("accounts/stream", AccountSearch(addresses))
-    }
+    override fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount> =
+        fetchStream("accounts/stream", AccountSearch(addresses))
 
     override fun receivableStream(
         publicKey: AttoPublicKey,
         minAmount: AttoAmount,
-    ): Flow<AttoReceivable> {
-        return fetchStream("accounts/$publicKey/receivables/stream?minAmount=$minAmount")
-    }
+    ): Flow<AttoReceivable> = fetchStream("accounts/$publicKey/receivables/stream?minAmount=$minAmount")
 
     override fun receivableStream(
         addresses: Collection<AttoAddress>,
         minAmount: AttoAmount,
-    ): Flow<AttoReceivable> {
-        return fetchStream("accounts/receivables/stream?minAmount=$minAmount", AccountSearch(addresses))
-    }
+    ): Flow<AttoReceivable> = fetchStream("accounts/receivables/stream?minAmount=$minAmount", AccountSearch(addresses))
 
-    override suspend fun accountEntry(hash: AttoHash): AttoAccountEntry {
-        return fetchStream<AttoAccountEntry>("accounts/entries/$hash/stream").first()
-    }
+    override suspend fun accountEntry(hash: AttoHash): AttoAccountEntry =
+        fetchStream<AttoAccountEntry>("accounts/entries/$hash/stream").first()
 
     override fun accountEntryStream(
         publicKey: AttoPublicKey,
@@ -199,13 +189,9 @@ private class AttoNodeClientRemote(
         return fetchStream("accounts/$publicKey/entries/stream?$queryParams")
     }
 
-    override fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry> {
-        return fetchStream("accounts/entries/stream", search)
-    }
+    override fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry> = fetchStream("accounts/entries/stream", search)
 
-    override suspend fun transaction(hash: AttoHash): AttoTransaction {
-        return fetchStream<AttoTransaction>("transactions/$hash/stream").first()
-    }
+    override suspend fun transaction(hash: AttoHash): AttoTransaction = fetchStream<AttoTransaction>("transactions/$hash/stream").first()
 
     override fun transactionStream(
         publicKey: AttoPublicKey,
@@ -222,9 +208,7 @@ private class AttoNodeClientRemote(
         return fetchStream("accounts/$publicKey/transactions/stream?$queryParams")
     }
 
-    override fun transactionStream(search: HeightSearch): Flow<AttoTransaction> {
-        return fetchStream("accounts/transactions/stream", search)
-    }
+    override fun transactionStream(search: HeightSearch): Flow<AttoTransaction> = fetchStream("accounts/transactions/stream", search)
 
     override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse {
         val uri = "$baseUrl/instants/$currentTime"

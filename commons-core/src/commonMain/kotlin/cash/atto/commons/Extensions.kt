@@ -13,9 +13,7 @@ fun ByteArray.toHex(): String = this.toHexString(HexFormat.UpperCase)
 
 fun Buffer.toHex(): String = this.copy().readByteArray().toHex()
 
-fun AttoSerializable.toHex(): String {
-    return toBuffer().toHex()
-}
+fun AttoSerializable.toHex(): String = toBuffer().toHex()
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs

@@ -21,13 +21,9 @@ data class AttoSeed(
         return true
     }
 
-    override fun hashCode(): Int {
-        return value.contentHashCode()
-    }
+    override fun hashCode(): Int = value.contentHashCode()
 
-    override fun toString(): String {
-        return "AttoSeed(value='${value.size} bytes')"
-    }
+    override fun toString(): String = "AttoSeed(value='${value.size} bytes')"
 }
 
 expect suspend fun generateSecretWithPBKDF2WithHmacSHA512(

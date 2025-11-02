@@ -13,9 +13,7 @@ private fun String?.toInstant(): AttoInstant {
     return AttoInstant.fromIso(this)
 }
 
-private fun Pair<AttoBlock, AttoAccount>.toAccountUpdate(): AccountUpdate {
-    return AccountUpdate(second, first)
-}
+private fun Pair<AttoBlock, AttoAccount>.toAccountUpdate(): AccountUpdate = AccountUpdate(second, first)
 
 fun attoAccountOpen(
     representativeAddress: AttoAddress,
