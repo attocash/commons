@@ -1,10 +1,13 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.getSubtleCryptoInstance
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.promise
 import org.khronos.webgl.Uint8Array
 import kotlin.js.json
 
-actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
+internal actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     mnemonic: CharArray,
     salt: ByteArray,
     iterations: Int,
@@ -43,3 +46,9 @@ actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     val derivedArray = Uint8Array(derivedBits)
     return derivedArray.toByteArray()
 }
+
+@OptIn(DelicateCoroutinesApi::class)
+fun AttoMnemonic.toSeedAsync(passphrase: String = ""): kotlin.js.Promise<AttoSeed> =
+    GlobalScope.promise {
+        toSeed(passphrase)
+    }

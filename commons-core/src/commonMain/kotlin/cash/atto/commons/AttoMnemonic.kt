@@ -4,6 +4,7 @@ import cash.atto.commons.utils.SecureRandom
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlin.js.JsName
+import kotlin.jvm.JvmStatic
 
 private fun toEntropyWithChecksum(words: List<String>): ByteArray {
     val buffer = Buffer()
@@ -80,6 +81,7 @@ class AttoMnemonic {
     }
 
     companion object {
+        @JvmStatic
         fun generate(): AttoMnemonic {
             val entropy = SecureRandom.randomByteArray(33U)
             return AttoMnemonic(entropy)

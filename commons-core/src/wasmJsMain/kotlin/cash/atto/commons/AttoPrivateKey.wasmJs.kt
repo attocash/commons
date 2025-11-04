@@ -6,7 +6,7 @@ import org.khronos.webgl.get
 
 internal object AttoPrivateKeyHolder
 
-actual class HmacSha512 actual constructor(
+internal actual class HmacSha512 actual constructor(
     secretKey: ByteArray,
 ) {
     @OptIn(ExperimentalWasmJsInterop::class)

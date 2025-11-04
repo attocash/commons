@@ -1,3 +1,5 @@
+@file:JvmName("AttoPublicKeys")
+
 package cash.atto.commons
 
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters

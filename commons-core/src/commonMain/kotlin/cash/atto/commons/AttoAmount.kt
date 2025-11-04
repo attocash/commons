@@ -1,3 +1,5 @@
+@file:JvmName("AttoAmounts")
+
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
@@ -8,6 +10,10 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsName
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -33,8 +39,13 @@ data class AttoAmount(
 
     companion object {
         private val MAX_RAW = 18_000_000_000_000_000_000UL
+
+        @JvmField
         val MAX = AttoAmount(MAX_RAW)
+
         private val MIN_RAW = 0UL
+
+        @JvmField
         val MIN = AttoAmount(MIN_RAW)
 
         private fun ULong.pow(exponent: Int): ULong {
@@ -47,6 +58,7 @@ data class AttoAmount(
 
         private fun scaleFactor(scale: UByte): ULong = 10UL.pow(scale.toInt())
 
+        @JvmStatic
         fun from(
             unit: AttoUnit,
             string: String,
@@ -101,8 +113,10 @@ data class AttoAmount(
     override fun toString(): String = "$raw"
 }
 
+@JvmSynthetic
 fun ULong.toAttoAmount(): AttoAmount = AttoAmount(this)
 
+@JsExportForJs
 fun String.toAttoAmount(): AttoAmount = AttoAmount(this.toULong())
 
 object AttoAmountAsULongSerializer : KSerializer<AttoAmount> {

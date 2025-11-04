@@ -1,10 +1,12 @@
+@file:JvmName("AttoSeeds")
+
 package cash.atto.commons
 
 import kotlinx.coroutines.runBlocking
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
-actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
+internal actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     mnemonic: CharArray,
     salt: ByteArray,
     iterations: Int,

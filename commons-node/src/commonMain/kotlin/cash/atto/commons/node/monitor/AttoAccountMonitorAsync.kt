@@ -16,13 +16,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.js.JsName
 import kotlin.jvm.JvmOverloads
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 class AttoAccountMonitorAsync internal constructor(
-    internal val monitor: AttoAccountMonitor,
+    @JsExport.Ignore
+    val monitor: AttoAccountMonitor,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())

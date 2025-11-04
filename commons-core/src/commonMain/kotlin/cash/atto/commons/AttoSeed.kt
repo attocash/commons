@@ -2,6 +2,7 @@ package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlin.js.ExperimentalJsExport
+import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -26,13 +27,14 @@ data class AttoSeed(
     override fun toString(): String = "AttoSeed(value='${value.size} bytes')"
 }
 
-expect suspend fun generateSecretWithPBKDF2WithHmacSHA512(
+internal expect suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     mnemonic: CharArray,
     salt: ByteArray,
     iterations: Int,
     keyLength: Int,
 ): ByteArray
 
+@JvmSynthetic
 suspend fun AttoMnemonic.toSeed(passphrase: String = ""): AttoSeed {
     val mnemonic = words.joinToString(" ")
     val salt = "mnemonic$passphrase"

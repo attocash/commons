@@ -1,3 +1,5 @@
+@file:JvmName("AttoHeights")
+
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
@@ -8,6 +10,9 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -16,7 +21,10 @@ data class AttoHeight(
     val value: ULong,
 ) : Comparable<AttoHeight> {
     companion object {
+        @JvmField
         val MIN = AttoHeight(1U)
+
+        @JvmField
         val MAX = AttoHeight(ULong.MAX_VALUE)
     }
 
@@ -43,12 +51,15 @@ data class AttoHeight(
     override fun toString(): String = value.toString()
 }
 
+@JvmSynthetic
 fun ULong.toAttoHeight() = AttoHeight(this)
 
+@JvmSynthetic
 fun UInt.toAttoHeight() = this.toULong().toAttoHeight()
 
 fun Int.toAttoHeight() = this.toULong().toAttoHeight()
 
+@JsExportForJs
 fun Long.toAttoHeight() = this.toULong().toAttoHeight()
 
 object AttoHeightSerializer : KSerializer<AttoHeight> {

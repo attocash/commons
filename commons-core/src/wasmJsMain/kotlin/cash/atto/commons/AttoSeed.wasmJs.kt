@@ -12,7 +12,7 @@ internal fun pbkdf2AndSha512Algorithm(
     iterations: Int,
 ): JsAny = js("""({ "name": "pbkdf2", "hash": "SHA-512", "salt": salt, "iterations": iterations })""")
 
-actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
+internal actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     mnemonic: CharArray,
     salt: ByteArray,
     iterations: Int,

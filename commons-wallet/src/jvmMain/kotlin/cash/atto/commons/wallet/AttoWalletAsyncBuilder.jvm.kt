@@ -1,23 +1,33 @@
 package cash.atto.commons.wallet
 
+import cash.atto.commons.AttoAddress
+import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoSeed
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.node.AttoFuture
 import cash.atto.commons.node.AttoNodeClientAsync
 import cash.atto.commons.node.await
+import cash.atto.commons.node.monitor.AttoAccountMonitorAsync
+import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toSigner
 import cash.atto.commons.worker.AttoWorkerAsync
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.ExecutorService
+import kotlin.time.Duration
+import kotlin.time.toKotlinDuration
 
 actual class AttoWalletAsyncBuilder actual constructor(
     private val clientAsync: AttoNodeClientAsync,
     private val workerAsync: AttoWorkerAsync,
 ) {
     private var signerProvider: (suspend (AttoKeyIndex) -> AttoSigner)? = null
+    private var monitor: AttoAccountMonitorAsync? = null
+    private var minAmount: AttoAmount? = null
+    private var retryAfter: Duration? = null
+    private var defaultRepresentativeAddressProvider: (() -> AttoAddress)? = null
 
     actual fun signerProvider(value: (AttoKeyIndex) -> AttoFuture<AttoSigner>): AttoWalletAsyncBuilder =
         apply {
@@ -29,8 +39,38 @@ actual class AttoWalletAsyncBuilder actual constructor(
             signerProvider = value::toSigner
         }
 
+    @JvmSynthetic
+    actual fun enableAutoReceiver(
+        monitor: AttoAccountMonitorAsync,
+        minAmount: AttoAmount,
+        duration: Duration,
+        defaultRepresentativeAddressProvider: () -> AttoAddress,
+    ): AttoWalletAsyncBuilder =
+        apply {
+            this.monitor = monitor
+            this.minAmount = minAmount
+            this.retryAfter = duration
+            this.defaultRepresentativeAddressProvider = defaultRepresentativeAddressProvider
+        }
+
+    @JvmOverloads
+    fun enableAutoReceiver(
+        monitor: AttoAccountMonitorAsync,
+        minAmount: AttoAmount = 1UL.toAttoAmount(),
+        duration: java.time.Duration = java.time.Duration.ofSeconds(10),
+        defaultRepresentativeAddressProvider: (() -> AttoAddress),
+    ): AttoWalletAsyncBuilder =
+        apply {
+            enableAutoReceiver(monitor, minAmount, duration.toKotlinDuration(), defaultRepresentativeAddressProvider)
+        }
+
     fun build(dispatcher: CoroutineDispatcher): AttoWalletAsync {
         val wallet = AttoWallet(clientAsync.client, workerAsync.worker, signerProvider!!)
+
+        if (monitor != null) {
+            wallet.startAutoReceiver(monitor!!.monitor, dispatcher, minAmount!!, retryAfter!!, defaultRepresentativeAddressProvider!!)
+        }
+
         return AttoWalletAsync(wallet, dispatcher)
     }
 

@@ -1,3 +1,5 @@
+@file:JvmName("AttoPrivateKeys")
+
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
@@ -6,6 +8,8 @@ import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -38,8 +42,10 @@ class AttoPrivateKey(
 
 fun AttoSeed.toPrivateKey(index: AttoKeyIndex): AttoPrivateKey = AttoPrivateKey(this, index)
 
+@JvmSynthetic
 fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey = AttoPrivateKey(this, index)
 
+@JsExportForJs
 fun AttoSeed.toPrivateKey(index: Int): AttoPrivateKey = AttoPrivateKey(this, index.toUInt())
 
 class AttoAlgorithmPrivateKey(
@@ -64,7 +70,7 @@ class AttoAlgorithmPrivateKey(
     override fun toString(): String = "${value.size} bytes"
 }
 
-expect class HmacSha512(
+internal expect class HmacSha512(
     secretKey: ByteArray,
 ) {
     fun update(

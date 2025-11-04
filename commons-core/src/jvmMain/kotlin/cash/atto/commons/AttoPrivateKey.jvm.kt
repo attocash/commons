@@ -5,7 +5,7 @@ import javax.crypto.spec.SecretKeySpec
 
 internal object AttoPrivateKeyHolder
 
-actual class HmacSha512 actual constructor(
+internal actual class HmacSha512 actual constructor(
     secretKey: ByteArray,
 ) {
     private val mac: Mac =

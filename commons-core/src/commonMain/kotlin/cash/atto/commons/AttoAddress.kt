@@ -1,3 +1,5 @@
+@file:JvmName("AttoAddresses")
+
 package cash.atto.commons
 
 import cash.atto.commons.utils.Base32
@@ -15,6 +17,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.js.JsName
+import kotlin.jvm.JvmName
 
 private const val SCHEMA = "atto://"
 
@@ -122,6 +125,7 @@ data class AttoAddress(
     override fun toString(): String = value
 }
 
+@JsExportForJs
 fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)
 
 object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
