@@ -46,7 +46,7 @@ private val logger = KotlinLogging.logger {}
 class AttoWallet(
     private val client: AttoNodeClient,
     private val worker: AttoWorker,
-    private val signerProvider: (AttoKeyIndex) -> AttoSigner,
+    private val signerProvider: suspend (AttoKeyIndex) -> AttoSigner,
 ) {
     companion object {}
 
@@ -284,6 +284,12 @@ class AttoWallet(
         fun addressFlow(): Flow<Set<AttoAddress>> = addressesState.asStateFlow()
     }
 }
+
+fun AttoWallet.Companion.create(
+    client: AttoNodeClient,
+    worker: AttoWorker,
+    signerProvider: suspend (AttoKeyIndex) -> AttoSigner,
+): AttoWallet = AttoWallet(client, worker, signerProvider)
 
 fun AttoWallet.Companion.create(
     client: AttoNodeClient,

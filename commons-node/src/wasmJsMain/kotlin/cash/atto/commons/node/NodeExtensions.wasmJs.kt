@@ -1,12 +1,13 @@
 package cash.atto.commons.node
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.await
 import kotlinx.coroutines.promise
 import kotlin.js.Promise
 
 @OptIn(ExperimentalWasmJsInterop::class)
 actual class AttoFuture<T> internal constructor(
-    private val promise: Promise<JsAny?>,
+    internal val promise: Promise<JsAny?>,
 ) {
     @Suppress("UNCHECKED_CAST")
     fun asPromise() = promise as Promise<T>
@@ -16,4 +17,10 @@ actual class AttoFuture<T> internal constructor(
 actual fun <T> CoroutineScope.submit(block: suspend () -> T): AttoFuture<T> {
     val p: Promise<JsAny?> = promise { block() }
     return AttoFuture(p)
+}
+
+@OptIn(ExperimentalWasmJsInterop::class)
+actual suspend fun <T> AttoFuture<T>.await(): T {
+    @Suppress("UNCHECKED_CAST")
+    return this.promise.await() as T
 }

@@ -2,6 +2,7 @@ package cash.atto.commons.node
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.await
 import kotlinx.coroutines.promise
 import kotlin.js.Promise
 
@@ -14,3 +15,5 @@ actual class AttoFuture<T> internal constructor(
 }
 
 actual fun <T> CoroutineScope.submit(block: suspend () -> T): AttoFuture<T> = AttoFuture(promise { block() })
+
+actual suspend fun <T> AttoFuture<T>.await(): T = this.asPromise().await()

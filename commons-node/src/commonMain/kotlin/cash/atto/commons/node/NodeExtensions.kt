@@ -58,6 +58,8 @@ expect class AttoFuture<T>
 
 expect fun <T> CoroutineScope.submit(block: suspend () -> T): AttoFuture<T>
 
+expect suspend fun <T> AttoFuture<T>.await(): T
+
 internal inline fun <T> CoroutineScope.consumeStream(
     stream: Flow<T>,
     crossinline onEach: suspend (T) -> Unit,

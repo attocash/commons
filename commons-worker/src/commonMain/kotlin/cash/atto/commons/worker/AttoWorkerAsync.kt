@@ -14,7 +14,7 @@ import kotlin.js.JsName
 
 @JsExportForJs
 class AttoWorkerAsync(
-    private val worker: AttoWorker,
+    val worker: AttoWorker,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
