@@ -2,7 +2,9 @@ package cash.atto.commons.node.monitor
 
 import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoHeight
+import cash.atto.commons.node.AttoFuture
 import cash.atto.commons.node.AttoNodeClientAsync
+import cash.atto.commons.node.await
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -12,11 +14,11 @@ actual class AttoTransactionMonitorAsyncBuilder actual constructor(
     private val nodeClient: AttoNodeClientAsync,
     private val accountMonitor: AttoAccountMonitorAsync,
 ) {
-    private var heightProvider: (AttoAddress) -> AttoHeight = { AttoHeight.MIN }
+    private var heightProvider: suspend (AttoAddress) -> AttoHeight = { AttoHeight.MIN }
 
-    actual fun heightProvider(value: (AttoAddress) -> AttoHeight): AttoTransactionMonitorAsyncBuilder =
+    actual fun heightProvider(value: (AttoAddress) -> AttoFuture<AttoHeight>): AttoTransactionMonitorAsyncBuilder =
         apply {
-            heightProvider = value
+            heightProvider = { value.invoke(it).await() }
         }
 
     fun build(dispatcher: CoroutineDispatcher): AttoTransactionMonitorAsync {

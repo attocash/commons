@@ -16,7 +16,7 @@ import kotlinx.coroutines.sync.withLock
 
 abstract class AttoHeightMonitor<T> internal constructor(
     private val accountMonitor: AttoAccountMonitor,
-    private val heightProvider: (AttoAddress) -> AttoHeight = { AttoHeight.MIN },
+    private val heightProvider: suspend (AttoAddress) -> AttoHeight = { AttoHeight.MIN },
 ) where T : HeightSupport, T : AddressSupport {
     private val mutex = Mutex()
     private val heightMap = mutableMapOf<AttoAddress, AttoHeight>()

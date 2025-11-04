@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 class AttoAccountEntryMonitor(
     private val nodeClient: AttoNodeClient,
     accountMonitor: AttoAccountMonitor,
-    heightProvider: (AttoAddress) -> AttoHeight = { AttoHeight.MIN },
+    heightProvider: suspend (AttoAddress) -> AttoHeight = { AttoHeight.MIN },
 ) : AttoHeightMonitor<AttoAccountEntry>(accountMonitor, heightProvider) {
     override fun stream(search: HeightSearch): Flow<AttoAccountEntry> = nodeClient.accountEntryStream(search)
 }
