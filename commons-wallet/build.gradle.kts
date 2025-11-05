@@ -79,7 +79,7 @@ kotlin {
         }
         nodejs {
             testTask {
-                enabled = false
+                enabled = true
             }
         }
     }

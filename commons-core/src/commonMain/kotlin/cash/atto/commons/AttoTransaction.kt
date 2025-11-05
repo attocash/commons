@@ -5,7 +5,6 @@ import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
