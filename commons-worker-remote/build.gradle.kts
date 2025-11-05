@@ -109,6 +109,12 @@ kotlin {
             }
         }
         val jsTest by getting
+
+        val wasmJsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
+            }
+        }
     }
 }
 

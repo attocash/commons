@@ -45,7 +45,7 @@ kotlin {
 
         nodejs {
             testTask {
-                enabled = false
+                enabled = true
                 useMocha {
                     timeout = "60000"
                     environment("MOCHA_OPTIONS", "--bail --exit")
@@ -125,7 +125,6 @@ kotlin {
             dependencies {
                 implementation(project(":commons-gatekeeper-test"))
 
-                implementation("io.ktor:ktor-server-cio:$ktorVersion")
                 implementation("com.auth0:java-jwt:4.5.0")
 
                 implementation("org.slf4j:slf4j-simple:2.0.17")
@@ -140,8 +139,13 @@ kotlin {
 
         val jsTest by getting {
             dependencies {
-                implementation("io.ktor:ktor-server-js:$ktorVersion")
                 implementation(npm("jsonwebtoken", "9.0.2"))
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
             }
         }
     }

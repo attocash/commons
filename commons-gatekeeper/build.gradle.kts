@@ -124,7 +124,7 @@ kotlin {
 
         val wasmJsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js-wasm-js:$ktorVersion")
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
             }
         }
     }

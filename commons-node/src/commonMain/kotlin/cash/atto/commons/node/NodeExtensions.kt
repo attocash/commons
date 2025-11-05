@@ -54,6 +54,7 @@ fun ByteArray.toBlockJson(): String {
 }
 
 @OptIn(ExperimentalMultiplatform::class)
+@JsExportForJs
 expect class AttoFuture<T>
 
 expect fun <T> CoroutineScope.submit(block: suspend () -> T): AttoFuture<T>

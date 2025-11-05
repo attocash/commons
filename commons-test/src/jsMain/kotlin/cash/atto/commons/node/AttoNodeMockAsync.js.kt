@@ -1,10 +1,12 @@
 package cash.atto.commons.node
 
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
+@JsExportForJs
 actual class AttoNodeMockAsync actual constructor(
     private val mock: AttoNodeMock,
     dispatcher: CoroutineDispatcher,

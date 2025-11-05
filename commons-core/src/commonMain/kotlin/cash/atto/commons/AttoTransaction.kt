@@ -23,7 +23,6 @@ data class AttoTransaction(
     AttoSerializable {
     val hash by lazy { block.hash }
 
-    @Transient
     override val height: AttoHeight
         get() = block.height
 

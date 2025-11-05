@@ -86,7 +86,6 @@ kotlin {
                 api(project(":commons-core"))
                 api(project(":commons-node"))
 
-                implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
@@ -94,6 +93,34 @@ kotlin {
                 implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
 
                 implementation("io.github.oshai:kotlin-logging:7.0.13")
+            }
+        }
+
+        val jvmMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-cio:$ktorVersion")
+            }
+        }
+
+        val jvmTest by getting {
+            dependencies {
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
+            }
+        }
+
+        val jsTest by getting {
+            dependencies {
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
             }
         }
     }

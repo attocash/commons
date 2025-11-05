@@ -43,7 +43,6 @@ kotlin {
                 api(project(":commons-gatekeeper"))
                 api(project(":commons-worker"))
 
-                implementation("io.ktor:ktor-client-cio:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
@@ -60,11 +59,17 @@ kotlin {
                 implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
             }
         }
+
         val jvmMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-cio:$ktorVersion")
+            }
+        }
+
+        val jvmTest by getting {
             dependencies {
             }
         }
-        val jvmTest by getting
     }
 }
 
