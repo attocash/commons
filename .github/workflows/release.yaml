@@ -45,8 +45,17 @@ jobs:
       - name: Build JS Package
         run: ./gradlew jsNodeProductionLibraryDistribution
 
-      - name: Publish to npm
+      - name: Publish commons-js
         working-directory: ./commons-js/build/dist/js/productionLibrary
+        run: |
+          VERSION=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/v//")
+          npm version "$VERSION"
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish commons-test
+        working-directory: ./commons-test/build/dist/js/productionLibrary
         run: |
           VERSION=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/v//")
           npm version "$VERSION"
