@@ -64,7 +64,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val ktorVersion = "3.3.1"
+        val ktorVersion = "3.3.2"
         val commonMain by getting {
             dependencies {
 
