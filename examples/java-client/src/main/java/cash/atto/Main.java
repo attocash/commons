@@ -36,8 +36,8 @@ public class Main {
 
         try {
             // Create async client and worker using the mock server URLs
-            AttoNodeClientAsync nodeClient = AttoNodeClientAsyncBuilder(nodeMock.getBaseUrl()).build();
-            AttoWorkerAsync worker = AttoWorkerAsyncBuilder(workerMock.getBaseUrl()).build();
+            AttoNodeClientAsync nodeClient = new AttoNodeClientAsyncBuilder(nodeMock.getBaseUrl()).build();
+            AttoWorkerAsync worker = new AttoWorkerAsyncBuilder(workerMock.getBaseUrl()).build();
 
             // Create account monitor for auto-receive functionality
             AttoAccountMonitorAsync accountMonitor = new AttoAccountMonitorAsyncBuilder(nodeClient).build();
