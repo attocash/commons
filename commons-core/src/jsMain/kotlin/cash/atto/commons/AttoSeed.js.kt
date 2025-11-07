@@ -1,5 +1,6 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.utils.getSubtleCryptoInstance
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -47,6 +48,7 @@ internal actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     return derivedArray.toByteArray()
 }
 
+@JsExportForJs
 @OptIn(DelicateCoroutinesApi::class)
 fun AttoMnemonic.toSeedAsync(passphrase: String = ""): kotlin.js.Promise<AttoSeed> =
     GlobalScope.promise {

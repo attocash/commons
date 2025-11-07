@@ -1,13 +1,11 @@
-package cash.atto.commons.node
+package cash.atto.commons
 
-import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.await
 import kotlinx.coroutines.promise
 import kotlin.js.Promise
 
 @OptIn(ExperimentalWasmJsInterop::class)
-@JsExportForJs
 actual class AttoFuture<T> internal constructor(
     internal val promise: Promise<JsAny?>,
 ) {

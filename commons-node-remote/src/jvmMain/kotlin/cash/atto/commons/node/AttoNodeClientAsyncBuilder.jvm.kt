@@ -1,19 +1,16 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.ExecutorService
 
+@JsExportForJs
 actual class AttoNodeClientAsyncBuilder actual constructor(
     private val url: String,
 ) {
     private var headers: Map<String, String> = emptyMap()
-
-    actual companion object {
-        @JvmStatic
-        actual fun remote(url: String): AttoNodeClientAsyncBuilder = AttoNodeClientAsyncBuilder(url)
-    }
 
     actual fun headers(value: Map<String, String>) = apply { headers = value }
 

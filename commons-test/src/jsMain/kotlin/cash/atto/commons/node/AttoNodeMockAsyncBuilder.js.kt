@@ -1,12 +1,16 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoFuture
 import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoTransaction
-import kotlinx.coroutines.CoroutineDispatcher
+import cash.atto.commons.submit
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 actual class AttoNodeMockAsyncBuilder actual constructor(
     private val privateKey: AttoPrivateKey,
 ) {
@@ -33,7 +37,7 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
     actual fun genesis(value: AttoTransaction?): AttoNodeMockAsyncBuilder = apply { genesis = value }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoFuture<AttoNodeMockAsync> =
+    actual fun build(): AttoFuture<AttoNodeMockAsync> =
         GlobalScope.submit {
             val defaultConfiguration =
                 AttoNodeMockConfiguration(
@@ -52,8 +56,6 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
                     dbUser = dbUser ?: defaultConfiguration.dbUser,
                     dbPassword = dbPassword ?: defaultConfiguration.dbPassword,
                 )
-            return@submit AttoNodeMock(configuration).toAsync(dispatcher)
+            return@submit AttoNodeMock(configuration).toAsync(Dispatchers.Default)
         }
-
-    actual fun build(): AttoFuture<AttoNodeMockAsync> = build(Dispatchers.Default)
 }

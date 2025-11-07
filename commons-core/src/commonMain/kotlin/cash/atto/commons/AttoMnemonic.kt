@@ -1,9 +1,12 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.utils.SecureRandom
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
+import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsName
+import kotlin.js.JsStatic
 import kotlin.jvm.JvmStatic
 
 private fun toEntropyWithChecksum(words: List<String>): ByteArray {
@@ -31,6 +34,7 @@ private fun toEntropyWithChecksum(words: List<String>): ByteArray {
 
 internal expect fun checksum(entropy: ByteArray): Byte
 
+@JsExportForJs
 class AttoMnemonic {
     val words: List<String>
 
@@ -81,7 +85,9 @@ class AttoMnemonic {
     }
 
     companion object {
+        @OptIn(ExperimentalJsStatic::class)
         @JvmStatic
+        @JsStatic
         fun generate(): AttoMnemonic {
             val entropy = SecureRandom.randomByteArray(33U)
             return AttoMnemonic(entropy)

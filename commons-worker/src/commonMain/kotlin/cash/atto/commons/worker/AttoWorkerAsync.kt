@@ -1,10 +1,12 @@
 package cash.atto.commons.worker
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoFuture
 import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
+import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlin.js.JsName
 
 @JsExportForJs
-class AttoWorkerAsync(
+class AttoWorkerAsync internal constructor(
     val worker: AttoWorker,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {

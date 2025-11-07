@@ -1,5 +1,6 @@
 package cash.atto.commons.worker
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -8,17 +9,13 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 
+@JsExportForJs
 actual class AttoWorkerAsyncBuilder actual constructor(
     private val url: String,
 ) {
     private var headers: Map<String, String> = emptyMap()
     private var cached: Boolean = true
     private var retryEvery: Duration? = null
-
-    actual companion object {
-        @JvmStatic
-        actual fun remote(url: String): AttoWorkerAsyncBuilder = AttoWorkerAsyncBuilder(url)
-    }
 
     actual fun headers(value: Map<String, String>) = apply { headers = value }
 

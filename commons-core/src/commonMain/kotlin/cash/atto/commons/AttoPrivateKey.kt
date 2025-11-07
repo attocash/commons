@@ -40,12 +40,12 @@ class AttoPrivateKey(
     override fun toString(): String = "${value.size} bytes"
 }
 
+@JsExportForJs
 fun AttoSeed.toPrivateKey(index: AttoKeyIndex): AttoPrivateKey = AttoPrivateKey(this, index)
 
 @JvmSynthetic
 fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey = AttoPrivateKey(this, index)
 
-@JsExportForJs
 fun AttoSeed.toPrivateKey(index: Int): AttoPrivateKey = AttoPrivateKey(this, index.toUInt())
 
 class AttoAlgorithmPrivateKey(

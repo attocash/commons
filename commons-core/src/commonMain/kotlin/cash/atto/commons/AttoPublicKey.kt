@@ -37,6 +37,7 @@ data class AttoPublicKey(
     override fun toString(): String = value.toHex()
 }
 
+@JsExportForJs
 expect fun AttoPrivateKey.toPublicKey(): AttoPublicKey
 
 object AttoPublicKeyAsStringSerializer : KSerializer<AttoPublicKey> {

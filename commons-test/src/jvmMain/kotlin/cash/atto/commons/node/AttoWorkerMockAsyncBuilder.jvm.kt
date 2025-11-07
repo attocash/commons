@@ -1,5 +1,6 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoFuture
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -8,7 +9,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 
 @JsExportForJs
-internal actual class AttoWorkerMockAsyncBuilder actual constructor() {
+actual class AttoWorkerMockAsyncBuilder actual constructor() {
     private var name: String? = null
     private var image: String? = null
 

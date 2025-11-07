@@ -9,7 +9,9 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsName
+import kotlin.js.JsStatic
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmStatic
@@ -58,6 +60,8 @@ data class AttoAmount(
 
         private fun scaleFactor(scale: UByte): ULong = 10UL.pow(scale.toInt())
 
+        @OptIn(ExperimentalJsStatic::class)
+        @JsStatic
         @JvmStatic
         fun from(
             unit: AttoUnit,

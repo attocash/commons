@@ -3,6 +3,7 @@
 package cash.atto.commons.node
 
 import cash.atto.commons.AttoBlock
+import cash.atto.commons.AttoJob
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.toBuffer
@@ -52,14 +53,6 @@ fun ByteArray.toBlockJson(): String {
     val block = AttoBlock.fromBuffer(this.toBuffer()) ?: throw IllegalArgumentException("Invalid block")
     return Json.encodeToString<AttoBlock>(block)
 }
-
-@OptIn(ExperimentalMultiplatform::class)
-@JsExportForJs
-expect class AttoFuture<T>
-
-expect fun <T> CoroutineScope.submit(block: suspend () -> T): AttoFuture<T>
-
-expect suspend fun <T> AttoFuture<T>.await(): T
 
 internal inline fun <T> CoroutineScope.consumeStream(
     stream: Flow<T>,

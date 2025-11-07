@@ -1,12 +1,16 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoFuture
 import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.submit
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
+@JsExportForJs
 actual class AttoNodeMockAsyncBuilder actual constructor(
     private val privateKey: AttoPrivateKey,
 ) {

@@ -1,12 +1,14 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoFuture
+import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
 @JsExportForJs
-internal actual class AttoWorkerMockAsyncBuilder actual constructor() {
+actual class AttoWorkerMockAsyncBuilder actual constructor() {
     private var name: String? = null
     private var image: String? = null
 

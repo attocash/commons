@@ -1,4 +1,4 @@
-package cash.atto.commons.node
+package cash.atto.commons
 
 class AttoJob(
     private val job: kotlinx.coroutines.Job,

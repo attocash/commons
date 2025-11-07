@@ -1,7 +1,9 @@
 package cash.atto.commons.worker
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlin.time.Duration
 
+@JsExportForJs
 expect class AttoWorkerAsyncBuilder private constructor(
     url: String,
 ) {
@@ -19,8 +21,4 @@ expect class AttoWorkerAsyncBuilder private constructor(
     fun retryEverySeconds(value: Long): AttoWorkerAsyncBuilder
 
     fun build(): AttoWorkerAsync
-
-    companion object {
-        fun remote(url: String): AttoWorkerAsyncBuilder
-    }
 }

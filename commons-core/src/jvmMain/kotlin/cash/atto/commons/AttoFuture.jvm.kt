@@ -1,4 +1,4 @@
-package cash.atto.commons.node
+package cash.atto.commons
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await

@@ -87,6 +87,7 @@ kotlin {
                 api(project(":commons-node-remote"))
                 api(project(":commons-worker"))
                 api(project(":commons-worker-remote"))
+                api(project(":commons-wallet"))
             }
         }
         val jsMain by getting

@@ -1,13 +1,19 @@
-package cash.atto.commons.worker
+package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.await
 import kotlinx.coroutines.promise
 import kotlin.js.Promise
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
 actual class AttoFuture<T> internal constructor(
-    internal val promise: Promise<T>,
+    private val promise: Promise<T>,
 ) {
     fun asPromise() = promise
 }
 
 actual fun <T> CoroutineScope.submit(block: suspend () -> T): AttoFuture<T> = AttoFuture(promise { block() })
+
+actual suspend fun <T> AttoFuture<T>.await(): T = this.asPromise().await()

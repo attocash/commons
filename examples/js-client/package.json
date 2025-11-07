@@ -1,0 +1,13 @@
+{
+  "name": "atto-js-client-example",
+  "version": "1.0.0",
+  "description": "Atto JS Client Example",
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "node main.mjs"
+  },
+  "keywords": ["atto", "crypto"],
+  "author": "",
+  "license": "MIT"
+}

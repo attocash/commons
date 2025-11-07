@@ -1,12 +1,11 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.utils.JsExportForJs
+
+@JsExportForJs
 expect class AttoNodeClientAsyncBuilder private constructor(
     url: String,
 ) {
-    companion object {
-        fun remote(url: String): AttoNodeClientAsyncBuilder
-    }
-
     fun headers(value: Map<String, String>): AttoNodeClientAsyncBuilder
 
     fun header(

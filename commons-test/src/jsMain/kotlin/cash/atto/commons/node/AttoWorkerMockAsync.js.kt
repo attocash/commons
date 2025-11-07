@@ -1,5 +1,7 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoFuture
+import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -10,7 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 actual class AttoWorkerMockAsync internal actual constructor(
     private val mock: AttoWorkerMock,
     dispatcher: CoroutineDispatcher,
-) : AutoCloseable {
+) {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
     actual val baseUrl: String
@@ -18,5 +20,5 @@ actual class AttoWorkerMockAsync internal actual constructor(
 
     actual fun start(): AttoFuture<Any> = scope.submit { mock.start() }
 
-    actual override fun close(): Unit = mock.close()
+    actual fun close(): Unit = mock.close()
 }

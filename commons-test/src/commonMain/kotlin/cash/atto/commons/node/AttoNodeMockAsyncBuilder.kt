@@ -1,9 +1,12 @@
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoFuture
 import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.utils.JsExportForJs
 
-expect class AttoNodeMockAsyncBuilder internal constructor(
+@JsExportForJs
+expect class AttoNodeMockAsyncBuilder(
     privateKey: AttoPrivateKey,
 ) {
     fun name(value: String): AttoNodeMockAsyncBuilder

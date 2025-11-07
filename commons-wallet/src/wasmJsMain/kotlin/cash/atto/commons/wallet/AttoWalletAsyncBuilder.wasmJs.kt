@@ -5,15 +5,17 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoSeed
 import cash.atto.commons.AttoSigner
-import cash.atto.commons.node.AttoFuture
+import cash.atto.commons.await
 import cash.atto.commons.node.AttoNodeClientAsync
-import cash.atto.commons.node.await
 import cash.atto.commons.node.monitor.AttoAccountMonitorAsync
 import cash.atto.commons.toSigner
+import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.worker.AttoWorkerAsync
 import kotlinx.coroutines.Dispatchers
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
+@JsExportForJs
 actual class AttoWalletAsyncBuilder actual constructor(
     private val clientAsync: AttoNodeClientAsync,
     private val workerAsync: AttoWorkerAsync,
@@ -24,9 +26,9 @@ actual class AttoWalletAsyncBuilder actual constructor(
     private var retryAfter: Duration? = null
     private var defaultRepresentativeAddressProvider: (() -> AttoAddress)? = null
 
-    actual fun signerProvider(value: (AttoKeyIndex) -> AttoFuture<AttoSigner>): AttoWalletAsyncBuilder =
+    actual fun signerProvider(value: AttoSignerProvider): AttoWalletAsyncBuilder =
         apply {
-            signerProvider = { index -> value(index).await() }
+            signerProvider = { index -> value.get(index).await() }
         }
 
     actual fun signerProvider(value: AttoSeed): AttoWalletAsyncBuilder =
@@ -37,13 +39,13 @@ actual class AttoWalletAsyncBuilder actual constructor(
     actual fun enableAutoReceiver(
         monitor: AttoAccountMonitorAsync,
         minAmount: AttoAmount,
-        duration: Duration,
+        retryAfterSeconds: Int,
         defaultRepresentativeAddressProvider: () -> AttoAddress,
     ): AttoWalletAsyncBuilder =
         apply {
             this.monitor = monitor
             this.minAmount = minAmount
-            this.retryAfter = duration
+            this.retryAfter = retryAfterSeconds.seconds
             this.defaultRepresentativeAddressProvider = defaultRepresentativeAddressProvider
         }
 
