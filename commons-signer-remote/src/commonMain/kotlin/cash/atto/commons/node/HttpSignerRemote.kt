@@ -36,14 +36,15 @@ import kotlinx.serialization.json.Json
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+private val json =
+    Json {
+        ignoreUnknownKeys = true
+    }
+
 private val httpClient =
     HttpClient {
         install(ContentNegotiation) {
-            json(
-                Json {
-                    ignoreUnknownKeys = true
-                },
-            )
+            json(json)
         }
         install(HttpTimeout)
 
