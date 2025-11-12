@@ -53,7 +53,7 @@ internal class AttoAddressTest {
     @Test
     fun `should parse path`() {
         // when
-        val address = AttoAddress.parsePath(expectedAddress.path)
+        val address = AttoAddress.parse(expectedAddress.path)
 
         // then
         assertTrue(AttoAddress.isValidPath(expectedAddress.path))
