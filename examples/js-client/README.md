@@ -1,23 +1,26 @@
 # Atto JavaScript Client Example
 
-This example demonstrates how to use the Atto Commons JavaScript library to create wallets, manage accounts, and perform transactions using Node.js.
+This example demonstrates how to use the Atto Commons JavaScript library to create wallets, manage accounts, and perform
+transactions using Node.js.
 
 ## Prerequisites
 
 - Node.js (version 18 or higher recommended)
-- The Atto Commons project built with JS target
+- A working internet connection to fetch npm packages and images
+- Docker or Podman installed and running
 
 ## Setup
 
-Build the JavaScript libraries from the project root:
-   ```bash
-   ./gradlew :commons-js:jsNodeProductionLibraryDistribution
-   ./gradlew :commons-test:jsNodeProductionLibraryDistribution
-   ```
+Install the released npm packages in this directory:
+
+```bash
+npm install @attocash/commons-js @attocash/commons-test
+```
 
 ## Running the Example
 
 Execute the example:
+
 ```bash
 node main.mjs
 ```
@@ -44,10 +47,3 @@ This example mirrors the functionality of the Java client example:
 - **Account management** (opening, checking balances)
 - **Transaction sending** between accounts
 - **Real-time monitoring** of transactions and account entries
-
-## Important Notes
-
-- The example uses **unreleased library versions** from `build/dist/js/productionLibrary/`
-- It imports from **commons-js** (core functionality) and **commons-test** (mock servers)
-- The mock servers run locally and are cleaned up automatically
-- All operations use the async/await pattern for JavaScript promises

@@ -1,6 +1,5 @@
 import {createRequire} from 'node:module';
 
-// Import from commons-js build output
 import {
   AttoAccountEntryMonitorAsyncBuilder,
   AttoAccountMonitorAsyncBuilder,
@@ -20,13 +19,12 @@ import {
   toPrivateKey,
   toPublicKey,
   toSeedAsync,
-} from '../../commons-js/build/dist/js/productionLibrary/index.mjs';
+} from '@attocash/commons-js';
 
-// Import from commons-test build output
 import {
   AttoNodeMockAsyncBuilder,
   AttoWorkerMockAsyncBuilder,
-} from '../../commons-test/build/dist/js/productionLibrary/commons-commons-test.mjs';
+} from '@attocash/commons-test';
 
 // Expose require for Ktor runtime
 globalThis.require = createRequire(import.meta.url);

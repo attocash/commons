@@ -2,10 +2,11 @@ HELP.md
 .gradle
 .kotlin
 build/
-**/.target/
+**/target/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+**/node_modules
 
 ### STS ###
 .apt_generated
