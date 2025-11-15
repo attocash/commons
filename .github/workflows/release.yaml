@@ -48,9 +48,14 @@ jobs:
       - name: Publish commons-js
         working-directory: ./commons-js/build/dist/js/productionLibrary
         run: |
-          VERSION=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/v//")
+          VERSION=${GITHUB_REF#refs/tags/v}
+          MAJOR=${VERSION%%.*}
+          TAG="v$MAJOR"
+
+          echo "Publishing version $VERSION with tag $TAG"
+
           npm version "$VERSION"
-          npm publish --access public
+          npm publish --access public --tag "$TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
