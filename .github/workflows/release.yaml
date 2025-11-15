@@ -50,7 +50,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           MAJOR=${VERSION%%.*}
-          TAG="v$MAJOR"
+          TAG="v${MAJOR}-line"
 
           echo "Publishing version $VERSION with tag $TAG"
 
