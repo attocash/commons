@@ -81,6 +81,7 @@ jobs:
       - name: release jar
         run: |
           VERSION=$(git rev-parse --short HEAD)
+          echo "Version: $VERSION"
           ./gradlew publishToSonatype --stacktrace -P version="$VERSION-SNAPSHOT"
         env:
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
