@@ -40,7 +40,7 @@ dependencies {
 
     compileOnly("org.springframework:spring-webflux")
 
-    compileOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.14")
+    compileOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0")
 
     compileOnly("org.springframework.data:spring-data-r2dbc")
 
