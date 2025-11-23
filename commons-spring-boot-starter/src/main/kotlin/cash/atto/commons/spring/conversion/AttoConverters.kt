@@ -5,12 +5,15 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
+import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoVersion
 import cash.atto.commons.AttoWork
+import cash.atto.commons.toAtto
 import cash.atto.commons.toBigInteger
 import cash.atto.commons.toBuffer
+import cash.atto.commons.toJavaInstant
 import cash.atto.commons.toULong
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -161,6 +164,13 @@ object AttoConverters {
             },
             object : Converter<ZonedDateTime, Instant> {
                 override fun convert(source: ZonedDateTime) = source.toInstant()
+            },
+            // AttoInstant <-> Instant (UTC)
+            object : Converter<AttoInstant, ZonedDateTime> {
+                override fun convert(source: AttoInstant) = source.toJavaInstant().atZone(ZoneOffset.UTC)
+            },
+            object : Converter<ZonedDateTime, AttoInstant> {
+                override fun convert(source: ZonedDateTime) = source.toInstant().toAtto()
             },
         )
 }
