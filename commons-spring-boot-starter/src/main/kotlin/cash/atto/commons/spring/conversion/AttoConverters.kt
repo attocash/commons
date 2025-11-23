@@ -128,10 +128,7 @@ object AttoConverters {
             // AttoAddress <-> String
             object : Converter<String, AttoAddress> {
                 override fun convert(source: String): AttoAddress {
-                    if (source.startsWith("atto://")) {
-                        AttoAddress.parse(source)
-                    }
-                    return AttoAddress.parsePath(source)
+                    return AttoAddress.parse(source)
                 }
             },
             object : Converter<AttoAddress, String> {
