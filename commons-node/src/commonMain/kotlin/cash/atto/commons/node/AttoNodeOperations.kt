@@ -11,6 +11,7 @@ import cash.atto.commons.AttoInstantAsStringSerializer
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.AttoVoterWeight
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
@@ -66,6 +67,8 @@ interface AttoNodeOperations {
     }
 
     suspend fun publish(transaction: AttoTransaction)
+
+    suspend fun voterWeight(address: AttoAddress): AttoVoterWeight
 }
 
 @OptIn(ExperimentalJsExport::class)

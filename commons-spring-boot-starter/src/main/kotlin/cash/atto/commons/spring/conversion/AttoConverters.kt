@@ -127,9 +127,7 @@ object AttoConverters {
             },
             // AttoAddress <-> String
             object : Converter<String, AttoAddress> {
-                override fun convert(source: String): AttoAddress {
-                    return AttoAddress.parse(source)
-                }
+                override fun convert(source: String): AttoAddress = AttoAddress.parse(source)
             },
             object : Converter<AttoAddress, String> {
                 override fun convert(source: AttoAddress) = source.toString()
