@@ -32,7 +32,7 @@ kotlin {
 dependencies {
     api(project(":commons-gatekeeper"))
 
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.7"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.0"))
 
     compileOnly("org.springframework.boot:spring-boot-autoconfigure")
 
@@ -40,11 +40,11 @@ dependencies {
 
     compileOnly("org.springframework:spring-webflux")
 
-    compileOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.14")
+    compileOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0")
 
     compileOnly("org.springframework.data:spring-data-r2dbc")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito")
