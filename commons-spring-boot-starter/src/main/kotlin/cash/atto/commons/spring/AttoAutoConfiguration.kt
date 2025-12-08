@@ -1,7 +1,7 @@
 package cash.atto.commons.spring
 
 import kotlinx.serialization.json.Json
-import org.springframework.boot.http.codec.CodecCustomizer
+import org.springframework.boot.web.codec.CodecCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.codec.json.KotlinSerializationJsonDecoder

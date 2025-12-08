@@ -32,7 +32,7 @@ kotlin {
 dependencies {
     api(project(":commons-gatekeeper"))
 
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.0"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
 
     compileOnly("org.springframework.boot:spring-boot-autoconfigure")
 
@@ -40,7 +40,7 @@ dependencies {
 
     compileOnly("org.springframework:spring-webflux")
 
-    compileOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0")
+    compileOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.14")
 
     compileOnly("org.springframework.data:spring-data-r2dbc")
 
