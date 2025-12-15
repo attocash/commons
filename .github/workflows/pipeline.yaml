@@ -59,7 +59,7 @@ jobs:
         run: npm pack
 
       - name: Upload .tgz to GitHub
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: attocash-commons-js-0.0.0-unspecified.tgz
           path: ./commons-js/build/dist/js/productionLibrary/attocash-commons-js-0.0.0-unspecified.tgz
