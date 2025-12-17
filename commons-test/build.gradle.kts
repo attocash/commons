@@ -88,8 +88,8 @@ kotlin {
 
         val jvmMain by getting {
             dependencies {
-                implementation("org.testcontainers:junit-jupiter:1.21.3")
-                implementation("org.testcontainers:mysql:1.21.3")
+                implementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
+                implementation("org.testcontainers:testcontainers-mysql:2.0.3")
                 implementation("com.mysql:mysql-connector-j:9.5.0")
             }
         }
