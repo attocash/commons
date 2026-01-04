@@ -1,13 +1,12 @@
 plugins {
-    val kotlinVersion = "2.2.21"
-    id("org.jetbrains.kotlin.multiplatform") version kotlinVersion apply false
-    id("org.jetbrains.kotlin.native.cocoapods") version kotlinVersion apply false
-    id("org.jetbrains.kotlin.plugin.spring") version kotlinVersion apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.cocoapods) apply false
+    alias(libs.plugins.kotlin.spring) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
 
-    id("org.jetbrains.dokka") version "2.1.0"
-    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.nexus.publish)
+    alias(libs.plugins.ktlint)
 }
 
 group = "cash.atto"

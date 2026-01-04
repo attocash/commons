@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("jvm")
-    kotlin("plugin.spring")
+    alias(libs.plugins.kotlin.spring)
 
     id("maven-publish")
     signing
@@ -32,7 +32,7 @@ kotlin {
 dependencies {
     api(project(":commons-gatekeeper"))
 
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.0"))
+    implementation(platform(libs.spring.boot.dependencies))
 
     compileOnly("org.springframework.boot:spring-boot-autoconfigure")
 
@@ -40,11 +40,11 @@ dependencies {
 
     compileOnly("org.springframework:spring-webflux")
 
-    compileOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0")
+    compileOnly(libs.springdoc.openapi.webflux)
 
     compileOnly("org.springframework.data:spring-data-r2dbc")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito")
@@ -53,7 +53,7 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     testRuntimeOnly("io.r2dbc:r2dbc-h2")
-    testImplementation("io.mockk:mockk:1.14.7")
+    testImplementation(libs.mockk)
 }
 
 tasks.test { useJUnitPlatform() }

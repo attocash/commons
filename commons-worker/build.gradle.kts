@@ -2,9 +2,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("plugin.serialization")
-
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
@@ -82,15 +81,15 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":commons-core"))
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+                api(libs.kotlinx.coroutines.core)
 
-                implementation("io.github.oshai:kotlin-logging:7.0.13")
+                implementation(libs.kotlin.logging)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
         val jvmMain by getting
