@@ -1,9 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("plugin.serialization")
-
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
@@ -36,33 +35,31 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val ktorVersion = "3.3.2"
-
         val commonMain by getting {
             dependencies {
                 api(project(":commons-gatekeeper"))
                 api(project(":commons-worker"))
 
-                implementation("io.ktor:ktor-client-logging:$ktorVersion")
-                implementation("io.ktor:ktor-serialization:$ktorVersion")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-                implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.serialization)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.server.status.pages)
 
-                implementation("io.github.oshai:kotlin-logging:7.0.13")
+                implementation(libs.kotlin.logging)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("io.ktor:ktor-server-cio:$ktorVersion")
-                implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+                implementation(libs.ktor.server.cio)
+                implementation(libs.ktor.server.content.negotiation)
             }
         }
 
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-cio:$ktorVersion")
+                implementation(libs.ktor.client.cio)
             }
         }
 

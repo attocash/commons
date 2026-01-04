@@ -2,9 +2,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("plugin.serialization")
-
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
@@ -64,7 +63,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val ktorVersion = "3.3.2"
         val commonMain by getting {
             dependencies {
 
@@ -72,25 +70,25 @@ kotlin {
                 api(project(":commons-node-remote"))
                 api(project(":commons-worker-remote"))
                 api(kotlin("test"))
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+                api(libs.kotlinx.coroutines.core)
+                api(libs.kotlinx.coroutines.test)
 
-                implementation("io.github.oshai:kotlin-logging:7.0.13")
+                implementation(libs.kotlin.logging)
 
-                implementation("io.ktor:ktor-client-logging:$ktorVersion")
-                implementation("io.ktor:ktor-serialization:$ktorVersion")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.serialization)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.content.negotiation)
 
-                implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+                implementation(libs.ktor.server.content.negotiation)
             }
         }
 
         val jvmMain by getting {
             dependencies {
-                implementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
-                implementation("org.testcontainers:testcontainers-mysql:2.0.3")
-                implementation("com.mysql:mysql-connector-j:9.5.0")
+                implementation(libs.testcontainers.junit.jupiter)
+                implementation(libs.testcontainers.mysql)
+                implementation(libs.mysql.connector)
             }
         }
 

@@ -2,9 +2,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("plugin.serialization")
-
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.benchmark)
 }
 
 group = "cash.atto"

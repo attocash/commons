@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
+    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
@@ -37,7 +37,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":commons-worker"))
-                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.14")
+                implementation(libs.kotlinx.benchmark.runtime)
             }
         }
         val commonTest by getting {
@@ -47,7 +47,7 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation("org.jocl:jocl:2.0.5")
+                implementation(libs.jocl)
             }
         }
         val jvmTest by getting {

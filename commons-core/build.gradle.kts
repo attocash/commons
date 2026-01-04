@@ -2,10 +2,9 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlin.serialization)
     kotlin("plugin.allopen")
-
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
+    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
@@ -82,26 +81,26 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
-                api("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
-                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.14")
+                api(libs.kotlinx.coroutines.core)
+                api(libs.kotlinx.datetime)
+                api(libs.kotlinx.io.core)
+                api(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.benchmark.runtime)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(project(":commons-worker"))
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.9.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.serialization.protobuf)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
         val jvmMain by getting {
             dependencies {
-                implementation("org.bouncycastle:bcprov-jdk18on:1.82")
-                implementation("io.swagger.core.v3:swagger-annotations-jakarta:2.2.40")
+                implementation(libs.bouncycastle)
+                implementation(libs.swagger.annotations)
             }
         }
         val jvmTest by getting {
@@ -109,7 +108,7 @@ kotlin {
             }
         }
 
-        val stablelibVersion = "1.0.1"
+        val stablelibVersion = libs.versions.stablelib.get()
 
         val jsMain by getting {
             dependencies {
@@ -128,7 +127,7 @@ kotlin {
 
         val wasmJsMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-browser:0.5.0")
+                implementation(libs.kotlinx.browser)
 
                 implementation(npm("@stablelib/sha256", stablelibVersion))
                 implementation(npm("@stablelib/sha512", stablelibVersion))

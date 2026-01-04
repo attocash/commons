@@ -2,9 +2,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("plugin.serialization")
-
-    id("org.jetbrains.kotlinx.benchmark") version "0.4.14"
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
@@ -87,8 +86,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val ktorVersion = "3.3.2"
-        val coroutinesVersion = "1.10.2"
         val commonMain by getting {
             dependencies {
                 api(project(":commons-core"))
@@ -97,27 +94,27 @@ kotlin {
                 api(project(":commons-worker-remote"))
                 api(project(":commons-gatekeeper"))
 
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+                api(libs.kotlinx.coroutines.core)
 
-                implementation("io.github.oshai:kotlin-logging:7.0.13")
+                implementation(libs.kotlin.logging)
 
-                implementation("io.ktor:ktor-client-logging:$ktorVersion")
-                implementation("io.ktor:ktor-serialization:$ktorVersion")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.serialization)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.content.negotiation)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(project(":commons-test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
-                implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.ktor.server.content.negotiation)
             }
         }
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-cio:$ktorVersion")
+                implementation(libs.ktor.client.cio)
             }
         }
 
@@ -125,15 +122,15 @@ kotlin {
             dependencies {
                 implementation(project(":commons-gatekeeper-test"))
 
-                implementation("com.auth0:java-jwt:4.5.0")
+                implementation(libs.java.jwt)
 
-                implementation("org.slf4j:slf4j-simple:2.0.17")
+                implementation(libs.slf4j.simple)
             }
         }
 
         val jsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js:$ktorVersion")
+                implementation(libs.ktor.client.js)
             }
         }
 
@@ -145,7 +142,7 @@ kotlin {
 
         val wasmJsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js:$ktorVersion")
+                implementation(libs.ktor.client.js)
             }
         }
     }
