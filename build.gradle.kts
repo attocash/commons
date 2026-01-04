@@ -18,7 +18,7 @@ repositories {
 }
 allprojects {
     apply {
-        if (name != "commons-spring-boot-starter") {
+        if (name != "commons-spring-boot-starter" && name != rootProject.name) {
             apply(plugin = "org.jetbrains.kotlin.multiplatform")
         }
         plugin("org.jetbrains.dokka")
