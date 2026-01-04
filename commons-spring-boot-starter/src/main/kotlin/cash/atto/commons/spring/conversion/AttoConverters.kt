@@ -167,5 +167,12 @@ object AttoConverters {
             object : Converter<ZonedDateTime, AttoInstant> {
                 override fun convert(source: ZonedDateTime) = source.toInstant().toAtto()
             },
+            // AttoInstant <-> Long
+            object : Converter<AttoInstant, Long> {
+                override fun convert(source: AttoInstant) = source.toEpochMilliseconds()
+            },
+            object : Converter<Long, AttoInstant> {
+                override fun convert(source: Long) = AttoInstant.fromEpochMilliseconds(source)
+            },
         )
 }
