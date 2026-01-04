@@ -22,7 +22,7 @@ testcontainers = "2.0.3"
 mockk = "1.14.7"
 
 # Security
-bouncycastle = "1.82"
+bouncycastle = "1.83"
 java-jwt = "4.5.0"
 
 # Database
