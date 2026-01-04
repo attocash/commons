@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlin.jvm.JvmOverloads
 
 @JsExportForJs
 class AttoTransactionMonitorAsync(
@@ -19,7 +18,6 @@ class AttoTransactionMonitorAsync(
 ) : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
-    @JvmOverloads
     fun onTransaction(
         onTransaction: AttoConsumer<AttoTransaction>,
         onCancel: AttoConsumer<Exception?>,
