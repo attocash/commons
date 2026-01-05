@@ -29,7 +29,7 @@ java-jwt = "4.5.0"
 mysql-connector = "9.5.0"
 
 # OpenCL
-jocl = "2.0.5"
+jocl = "2.0.6"
 
 # Spring
 spring-boot = "4.0.1"
