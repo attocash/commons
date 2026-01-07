@@ -30,8 +30,7 @@ data class AttoNodeMockConfiguration(
     val genesisTransaction: AttoTransaction,
     val privateKey: AttoPrivateKey,
     val name: String = "node",
-    // TODO: change to live
-    val image: String = "ghcr.io/attocash/node:c13a5bd4c44d06810b6f5b6baa222154f16d680d",
+    val image: String = "ghcr.io/attocash/node:live",
     val mysqlImage: String = "mysql:8.4",
     val dbName: String = "node",
     val dbUser: String = "root",
