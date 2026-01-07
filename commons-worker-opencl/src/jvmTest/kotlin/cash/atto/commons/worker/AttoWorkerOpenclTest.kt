@@ -7,7 +7,6 @@ import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.fromHexToByteArray
 import cash.atto.commons.isValid
 import kotlinx.coroutines.runBlocking
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -15,10 +14,9 @@ class AttoWorkerOpenclTest {
     private val hash = AttoHash("0000000000000000000000000000000000000000000000000000000000000000".fromHexToByteArray())
 
     companion object {
-        private val worker = AttoWorker.opencl(1U)
+        private val worker = AttoWorker.opencl()
     }
 
-    @Ignore("OpenCL stopped working in Github actions")
     @Test
     fun `should perform work with opencl`() =
         runBlocking {
