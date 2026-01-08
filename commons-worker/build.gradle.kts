@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.serialization)
+    kotlin("plugin.allopen")
     alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
@@ -30,6 +31,9 @@ kotlin {
     jvm {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_1_8
+        }
+        compilations.create("benchmark") {
+            associateWith(this@jvm.compilations.getByName("main"))
         }
     }
 
@@ -97,20 +101,24 @@ kotlin {
 
         val jsMain by getting
         val jsTest by getting
+
+        val jvmBenchmark by getting {
+            dependencies {
+                implementation(libs.kotlinx.benchmark.runtime)
+            }
+        }
     }
 }
 
-// benchmark {
-//    targets {
-//        register("jvm")
-//    }
-// }
+benchmark {
+    targets {
+        register("jvmBenchmark")
+    }
+}
 
-// benchmark {
-//    targets {
-//        register("benchmarks")
-//    }
-// }
+allOpen {
+    annotation("org.openjdk.jmh.annotations.State")
+}
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")

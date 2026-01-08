@@ -3,8 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.serialization)
-    kotlin("plugin.allopen")
-    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
@@ -85,7 +83,6 @@ kotlin {
                 api(libs.kotlinx.datetime)
                 api(libs.kotlinx.io.core)
                 api(libs.kotlinx.serialization.core)
-                implementation(libs.kotlinx.benchmark.runtime)
             }
         }
         val commonTest by getting {
@@ -143,22 +140,6 @@ kotlin {
         }
     }
 }
-
-// benchmark {
-//    targets {
-//        register("jvm")
-//    }
-// }
-
-allOpen {
-    annotation("org.openjdk.jmh.annotations.State")
-}
-
-// benchmark {
-//    targets {
-//        register("benchmarks")
-//    }
-// }
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
