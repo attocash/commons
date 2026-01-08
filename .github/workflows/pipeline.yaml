@@ -19,7 +19,7 @@ jobs:
 
       - name: opencl
         run: |
-          sudo apt-get install -y ocl-icd-opencl pocl-opencl-icd clinfo
+          sudo apt-get install -y ocl-icd-libopencl1 pocl-opencl-icd clinfo
           clinfo
 
       - uses: browser-actions/setup-chrome@v2
