@@ -34,7 +34,6 @@ fun AttoBlock.getTarget(): AttoWorkTarget =
     when (this) {
         is AttoOpenBlock -> AttoWorkTarget(this.publicKey.value)
         is PreviousSupport -> AttoWorkTarget(this.previous.value)
-        else -> throw IllegalArgumentException("Unsupported block type $this")
     }
 
 @OptIn(ExperimentalJsExport::class)
