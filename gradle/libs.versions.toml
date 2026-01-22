@@ -32,7 +32,7 @@ mysql-connector = "9.5.0"
 jocl = "2.0.6"
 
 # Spring
-spring-boot = "4.0.1"
+spring-boot = "4.0.2"
 springdoc-openapi = "3.0.1"
 
 # Swagger
