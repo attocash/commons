@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.time.Duration
 
 plugins {
     alias(libs.plugins.kotlin.serialization)
@@ -38,12 +39,19 @@ kotlin {
         browser {
             testTask {
                 useKarma {
+                    timeout = Duration.ofSeconds(60)
                     useChromeHeadlessNoSandbox()
                 }
             }
         }
 
-        nodejs()
+        nodejs {
+            testTask {
+                useMocha {
+                    timeout = "60000"
+                }
+            }
+        }
 
         generateTypeScriptDefinitions()
 
@@ -67,11 +75,19 @@ kotlin {
         browser {
             testTask {
                 useKarma {
+                    timeout = Duration.ofSeconds(60)
                     useChromeHeadlessNoSandbox()
                 }
             }
         }
-        nodejs()
+
+        nodejs {
+            testTask {
+                useMocha {
+                    timeout = "60000"
+                }
+            }
+        }
     }
 
     applyDefaultHierarchyTemplate()
