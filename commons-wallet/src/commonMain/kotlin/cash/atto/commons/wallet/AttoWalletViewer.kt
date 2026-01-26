@@ -71,9 +71,9 @@ class AttoWalletViewer(
         scope.launch {
             while (isActive) {
                 try {
-                    val fromHeight = accountEntryRepository.last(publicKey)?.height ?: AttoHeight(1U)
+                    val fromHeight = accountEntryRepository.last(publicKey)?.height ?: AttoHeight(0U)
 
-                    client.accountEntryStream(publicKey, fromHeight).collect {
+                    client.accountEntryStream(publicKey, fromHeight + 1U).collect {
                         _accountEntryFlow.emit(it)
                     }
                     break
@@ -112,8 +112,9 @@ class AttoWalletViewer(
         scope.launch {
             while (isActive) {
                 try {
-                    val fromHeight = transactionRepository.last(publicKey)?.height ?: AttoHeight(1U)
-                    client.transactionStream(publicKey, fromHeight).collect {
+                    val fromHeight = transactionRepository.last(publicKey)?.height ?: AttoHeight(0U)
+
+                    client.transactionStream(publicKey, fromHeight + 1U).collect {
                         _transactionFlow.emit(it)
                     }
                 } catch (e: Exception) {
