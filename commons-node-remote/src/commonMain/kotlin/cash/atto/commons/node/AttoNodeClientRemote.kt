@@ -34,8 +34,8 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 import kotlin.jvm.JvmSynthetic
 import kotlin.time.Duration
@@ -103,14 +103,14 @@ private class AttoNodeClientRemote(
     }
 
     private inline fun <reified T> fetchStream(urlPath: String): Flow<T> =
-        flow {
+        channelFlow {
             val headers = headerProvider.invoke()
 
             httpClient
                 .prepareGet("$baseUrl/$urlPath") {
                     configure(headers, accept = "application/x-ndjson", timeout = Duration.INFINITE)
                 }.execute { response ->
-                    response.body<ByteReadChannel>().readStream<T> { emit(it) }
+                    response.body<ByteReadChannel>().readStream<T> { send(it) }
                 }
         }
 
@@ -131,7 +131,7 @@ private class AttoNodeClientRemote(
         urlPath: String,
         search: Any,
     ): Flow<T> =
-        flow {
+        channelFlow {
             val headers = headerProvider.invoke()
 
             httpClient
@@ -139,7 +139,7 @@ private class AttoNodeClientRemote(
                     configure(headers, accept = "application/x-ndjson", timeout = Duration.INFINITE)
                     setBody(search)
                 }.execute { response ->
-                    response.body<ByteReadChannel>().readStream<T> { emit(it) }
+                    response.body<ByteReadChannel>().readStream<T> { send(it) }
                 }
         }
 
