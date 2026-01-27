@@ -19,7 +19,7 @@ slf4j = "2.0.17"
 
 # Testing
 testcontainers = "2.0.3"
-mockk = "1.14.7"
+mockk = "1.14.9"
 
 # Security
 bouncycastle = "1.83"
