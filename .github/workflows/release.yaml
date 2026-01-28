@@ -50,7 +50,16 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           MAJOR=${VERSION%%.*}
-          TAG="v${MAJOR}-line"
+
+          # Get the latest version from npm to determine if this should be tagged as 'latest'
+          LATEST_VERSION=$(npm view @attocash/commons-js version 2>/dev/null || echo "0.0.0")
+          LATEST_MAJOR=${LATEST_VERSION%%.*}
+
+          if [ "$MAJOR" -ge "$LATEST_MAJOR" ]; then
+            TAG="latest"
+          else
+            TAG="v${MAJOR}-line"
+          fi
 
           echo "Publishing version $VERSION with tag $TAG"
 
