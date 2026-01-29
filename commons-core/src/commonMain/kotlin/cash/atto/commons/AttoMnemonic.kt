@@ -4,7 +4,9 @@ import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.utils.SecureRandom
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
+import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalJsStatic
+import kotlin.js.JsExport
 import kotlin.js.JsName
 import kotlin.js.JsStatic
 import kotlin.jvm.JvmStatic
@@ -35,10 +37,16 @@ private fun toEntropyWithChecksum(words: List<String>): ByteArray {
 internal expect fun checksum(entropy: ByteArray): Byte
 
 @JsExportForJs
+@OptIn(ExperimentalJsExport::class)
 class AttoMnemonic {
+    @OptIn(ExperimentalJsExport::class)
+    @JsExport.Ignore
     val words: List<String>
 
-    @JsName("fromWords")
+    val phrase: String
+        get() = words.joinToString(" ")
+
+    @JsExport.Ignore
     constructor(words: List<String>) {
         if (words.size != 24) {
             throw AttoMnemonicException("Mnemonic should have 24 words")
@@ -60,7 +68,7 @@ class AttoMnemonic {
         this.words = words.toList()
     }
 
-    @JsName("fromString")
+    @JsName("fromPhrase")
     constructor(words: String) : this(words.split(" "))
 
     @JsName("fromEntropy")

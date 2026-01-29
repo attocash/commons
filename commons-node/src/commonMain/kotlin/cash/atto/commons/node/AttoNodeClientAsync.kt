@@ -25,6 +25,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -37,7 +38,12 @@ class AttoNodeClientAsync(
     @JsExport.Ignore
     fun account(publicKey: AttoPublicKey): AttoFuture<AttoAccount?> = scope.submit { client.account(publicKey) }
 
+    @JsExport.Ignore
     fun account(addresses: Collection<AttoAddress>): AttoFuture<Collection<AttoAccount>> = scope.submit { client.account(addresses) }
+
+    @JvmSynthetic
+    fun account(addresses: Array<AttoAddress>): AttoFuture<Array<AttoAccount>> =
+        scope.submit { client.account(addresses.toList()).toTypedArray() }
 
     private inline fun <T> CoroutineScope.consumeStream(
         stream: Flow<T>,
