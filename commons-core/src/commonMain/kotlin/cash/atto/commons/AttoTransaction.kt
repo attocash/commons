@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalJsExport::class)
+
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
@@ -10,6 +12,8 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 @JsExportForJs
 @Serializable
@@ -31,6 +35,7 @@ data class AttoTransaction(
     companion object {
         const val SIZE = 72
 
+        @JsExport.Ignore
         fun fromBuffer(buffer: Buffer): AttoTransaction? {
             if (SIZE > buffer.size) {
                 return null
@@ -84,6 +89,7 @@ data class AttoTransaction(
      */
     fun getTotalSize(): Int = SIZE + block.type.size
 
+    @JsExport.Ignore
     override fun toBuffer(): Buffer {
         val serializedBlock = block.toBuffer()
         return Buffer().apply {

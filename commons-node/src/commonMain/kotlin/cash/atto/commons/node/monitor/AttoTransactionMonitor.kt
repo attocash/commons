@@ -16,7 +16,7 @@ class AttoTransactionMonitor(
 }
 
 fun AttoAccountMonitor.toTransactionMonitor(
-    heightProvider: (AttoAddress) -> AttoHeight = {
+    heightProvider: suspend (AttoAddress) -> AttoHeight = {
         AttoHeight.MIN
     },
 ): AttoTransactionMonitor = AttoTransactionMonitor(client, this, heightProvider)

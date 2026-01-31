@@ -1,11 +1,8 @@
 package cash.atto.commons.node
 
-import cash.atto.commons.AttoFuture
-import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlin.js.ExperimentalJsExport
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -17,15 +14,13 @@ actual class AttoWorkerMockAsyncBuilder actual constructor() {
 
     actual fun image(value: String): AttoWorkerMockAsyncBuilder = apply { this.image = value }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    actual fun build(): AttoFuture<AttoWorkerMockAsync> =
-        GlobalScope.submit {
-            val defaultConfiguration = AttoWorkerMockConfiguration()
-            val configuration =
-                defaultConfiguration.copy(
-                    name = name ?: defaultConfiguration.name,
-                    image = image ?: defaultConfiguration.image,
-                )
-            AttoWorkerMock(configuration).toAsync(Dispatchers.Default)
-        }
+    suspend fun build(): AttoWorkerMockAsync {
+        val defaultConfiguration = AttoWorkerMockConfiguration()
+        val configuration =
+            defaultConfiguration.copy(
+                name = name ?: defaultConfiguration.name,
+                image = image ?: defaultConfiguration.image,
+            )
+        return AttoWorkerMock(configuration).toAsync(Dispatchers.Default)
+    }
 }

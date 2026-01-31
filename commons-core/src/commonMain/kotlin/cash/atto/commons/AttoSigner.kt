@@ -1,5 +1,9 @@
 package cash.atto.commons
 
+import cash.atto.commons.utils.JsExportForJs
+import kotlin.js.JsName
+
+@JsExportForJs
 interface AttoSigner {
     companion object {}
 
@@ -7,18 +11,22 @@ interface AttoSigner {
     val publicKey: AttoPublicKey
     val address: AttoAddress
 
+    @JsName("signHash")
     suspend fun sign(hash: AttoHash): AttoSignature
 
+    @JsName("signBlock")
     suspend fun sign(block: AttoBlock): AttoSignature {
         checkPublicKey(block.publicKey)
         return sign(block.hash)
     }
 
+    @JsName("signVote")
     suspend fun sign(vote: AttoVote): AttoSignature {
         checkPublicKey(vote.publicKey)
         return sign(vote.hash)
     }
 
+    @JsName("signChallenge")
     suspend fun sign(
         challenge: AttoChallenge,
         timestamp: AttoInstant,

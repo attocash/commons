@@ -1,11 +1,8 @@
 package cash.atto.commons.node
 
-import cash.atto.commons.AttoFuture
-import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
+import kotlin.js.ExperimentalJsExport
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -13,12 +10,10 @@ actual class AttoWorkerMockAsync internal actual constructor(
     private val mock: AttoWorkerMock,
     dispatcher: CoroutineDispatcher,
 ) {
-    private val scope = CoroutineScope(dispatcher + SupervisorJob())
-
     actual val baseUrl: String
         get() = mock.baseUrl
 
-    actual fun start(): AttoFuture<Any> = scope.submit { mock.start() }
+    suspend fun start(): Any = mock.start()
 
     actual fun close(): Unit = mock.close()
 }

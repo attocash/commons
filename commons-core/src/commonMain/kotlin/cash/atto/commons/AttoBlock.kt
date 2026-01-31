@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalSerializationApi::class)
+@file:OptIn(ExperimentalSerializationApi::class, ExperimentalJsExport::class)
 
 package cash.atto.commons
 
@@ -9,13 +9,17 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.time.Duration.Companion.minutes
 
 val maxVersion = AttoVersion(0U)
 
 @JsExportForJs
 enum class AttoBlockType(
+    @JsExport.Ignore
     val code: UByte,
+    @JsExport.Ignore
     val size: Int,
 ) {
     UNKNOWN(UByte.MAX_VALUE, 0),
@@ -32,6 +36,7 @@ enum class AttoBlockType(
     companion object {
         private val map = entries.associateBy(AttoBlockType::code)
 
+        @JsExport.Ignore
         fun from(code: UByte): AttoBlockType = map[code] ?: UNKNOWN
     }
 }
@@ -64,9 +69,11 @@ sealed interface AttoBlock :
     val balance: AttoAmount
     val timestamp: AttoInstant
 
+    @JsExport.Ignore
     override fun toBuffer(): Buffer
 
     companion object {
+        @JsExport.Ignore
         fun fromBuffer(serializedBlock: Buffer): AttoBlock? {
             val type =
                 Buffer().let {
@@ -229,6 +236,7 @@ data class AttoSendBlock(
         }
     }
 
+    @JsExport.Ignore
     override fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeAttoBlockType(type)
@@ -299,6 +307,7 @@ data class AttoReceiveBlock(
     override val address = AttoAddress(algorithm, publicKey)
 
     companion object {
+        @JsExport.Ignore
         internal fun fromBuffer(serializedBlock: Buffer): AttoReceiveBlock? {
             if (AttoBlockType.RECEIVE.size > serializedBlock.size) {
                 return null
@@ -324,6 +333,7 @@ data class AttoReceiveBlock(
         }
     }
 
+    @JsExport.Ignore
     override fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeAttoBlockType(type)
@@ -372,6 +382,7 @@ data class AttoOpenBlock(
     val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)
 
     companion object {
+        @JsExport.Ignore
         internal fun fromBuffer(serializedBlock: Buffer): AttoOpenBlock? {
             if (AttoBlockType.OPEN.size > serializedBlock.size) {
                 return null
@@ -397,6 +408,7 @@ data class AttoOpenBlock(
         }
     }
 
+    @JsExport.Ignore
     override fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeAttoBlockType(type)
@@ -442,6 +454,7 @@ data class AttoChangeBlock(
     val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)
 
     companion object {
+        @JsExport.Ignore
         internal fun fromBuffer(serializedBlock: Buffer): AttoChangeBlock? {
             if (AttoBlockType.CHANGE.size > serializedBlock.size) {
                 return null
@@ -467,6 +480,7 @@ data class AttoChangeBlock(
         }
     }
 
+    @JsExport.Ignore
     override fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeAttoBlockType(type)

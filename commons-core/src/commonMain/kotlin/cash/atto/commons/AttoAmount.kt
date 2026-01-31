@@ -1,4 +1,5 @@
 @file:JvmName("AttoAmounts")
+@file:OptIn(ExperimentalJsStatic::class)
 
 package cash.atto.commons
 
@@ -10,6 +11,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalJsStatic
+import kotlin.js.JsExport
 import kotlin.js.JsName
 import kotlin.js.JsStatic
 import kotlin.jvm.JvmField
@@ -21,6 +23,7 @@ import kotlin.jvm.JvmSynthetic
 @JsExportForJs
 enum class AttoUnit(
     val prefix: String,
+    @JsExport.Ignore
     internal val scale: UByte,
 ) {
     ATTO("atto", 9U),
@@ -30,95 +33,108 @@ enum class AttoUnit(
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 @Serializable(with = AttoAmountAsULongSerializer::class)
-data class AttoAmount(
-    val raw: ULong,
-) : Comparable<AttoAmount> {
-    init {
-        if (raw > MAX_RAW) {
-            throw IllegalStateException("$raw exceeds the max amount of $MAX_RAW")
-        }
-    }
-
-    companion object {
-        private val MAX_RAW = 18_000_000_000_000_000_000UL
-
-        @JvmField
-        val MAX = AttoAmount(MAX_RAW)
-
-        private val MIN_RAW = 0UL
-
-        @JvmField
-        val MIN = AttoAmount(MIN_RAW)
-
-        private fun ULong.pow(exponent: Int): ULong {
-            var result = 1UL
-            repeat(exponent) {
-                result *= this
+data class AttoAmount
+    @JsExport.Ignore
+    constructor(
+        @JsExport.Ignore
+        val raw: ULong,
+    ) : Comparable<AttoAmount> {
+        init {
+            if (raw > MAX_RAW) {
+                throw IllegalStateException("$raw exceeds the max amount of $MAX_RAW")
             }
-            return result
         }
 
-        private fun scaleFactor(scale: UByte): ULong = 10UL.pow(scale.toInt())
+        companion object {
+            private val MAX_RAW = 18_000_000_000_000_000_000UL
 
-        @OptIn(ExperimentalJsStatic::class)
-        @JsStatic
-        @JvmStatic
-        fun from(
-            unit: AttoUnit,
-            string: String,
-        ): AttoAmount {
-            val parts = string.split('.')
-            val wholePart = parts[0].toULong()
+            @JvmField
+            @JsStatic
+            val MAX = AttoAmount(MAX_RAW)
+
+            @JsExport.Ignore
+            private val MIN_RAW = 0UL
+
+            @JvmField
+            @JsStatic
+            val MIN = AttoAmount(MIN_RAW)
+
+            private fun ULong.pow(exponent: Int): ULong {
+                var result = 1UL
+                repeat(exponent) {
+                    result *= this
+                }
+                return result
+            }
+
+            private fun scaleFactor(scale: UByte): ULong = 10UL.pow(scale.toInt())
+
+            @OptIn(ExperimentalJsStatic::class)
+            @JsStatic
+            @JvmStatic
+            fun from(
+                unit: AttoUnit,
+                string: String,
+            ): AttoAmount {
+                val parts = string.split('.')
+                val wholePart = parts[0].toULong()
+                val factor = scaleFactor(unit.scale)
+
+                var scaledValue = wholePart * factor
+
+                if (parts.size > 1) {
+                    val fractionalPart = parts[1].toULong()
+                    scaledValue += fractionalPart * factor / scaleFactor(parts[1].length.toUByte())
+                }
+                return AttoAmount(scaledValue)
+            }
+        }
+
+        @JsName("toFormattedString")
+        fun toString(unit: AttoUnit): String {
             val factor = scaleFactor(unit.scale)
+            val wholePart = raw / factor
 
-            var scaledValue = wholePart * factor
+            val fractionalPart = raw % factor
 
-            if (parts.size > 1) {
-                val fractionalPart = parts[1].toULong()
-                scaledValue += fractionalPart * factor / scaleFactor(parts[1].length.toUByte())
+            return if (fractionalPart == 0UL) {
+                wholePart.toString()
+            } else {
+                val fractionalStr = fractionalPart.toString().padStart(unit.scale.toInt(), '0').trimEnd('0')
+                "$wholePart.$fractionalStr"
             }
-            return AttoAmount(scaledValue)
         }
-    }
 
-    @JsName("toFormattedString")
-    fun toString(unit: AttoUnit): String {
-        val factor = scaleFactor(unit.scale)
-        val wholePart = raw / factor
-
-        val fractionalPart = raw % factor
-
-        return if (fractionalPart == 0UL) {
-            wholePart.toString()
-        } else {
-            val fractionalStr = fractionalPart.toString().padStart(unit.scale.toInt(), '0').trimEnd('0')
-            "$wholePart.$fractionalStr"
+        operator fun plus(amount: AttoAmount): AttoAmount {
+            val total = raw + amount.raw
+            if (total < raw || total < amount.raw) {
+                throw IllegalStateException("ULong overflow")
+            }
+            return AttoAmount(total)
         }
-    }
 
-    operator fun plus(amount: AttoAmount): AttoAmount {
-        val total = raw + amount.raw
-        if (total < raw || total < amount.raw) {
-            throw IllegalStateException("ULong overflow")
+        operator fun minus(amount: AttoAmount): AttoAmount {
+            val total = raw - amount.raw
+            if (total > raw) {
+                throw IllegalStateException("ULong underflow")
+            }
+            return AttoAmount(total)
         }
-        return AttoAmount(total)
+
+        override operator fun compareTo(other: AttoAmount): Int = this.raw.compareTo(other.raw)
+
+        override fun toString(): String = "$raw"
     }
-
-    operator fun minus(amount: AttoAmount): AttoAmount {
-        val total = raw - amount.raw
-        if (total > raw) {
-            throw IllegalStateException("ULong underflow")
-        }
-        return AttoAmount(total)
-    }
-
-    override operator fun compareTo(other: AttoAmount): Int = this.raw.compareTo(other.raw)
-
-    override fun toString(): String = "$raw"
-}
 
 @JvmSynthetic
-fun ULong.toAttoAmount(): AttoAmount = AttoAmount(this)
+fun ULong.toAttoAmount() = AttoAmount(this)
+
+@JvmSynthetic
+fun UInt.toAttoAmount() = this.toULong().toAttoAmount()
+
+fun Int.toAttoAmount() = this.toULong().toAttoAmount()
+
+fun Long.toAttoAmount() = this.toULong().toAttoAmount()
 
 @JsExportForJs
 fun String.toAttoAmount(): AttoAmount = AttoAmount(this.toULong())

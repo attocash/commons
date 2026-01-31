@@ -1,13 +1,9 @@
 package cash.atto.commons.node
 
-import cash.atto.commons.AttoFuture
 import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoTransaction
-import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -36,26 +32,21 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
 
     actual fun genesis(value: AttoTransaction?): AttoNodeMockAsyncBuilder = apply { genesis = value }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    actual fun build(): AttoFuture<AttoNodeMockAsync> =
-        GlobalScope.submit {
-            val defaultConfiguration =
-                AttoNodeMockConfiguration(
-                    genesisTransaction =
-                        genesis ?: run {
-                            AttoTransaction.createGenesis(privateKey)
-                        },
-                    privateKey = privateKey,
-                )
-            val configuration =
-                defaultConfiguration.copy(
-                    name = name ?: defaultConfiguration.name,
-                    image = image ?: defaultConfiguration.image,
-                    mysqlImage = mysqlImage ?: defaultConfiguration.mysqlImage,
-                    dbName = dbName ?: defaultConfiguration.dbName,
-                    dbUser = dbUser ?: defaultConfiguration.dbUser,
-                    dbPassword = dbPassword ?: defaultConfiguration.dbPassword,
-                )
-            return@submit AttoNodeMock(configuration).toAsync(Dispatchers.Default)
-        }
+    suspend fun build(): AttoNodeMockAsync {
+        val defaultConfiguration =
+            AttoNodeMockConfiguration(
+                genesisTransaction = genesis ?: AttoTransaction.createGenesis(privateKey),
+                privateKey = privateKey,
+            )
+        val configuration =
+            defaultConfiguration.copy(
+                name = name ?: defaultConfiguration.name,
+                image = image ?: defaultConfiguration.image,
+                mysqlImage = mysqlImage ?: defaultConfiguration.mysqlImage,
+                dbName = dbName ?: defaultConfiguration.dbName,
+                dbUser = dbUser ?: defaultConfiguration.dbUser,
+                dbPassword = dbPassword ?: defaultConfiguration.dbPassword,
+            )
+        return AttoNodeMock(configuration).toAsync(Dispatchers.Default)
+    }
 }

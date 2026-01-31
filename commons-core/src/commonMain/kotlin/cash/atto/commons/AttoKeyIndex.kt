@@ -3,15 +3,20 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmSynthetic
 
+@OptIn(ExperimentalJsExport::class)
 @JsExportForJs
-data class AttoKeyIndex(
-    val value: UInt,
-) {
-    fun toInt(): Int = value.toInt()
-}
+data class AttoKeyIndex
+    @JsExport.Ignore
+    constructor(
+        val value: UInt,
+    ) {
+        fun toInt(): Int = value.toInt()
+    }
 
 @JvmSynthetic
 operator fun AttoKeyIndex.compareTo(other: AttoKeyIndex) = value.compareTo(other.value)

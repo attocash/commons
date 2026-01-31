@@ -18,39 +18,41 @@ import kotlin.time.Instant
 
 @JsExportForJs
 @Serializable(with = AttoInstantAsLongSerializer::class)
-data class AttoInstant(
-    val value: Instant,
-) : Comparable<AttoInstant> {
-    companion object {
+data class AttoInstant
+    @JsExport.Ignore
+    constructor(
+        val value: Instant,
+    ) : Comparable<AttoInstant> {
+        companion object {
+            @JsExport.Ignore
+            fun now(clock: Clock): AttoInstant = fromEpochMilliseconds(clock.now().toEpochMilliseconds())
+
+            /**
+             * To avoid opt in warn
+             */
+            fun now(): AttoInstant = now(Clock.System)
+
+            fun fromIso(value: String): AttoInstant = fromEpochMilliseconds(Instant.parse(value).toEpochMilliseconds())
+
+            fun fromEpochMilliseconds(value: Long): AttoInstant = AttoInstant(Instant.fromEpochMilliseconds(value))
+        }
+
         @JsExport.Ignore
-        fun now(clock: Clock): AttoInstant = fromEpochMilliseconds(clock.now().toEpochMilliseconds())
+        operator fun plus(duration: Duration): AttoInstant = AttoInstant(value.plus(duration))
 
-        /**
-         * To avoid opt in warn
-         */
-        fun now(): AttoInstant = now(Clock.System)
+        @JsExport.Ignore
+        operator fun minus(duration: Duration): AttoInstant = AttoInstant(value.minus(duration))
 
-        fun fromIso(value: String): AttoInstant = fromEpochMilliseconds(Instant.parse(value).toEpochMilliseconds())
+        @JsExport.Ignore
+        operator fun minus(another: AttoInstant): Duration = value - another.value
 
-        fun fromEpochMilliseconds(value: Long): AttoInstant = AttoInstant(Instant.fromEpochMilliseconds(value))
+        @JsExport.Ignore
+        override fun compareTo(other: AttoInstant): Int = value.compareTo(other.value)
+
+        fun toEpochMilliseconds(): Long = value.toEpochMilliseconds()
+
+        override fun toString(): String = value.toString()
     }
-
-    @JsExport.Ignore
-    operator fun plus(duration: Duration): AttoInstant = AttoInstant(value.plus(duration))
-
-    @JsExport.Ignore
-    operator fun minus(duration: Duration): AttoInstant = AttoInstant(value.minus(duration))
-
-    @JsExport.Ignore
-    operator fun minus(another: AttoInstant): Duration = value - another.value
-
-    @JsExport.Ignore
-    override fun compareTo(other: AttoInstant): Int = value.compareTo(other.value)
-
-    fun toEpochMilliseconds(): Long = value.toEpochMilliseconds()
-
-    override fun toString(): String = value.toString()
-}
 
 fun Instant.toAtto(): AttoInstant = AttoInstant(this)
 
