@@ -17,6 +17,7 @@ import cash.atto.commons.node.monitor.AttoAccountMonitor
 import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toAttoIndex
 import cash.atto.commons.toSigner
+import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.worker.AttoWorker
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
@@ -53,7 +54,7 @@ class AttoWallet(
     private val mutex = Mutex()
     private val accounts = WalletAccounts()
 
-    suspend fun openAccount(indexes: Collection<AttoKeyIndex>): Collection<Account> {
+    suspend fun openAccount(indexes: Collection<AttoKeyIndex>): Collection<AttoWalletAccount> {
         if (indexes.isEmpty()) return emptyList()
         mutex.withLock {
             val indexMap = mutableMapOf<AttoAddress, AttoKeyIndex>()
@@ -72,7 +73,7 @@ class AttoWallet(
 
             val newAccounts =
                 indexMap.map {
-                    Account(it.value, it.key, attoAccountMap[it.key])
+                    AttoWalletAccount(it.value, it.key, attoAccountMap[it.key])
                 }
 
             accounts.add(newAccounts)
@@ -84,7 +85,7 @@ class AttoWallet(
     suspend fun openAccount(
         fromIndex: AttoKeyIndex,
         toIndex: AttoKeyIndex,
-    ): Collection<Account> {
+    ): Collection<AttoWalletAccount> {
         require(fromIndex <= toIndex) { "fromIndex ($fromIndex) must be less than or equal to toIndex ($toIndex)" }
         val indexes =
             buildList {
@@ -97,7 +98,7 @@ class AttoWallet(
         return openAccount(indexes)
     }
 
-    suspend fun openAccount(index: AttoKeyIndex): Account = openAccount(index, index).first()
+    suspend fun openAccount(index: AttoKeyIndex): AttoWalletAccount = openAccount(index, index).first()
 
     suspend fun closeAccount(index: AttoKeyIndex) {
         mutex.withLock {
@@ -210,27 +211,14 @@ class AttoWallet(
         }
     }
 
-    class Account(
-        val index: AttoKeyIndex,
-        val address: AttoAddress,
-        @Volatile var account: AttoAccount? = null,
-    ) {
-        private val mutex = Mutex()
-
-        suspend fun <T> withLock(action: suspend () -> T): T =
-            mutex.withLock {
-                action.invoke()
-            }
-    }
-
     private class WalletAccounts {
-        private val accountAddressMap: MutableMap<AttoAddress, Account> = mutableMapOf()
-        private val accountIndexMap: MutableMap<AttoKeyIndex, Account> = mutableMapOf()
+        private val accountAddressMap: MutableMap<AttoAddress, AttoWalletAccount> = mutableMapOf()
+        private val accountIndexMap: MutableMap<AttoKeyIndex, AttoWalletAccount> = mutableMapOf()
         private val addressesState = MutableStateFlow<Set<AttoAddress>>(emptySet())
 
         private val mutex = Mutex()
 
-        suspend fun add(accounts: Collection<Account>) {
+        suspend fun add(accounts: Collection<AttoWalletAccount>) {
             if (accounts.isEmpty()) return
             mutex.withLock {
                 val accounts =
@@ -247,18 +235,18 @@ class AttoWallet(
             }
         }
 
-        suspend fun add(account: Account) = add(listOf(account))
+        suspend fun add(account: AttoWalletAccount) = add(listOf(account))
 
         suspend fun contains(index: AttoKeyIndex) = mutex.withLock { accountIndexMap.containsKey(index) }
 
         suspend fun contains(address: AttoAddress) = mutex.withLock { accountAddressMap.containsKey(address) }
 
-        suspend fun get(index: AttoKeyIndex): Account =
+        suspend fun get(index: AttoKeyIndex): AttoWalletAccount =
             mutex.withLock {
                 accountIndexMap[index] ?: throw IllegalArgumentException("Account doesn't exist for index $index")
             }
 
-        suspend fun get(address: AttoAddress): Account =
+        suspend fun get(address: AttoAddress): AttoWalletAccount =
             mutex.withLock {
                 accountAddressMap[address] ?: throw IllegalArgumentException("Account doesn't exist for address $address")
             }
@@ -283,6 +271,20 @@ class AttoWallet(
 
         fun addressFlow(): Flow<Set<AttoAddress>> = addressesState.asStateFlow()
     }
+}
+
+@JsExportForJs
+class AttoWalletAccount(
+    val index: AttoKeyIndex,
+    val address: AttoAddress,
+    @Volatile var account: AttoAccount? = null,
+) {
+    private val mutex = Mutex()
+
+    internal suspend fun <T> withLock(action: suspend () -> T): T =
+        mutex.withLock {
+            action.invoke()
+        }
 }
 
 fun AttoWallet.Companion.create(

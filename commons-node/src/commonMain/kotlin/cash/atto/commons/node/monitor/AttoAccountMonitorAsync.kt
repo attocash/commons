@@ -1,58 +1,16 @@
 package cash.atto.commons.node.monitor
 
-import cash.atto.commons.AttoAccount
-import cash.atto.commons.AttoAddress
-import cash.atto.commons.AttoAmount
-import cash.atto.commons.AttoFuture
-import cash.atto.commons.AttoJob
-import cash.atto.commons.AttoReceivable
-import cash.atto.commons.node.AttoConsumer
-import cash.atto.commons.node.consumeStream
-import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
-import kotlin.js.JsName
-import kotlin.jvm.JvmOverloads
 
-@OptIn(ExperimentalJsExport::class)
 @JsExportForJs
-class AttoAccountMonitorAsync internal constructor(
-    @JsExport.Ignore
-    val monitor: AttoAccountMonitor,
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+expect class AttoAccountMonitorAsync internal constructor(
+    monitor: AttoAccountMonitor,
+    dispatcher: CoroutineDispatcher,
 ) : AutoCloseable {
-    private val scope = CoroutineScope(dispatcher + SupervisorJob())
+    val monitor: AttoAccountMonitor
 
-    @JsName("monitorMap")
-    fun monitor(addresses: Collection<AttoAddress>): AttoFuture<Unit> = scope.submit { monitor.monitor(addresses) }
-
-    @JsName("monitor")
-    fun monitor(address: AttoAddress): AttoFuture<Unit> = scope.submit { monitor.monitor(address) }
-
-    fun getAccounts(): AttoFuture<Collection<AttoAccount>> = scope.submit { monitor.getAccounts() }
-
-    @JvmOverloads
-    fun onReceivable(
-        minAmount: AttoAmount = AttoAmount.MIN,
-        onReceivable: AttoConsumer<AttoReceivable>,
-        onCancel: AttoConsumer<Exception?>,
-    ): AttoJob =
-        scope.consumeStream(
-            stream = monitor.receivableStream(minAmount),
-            onEach = { onReceivable.consume(it) },
-            onCancel = { onCancel.consume(it) },
-        )
-
-    override fun close() {
-        scope.cancel()
-    }
+    override fun close()
 }
 
-fun AttoAccountMonitor.toAsync(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoAccountMonitorAsync =
-    AttoAccountMonitorAsync(this, dispatcher)
+fun AttoAccountMonitor.toAsync(dispatcher: CoroutineDispatcher): AttoAccountMonitorAsync = AttoAccountMonitorAsync(this, dispatcher)

@@ -16,6 +16,7 @@ import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.time.Duration.Companion.milliseconds
 
 interface AttoNodeOperations {
@@ -101,10 +102,12 @@ data class AccountHeightSearch(
 @OptIn(ExperimentalJsExport::class)
 @Serializable
 @JsExportForJs
-data class HeightSearch(
-    val search: Collection<AccountHeightSearch>,
-) {
-    companion object {
-        fun fromArray(search: Array<AccountHeightSearch>): HeightSearch = HeightSearch(search.toList())
+data class HeightSearch
+    @JsExport.Ignore
+    constructor(
+        val search: Collection<AccountHeightSearch>,
+    ) {
+        companion object {
+            fun fromArray(search: Array<AccountHeightSearch>): HeightSearch = HeightSearch(search.toList())
+        }
     }
-}

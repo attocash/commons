@@ -5,7 +5,6 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoSeed
 import cash.atto.commons.AttoSigner
-import cash.atto.commons.await
 import cash.atto.commons.node.AttoNodeClientAsync
 import cash.atto.commons.node.monitor.AttoAccountMonitorAsync
 import cash.atto.commons.toSigner
@@ -28,7 +27,7 @@ actual class AttoWalletAsyncBuilder actual constructor(
 
     actual fun signerProvider(value: AttoSignerProvider): AttoWalletAsyncBuilder =
         apply {
-            signerProvider = { index -> value.get(index).await() }
+            signerProvider = { index -> value.get(index) }
         }
 
     actual fun signerProvider(value: AttoSeed): AttoWalletAsyncBuilder =
@@ -64,4 +63,8 @@ actual class AttoWalletAsyncBuilder actual constructor(
 
         return AttoWalletAsync(wallet, Dispatchers.Default)
     }
+}
+
+actual interface AttoSignerProvider {
+    suspend fun get(index: AttoKeyIndex): AttoSigner
 }

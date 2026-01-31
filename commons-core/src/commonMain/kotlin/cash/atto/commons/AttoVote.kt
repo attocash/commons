@@ -11,6 +11,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -34,6 +35,7 @@ data class AttoVote(
 
     fun isValid(): Boolean = version.value <= 0U
 
+    @JsExport.Ignore
     override fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeAttoVersion(version)

@@ -16,7 +16,7 @@ class AttoAccountEntryMonitor(
 }
 
 fun AttoAccountMonitor.toAccountEntryMonitor(
-    heightProvider: (AttoAddress) -> AttoHeight = {
+    heightProvider: suspend (AttoAddress) -> AttoHeight = {
         AttoHeight.MIN
     },
 ): AttoAccountEntryMonitor = AttoAccountEntryMonitor(client, this, heightProvider)

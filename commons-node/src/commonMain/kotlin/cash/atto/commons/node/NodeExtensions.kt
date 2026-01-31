@@ -2,6 +2,7 @@
 
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoJob
 import cash.atto.commons.AttoReceivable
@@ -46,6 +47,14 @@ fun AttoBlock.toJson(): String = json.encodeToString(this)
 fun String.toBlock(): AttoBlock = json.decodeFromString<AttoBlock>(this)
 
 @JsExportForJs
+@JsName("accountEntryToJson")
+fun AttoAccountEntry.toJson(): String = json.encodeToString(this)
+
+@JsExportForJs
+@JsName("accountEntryFromJson")
+fun String.toAccountEntry(): AttoAccountEntry = json.decodeFromString<AttoAccountEntry>(this)
+
+@JsExportForJs
 @JsName("fromByteArrayToTransactionJson")
 fun ByteArray.toTransactionJson(): String {
     val transaction = AttoTransaction.fromBuffer(this.toBuffer()) ?: throw IllegalArgumentException("Invalid transaction")
@@ -62,7 +71,7 @@ fun ByteArray.toBlockJson(): String {
 internal inline fun <T> CoroutineScope.consumeStream(
     stream: Flow<T>,
     crossinline onEach: suspend (T) -> Unit,
-    noinline onCancel: (Exception?) -> Unit,
+    noinline onCancel: suspend (Exception?) -> Unit,
 ): AttoJob =
     AttoJob(
         launch {

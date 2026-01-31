@@ -55,6 +55,8 @@ kotlin {
         compilerOptions {
             target = "es2015"
             useEsClasses = true
+            sourceMap = true
+            sourceMapEmbedSources = org.jetbrains.kotlin.gradle.dsl.JsSourceMapEmbedMode.SOURCE_MAP_SOURCE_CONTENT_ALWAYS
             freeCompilerArgs.addAll(
                 // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
                 "-Xir-per-file",

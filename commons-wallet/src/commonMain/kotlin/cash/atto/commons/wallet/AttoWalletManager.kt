@@ -147,7 +147,6 @@ class AttoWalletManager(
             when (block) {
                 is AttoOpenBlock -> block.publicKey.value
                 is PreviousSupport -> block.previous.value
-                else -> throw IllegalArgumentException("$block unsupported")
             }
 
         val transaction =

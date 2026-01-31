@@ -1,12 +1,12 @@
 package cash.atto.commons.node
 
-import cash.atto.commons.AttoFuture
-import cash.atto.commons.submit
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.future.future
+import java.util.concurrent.CompletableFuture
 
 @JsExportForJs
 actual class AttoWorkerMockAsync internal actual constructor(
@@ -18,7 +18,7 @@ actual class AttoWorkerMockAsync internal actual constructor(
     actual val baseUrl: String
         get() = mock.baseUrl
 
-    actual fun start(): AttoFuture<Any> = scope.submit { mock.start() }
+    fun start(): CompletableFuture<Any> = scope.future { mock.start() }
 
     actual override fun close() {
         try {

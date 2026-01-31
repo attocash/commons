@@ -5,7 +5,6 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoSeed
 import cash.atto.commons.AttoSigner
-import cash.atto.commons.await
 import cash.atto.commons.node.AttoNodeClientAsync
 import cash.atto.commons.node.monitor.AttoAccountMonitorAsync
 import cash.atto.commons.toAttoAmount
@@ -15,6 +14,8 @@ import cash.atto.commons.worker.AttoWorkerAsync
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.future.await
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -78,4 +79,9 @@ actual class AttoWalletAsyncBuilder actual constructor(
     fun build(executorService: ExecutorService): AttoWalletAsync = build(executorService.asCoroutineDispatcher())
 
     actual fun build(): AttoWalletAsync = build(Dispatchers.Default)
+}
+
+@JsExportForJs
+actual interface AttoSignerProvider {
+    suspend fun get(index: AttoKeyIndex): CompletableFuture<AttoSigner>
 }

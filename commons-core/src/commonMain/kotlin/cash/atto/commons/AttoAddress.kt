@@ -15,8 +15,10 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
 import kotlin.js.JsName
+import kotlin.js.JsStatic
 import kotlin.jvm.JvmName
 
 private const val SCHEMA = "atto://"
@@ -102,6 +104,8 @@ data class AttoAddress(
             return AttoAddress(algorithm, publicKey)
         }
 
+        @OptIn(ExperimentalJsStatic::class)
+        @JsStatic
         fun parse(value: String): AttoAddress {
             val address = if (value.startsWith(SCHEMA)) value else SCHEMA + value
             require(isValid(address)) { "$value is invalid" }

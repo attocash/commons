@@ -1,12 +1,12 @@
 package cash.atto.commons.node.monitor
 
 import cash.atto.commons.AttoAddress
-import cash.atto.commons.AttoFuture
 import cash.atto.commons.AttoHeight
-import cash.atto.commons.await
 import cash.atto.commons.node.AttoNodeClientAsync
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.await
+import kotlin.js.Promise
 
 @JsExportForJs
 actual class AttoTransactionMonitorAsyncBuilder actual constructor(
@@ -15,9 +15,9 @@ actual class AttoTransactionMonitorAsyncBuilder actual constructor(
 ) {
     private var heightProvider: suspend (AttoAddress) -> AttoHeight = { AttoHeight.MIN }
 
-    actual fun heightProvider(value: (AttoAddress) -> AttoFuture<AttoHeight>): AttoTransactionMonitorAsyncBuilder =
+    fun heightProvider(value: (AttoAddress) -> Promise<AttoHeight>): AttoTransactionMonitorAsyncBuilder =
         apply {
-            heightProvider = { value.invoke(it).await() }
+            heightProvider = { address -> value.invoke(address).await() }
         }
 
     actual fun build(): AttoTransactionMonitorAsync {
