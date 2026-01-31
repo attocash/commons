@@ -12,7 +12,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <atto.commons.version>6.0.0</atto.commons.version>
+        <atto.commons.version>6.3.0</atto.commons.version>
     </properties>
 
     <repositories>
@@ -47,7 +47,7 @@
         <dependency>
             <groupId>cash.atto</groupId>
             <artifactId>commons-test-jvm</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>${atto.commons.version}</version>
         </dependency>
         <dependency>
             <groupId>cash.atto</groupId>

@@ -25,12 +25,12 @@ public class Main {
         AttoPrivateKey genesisPrivateKey = AttoPrivateKeys.toPrivateKey(seed, genesisIndex);
 
         // Create and start AttoNodeMockAsync using its builder
-        AttoNodeMockAsync nodeMock = new AttoNodeMockAsyncBuilder(genesisPrivateKey).build().get();
+        AttoNodeMockAsync nodeMock = new AttoNodeMockAsyncBuilder(genesisPrivateKey).build();
         nodeMock.start().get();
         System.out.println("Node mock started at: " + nodeMock.getBaseUrl());
 
         // Create and start AttoWorkerMockAsync using its builder
-        AttoWorkerMockAsync workerMock = new AttoWorkerMockAsyncBuilder().build().get();
+        AttoWorkerMockAsync workerMock = new AttoWorkerMockAsyncBuilder().build();
         workerMock.start().get();
         System.out.println("Worker mock started at: " + workerMock.getBaseUrl());
 
@@ -112,22 +112,30 @@ public class Main {
             // Register transaction monitor to track all transactions
             System.out.println("\n=== Registering Transaction Monitor ===");
             AttoJob transactionJob = transactionMonitor.onTransaction(
-                transaction -> System.out.println("Transaction monitor received: " + transaction.getHash()),
+                transaction -> {
+                    System.out.println("Transaction monitor received: " + transaction.getHash());
+                    return CompletableFuture.completedFuture(null);
+                },
                 error -> {
                     if (error != null) {
                         System.err.println("Transaction monitor error: " + error.getMessage());
                     }
+                    return CompletableFuture.completedFuture(null);
                 }
             );
 
             // Register account entry monitor to track all account entries
             System.out.println("=== Registering Account Entry Monitor ===");
             AttoJob accountEntryJob = accountEntryMonitor.onAccountEntry(
-                entry -> System.out.println("Account entry monitor received: " + entry.getHash()),
+                entry -> {
+                    System.out.println("Account entry monitor received: " + entry.getHash());
+                    return CompletableFuture.completedFuture(null);
+                },
                 error -> {
                     if (error != null) {
                         System.err.println("Account entry monitor error: " + error.getMessage());
                     }
+                    return CompletableFuture.completedFuture(null);
                 }
             );
 
