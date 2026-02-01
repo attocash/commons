@@ -24,7 +24,7 @@ actual class AttoAccountEntryMonitorAsyncBuilder actual constructor(
         }
 
     fun build(dispatcher: CoroutineDispatcher): AttoAccountEntryMonitorAsync {
-        val accountEntryMonitor = AttoAccountEntryMonitor(nodeClient.client, accountMonitor.monitor, heightProvider)
+        val accountEntryMonitor = AttoAccountEntryMonitor(nodeClient.client, accountMonitor.accountMonitor, heightProvider)
         return AttoAccountEntryMonitorAsync(accountEntryMonitor, dispatcher)
     }
 

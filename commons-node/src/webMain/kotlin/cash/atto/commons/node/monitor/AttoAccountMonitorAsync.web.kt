@@ -18,18 +18,18 @@ import kotlin.js.JsName
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 actual class AttoAccountMonitorAsync internal actual constructor(
-    actual val monitor: AttoAccountMonitor,
+    actual val accountMonitor: AttoAccountMonitor,
     dispatcher: CoroutineDispatcher,
 ) : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
     @JsName("monitorCollection")
-    suspend fun monitor(addresses: Collection<AttoAddress>): Unit = monitor.monitor(addresses)
+    suspend fun monitor(addresses: Collection<AttoAddress>): Unit = accountMonitor.monitor(addresses)
 
-    @JsName("monitor")
-    suspend fun monitor(address: AttoAddress): Unit = monitor.monitor(address)
+    @JsName("monitorAddress")
+    suspend fun monitor(address: AttoAddress): Unit = accountMonitor.monitor(address)
 
-    suspend fun getAccounts(): Collection<AttoAccount> = monitor.getAccounts()
+    suspend fun getAccounts(): Collection<AttoAccount> = accountMonitor.getAccounts()
 
     fun onReceivable(
         minAmount: AttoAmount = AttoAmount.MIN,
@@ -37,7 +37,7 @@ actual class AttoAccountMonitorAsync internal actual constructor(
         onCancel: (Exception?) -> Any,
     ): AttoJob =
         scope.consumeStream(
-            stream = monitor.receivableStream(minAmount),
+            stream = accountMonitor.receivableStream(minAmount),
             onEach = { onReceivable.invoke(it) },
             onCancel = { onCancel.invoke(it) },
         )

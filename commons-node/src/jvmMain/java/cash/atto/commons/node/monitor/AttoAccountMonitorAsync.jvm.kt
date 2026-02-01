@@ -17,16 +17,16 @@ import java.util.concurrent.CompletableFuture
 
 @JsExportForJs
 actual class AttoAccountMonitorAsync internal actual constructor(
-    actual val monitor: AttoAccountMonitor,
+    actual val accountMonitor: AttoAccountMonitor,
     dispatcher: CoroutineDispatcher,
 ) : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
-    fun monitor(addresses: Collection<AttoAddress>): CompletableFuture<Unit> = scope.future { monitor.monitor(addresses) }
+    fun monitor(addresses: Collection<AttoAddress>): CompletableFuture<Unit> = scope.future { accountMonitor.monitor(addresses) }
 
-    fun monitor(address: AttoAddress): CompletableFuture<Unit> = scope.future { monitor.monitor(address) }
+    fun monitor(address: AttoAddress): CompletableFuture<Unit> = scope.future { accountMonitor.monitor(address) }
 
-    fun getAccounts(): CompletableFuture<Collection<AttoAccount>> = scope.future { monitor.getAccounts() }
+    fun getAccounts(): CompletableFuture<Collection<AttoAccount>> = scope.future { accountMonitor.getAccounts() }
 
     @JvmOverloads
     fun onReceivable(
@@ -35,7 +35,7 @@ actual class AttoAccountMonitorAsync internal actual constructor(
         onCancel: (Exception?) -> Any,
     ): AttoJob =
         scope.consumeStream(
-            stream = monitor.receivableStream(minAmount),
+            stream = accountMonitor.receivableStream(minAmount),
             onEach = { onReceivable.invoke(it) },
             onCancel = { onCancel.invoke(it) },
         )

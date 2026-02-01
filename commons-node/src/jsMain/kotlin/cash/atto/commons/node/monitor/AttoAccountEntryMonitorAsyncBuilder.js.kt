@@ -21,7 +21,7 @@ actual class AttoAccountEntryMonitorAsyncBuilder actual constructor(
         }
 
     actual fun build(): AttoAccountEntryMonitorAsync {
-        val accountEntryMonitor = AttoAccountEntryMonitor(nodeClient.client, accountMonitor.monitor, heightProvider)
+        val accountEntryMonitor = AttoAccountEntryMonitor(nodeClient.client, accountMonitor.accountMonitor, heightProvider)
         return AttoAccountEntryMonitorAsync(accountEntryMonitor, Dispatchers.Default)
     }
 }

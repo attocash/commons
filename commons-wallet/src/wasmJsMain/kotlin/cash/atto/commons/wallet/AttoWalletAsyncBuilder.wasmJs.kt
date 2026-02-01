@@ -53,7 +53,7 @@ actual class AttoWalletAsyncBuilder actual constructor(
 
         if (monitor != null) {
             wallet.startAutoReceiver(
-                monitor!!.monitor,
+                monitor!!.accountMonitor,
                 Dispatchers.Default,
                 minAmount!!,
                 retryAfter!!,

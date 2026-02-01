@@ -37,7 +37,7 @@ class AttoAccountMonitor internal constructor(
     suspend fun getAccounts(): Collection<AttoAccount> = client.account(state.getAddresses())
 
     suspend fun getAccount(address: AttoAddress): AttoAccount? {
-        require(state.getAddresses().contains(address)) { "Address $address not found in the monitor" }
+        require(state.getAddresses().contains(address)) { "Address $address not found in the accountMonitor" }
         return client.account(address.publicKey)
     }
 

@@ -316,20 +316,20 @@ fun AttoWallet.Companion.create(
     }
 
 /**
- * Keeps the monitor’s membership aligned with this wallet’s addresses.
+ * Keeps the accountMonitor’s membership aligned with this wallet’s addresses.
  *
  * Behavior
  * - Subscribes to the wallet’s address snapshots and computes diffs over time.
- * - For any new address in the wallet, calls `monitor.monitor(address)`.
- * - For any address removed from the wallet, calls `monitor.stopMonitoring(address)`.
- * - After convergence: `monitor.isMonitored(a) == (a in latest wallet addresses)`.
+ * - For any new address in the wallet, calls `accountMonitor.accountMonitor(address)`.
+ * - For any address removed from the wallet, calls `accountMonitor.stopMonitoring(address)`.
+ * - After convergence: `accountMonitor.isMonitored(a) == (a in latest wallet addresses)`.
  *
  * Scope & Lifecycle
  * - Returns a Job; cancel it to stop syncing.
  * - The flow should not fail.
  *
  * Notes
- * - Initial offsets/heights are decided by the monitor’s own `monitor(address)` policy.
+ * - Initial offsets/heights are decided by the accountMonitor’s own `accountMonitor(address)` policy.
  * - Addresses that were never part of this wallet are **not** touched by this binding.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -355,7 +355,7 @@ fun AttoWallet.bindTo(
                     monitor.stopMonitoring(address)
                 }
             }
-        }.catch { e -> logger.warn(e) { "Bind to monitor failed with $e" } }
+        }.catch { e -> logger.warn(e) { "Bind to accountMonitor failed with $e" } }
         .launchIn(scope)
 
 /**
@@ -377,12 +377,12 @@ fun AttoWallet.bindTo(
 }
 
 /**
- * Automatically receives incoming funds for all wallet addresses and ensures the monitor
+ * Automatically receives incoming funds for all wallet addresses and ensures the accountMonitor
  * stays in sync with the wallet while doing so.
  *
  * Behavior
- * - First binds the monitor to the wallet via [bindTo], so membership tracks opens/closes.
- * - Subscribes to `monitor.receivableStream(minAmount)` and calls `receive(...)` for each receivable.
+ * - First binds the accountMonitor to the wallet via [bindTo], so membership tracks opens/closes.
+ * - Subscribes to `accountMonitor.receivableStream(minAmount)` and calls `receive(...)` for each receivable.
  * - On processing failure, logs and retries after [retryAfter] until cancelled.
  *
  * Scope & Lifecycle
@@ -390,7 +390,7 @@ fun AttoWallet.bindTo(
  *   (the binding job is cancelled on completion).
  *
  * Assumptions
- * - Receivables emitted by the monitor belong to this wallet’s addresses; if the monitor also includes
+ * - Receivables emitted by the accountMonitor belong to this wallet’s addresses; if the accountMonitor also includes
  *   foreign addresses, `receive(...)` may fail for those.
  * - When opening a new account on first receive, [defaultRepresentativeAddressProvider] is used.
  */

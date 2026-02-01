@@ -21,7 +21,7 @@ actual class AttoTransactionMonitorAsyncBuilder actual constructor(
         }
 
     actual fun build(): AttoTransactionMonitorAsync {
-        val transactionMonitor = AttoTransactionMonitor(nodeClient.client, accountMonitor.monitor, heightProvider)
+        val transactionMonitor = AttoTransactionMonitor(nodeClient.client, accountMonitor.accountMonitor, heightProvider)
         return AttoTransactionMonitorAsync(transactionMonitor, Dispatchers.Default)
     }
 }

@@ -5,10 +5,10 @@ import kotlinx.coroutines.CoroutineDispatcher
 
 @JsExportForJs
 expect class AttoAccountMonitorAsync internal constructor(
-    monitor: AttoAccountMonitor,
+    accountMonitor: AttoAccountMonitor,
     dispatcher: CoroutineDispatcher,
 ) : AutoCloseable {
-    val monitor: AttoAccountMonitor
+    val accountMonitor: AttoAccountMonitor
 
     override fun close()
 }

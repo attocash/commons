@@ -1,1 +1,1 @@
-export * from "./commons-commons-test";
+export * from "./commons-commons-test.mjs";

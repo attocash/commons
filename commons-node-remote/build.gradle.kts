@@ -36,6 +36,8 @@ kotlin {
     js(IR) {
         binaries.library()
 
+        useEsModules()
+
         browser {
             testTask {
                 useKarma {
@@ -59,7 +61,7 @@ kotlin {
             sourceMapEmbedSources = org.jetbrains.kotlin.gradle.dsl.JsSourceMapEmbedMode.SOURCE_MAP_SOURCE_CONTENT_ALWAYS
             freeCompilerArgs.addAll(
                 // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
-                "-Xir-per-file",
+
                 "-Xes-long-as-bigint",
             )
         }
