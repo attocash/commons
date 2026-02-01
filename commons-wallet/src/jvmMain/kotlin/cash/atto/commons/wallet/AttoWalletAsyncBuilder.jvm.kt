@@ -70,7 +70,13 @@ actual class AttoWalletAsyncBuilder actual constructor(
         val wallet = AttoWallet(clientAsync.client, workerAsync.worker, signerProvider!!)
 
         if (monitor != null) {
-            wallet.startAutoReceiver(monitor!!.accountMonitor, dispatcher, minAmount!!, retryAfter!!, defaultRepresentativeAddressProvider!!)
+            wallet.startAutoReceiver(
+                monitor!!.accountMonitor,
+                dispatcher,
+                minAmount!!,
+                retryAfter!!,
+                defaultRepresentativeAddressProvider!!,
+            )
         }
 
         return AttoWalletAsync(wallet, dispatcher)
