@@ -2,6 +2,7 @@
 
 package cash.atto.commons.node
 
+import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoJob
@@ -21,6 +22,14 @@ private val json =
     Json {
         ignoreUnknownKeys = true
     }
+
+@JsExportForJs
+@JsName("accountToJson")
+fun AttoAccount.toJson(): String = json.encodeToString(this)
+
+@JsExportForJs
+@JsName("accountFromJson")
+fun String.toAccount(): AttoAccount = json.decodeFromString<AttoAccount>(this)
 
 @JsExportForJs
 @JsName("receivableToJson")
