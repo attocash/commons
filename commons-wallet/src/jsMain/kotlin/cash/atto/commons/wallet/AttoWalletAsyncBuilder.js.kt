@@ -11,6 +11,8 @@ import cash.atto.commons.toSigner
 import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.worker.AttoWorkerAsync
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.await
+import kotlin.js.Promise
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -29,7 +31,7 @@ actual class AttoWalletAsyncBuilder actual constructor(
     @JsName("signerProviderFunction")
     actual fun signerProvider(value: AttoSignerProvider): AttoWalletAsyncBuilder =
         apply {
-            signerProvider = { index -> value.get(index) }
+            signerProvider = { index -> value.get(index).await() }
         }
 
     @JsName("signerProviderSeed")
@@ -70,5 +72,5 @@ actual class AttoWalletAsyncBuilder actual constructor(
 
 @JsExportForJs
 actual interface AttoSignerProvider {
-    suspend fun get(index: AttoKeyIndex): AttoSigner
+    fun get(index: AttoKeyIndex): Promise<AttoSigner>
 }
