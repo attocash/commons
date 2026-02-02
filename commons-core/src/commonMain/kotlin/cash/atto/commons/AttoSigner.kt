@@ -51,6 +51,8 @@ expect class InMemorySigner(
     override suspend fun sign(hash: AttoHash): AttoSignature
 }
 
+@JsExportForJs
+@JsName("privateKeyToSigner")
 fun AttoPrivateKey.toSigner(): AttoSigner = InMemorySigner(this)
 
 fun AttoSeed.toSigner(index: AttoKeyIndex): AttoSigner = toPrivateKey(index).toSigner()
