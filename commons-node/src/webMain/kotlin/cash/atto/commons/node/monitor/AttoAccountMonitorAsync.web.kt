@@ -23,13 +23,13 @@ actual class AttoAccountMonitorAsync internal actual constructor(
 ) : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
-    @JsName("monitorCollection")
-    suspend fun monitor(addresses: Collection<AttoAddress>): Unit = accountMonitor.monitor(addresses)
+    @JsName("monitorAddressArray")
+    suspend fun monitor(addresses: Array<AttoAddress>): Unit = accountMonitor.monitor(addresses.toList())
 
     @JsName("monitorAddress")
     suspend fun monitor(address: AttoAddress): Unit = accountMonitor.monitor(address)
 
-    suspend fun getAccounts(): Collection<AttoAccount> = accountMonitor.getAccounts()
+    suspend fun getAccounts(): Array<AttoAccount> = accountMonitor.getAccounts().toTypedArray()
 
     fun onReceivable(
         minAmount: AttoAmount = AttoAmount.MIN,
