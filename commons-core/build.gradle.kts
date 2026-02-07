@@ -41,7 +41,9 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    timeout = Duration.ofSeconds(60)
+                    useMocha {
+                        timeout = "60000"
+                    }
                     useChromeHeadlessNoSandbox()
                 }
             }
@@ -79,7 +81,9 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    timeout = Duration.ofSeconds(60)
+                    useMocha {
+                        timeout = "60000"
+                    }
                     useChromeHeadlessNoSandbox()
                 }
             }
