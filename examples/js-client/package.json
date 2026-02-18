@@ -14,7 +14,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@attocash/commons-js": "^6.3.0",
-    "@attocash/commons-test": "^6.3.0"
+    "@attocash/commons-js": "^6.3.2",
+    "@attocash/commons-test": "^6.3.2"
   }
 }

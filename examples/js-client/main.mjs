@@ -162,7 +162,7 @@ async function main() {
       if (account0After1) {
         console.log(`Account 0 balance: ${account0After1.balance}`);
       }
-      if (account1After1) {cd .
+      if (account1After1) {
         console.log(`Account 1 balance: ${account1After1.balance}`);
       }
 
