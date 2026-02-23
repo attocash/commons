@@ -32,6 +32,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.cancel
+import io.ktor.utils.io.readLineStrict
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import kotlin.jvm.JvmSynthetic
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -57,6 +59,11 @@ private val httpClient =
         expectSuccess = true
     }
 
+private val STREAM_SOCKET_IDLE_TIMEOUT: Duration = 1.hours
+private const val NDJSON_MAX_LINE_CHARS: Long = 2_000L
+
+private fun Duration.toTimeoutMillis(): Long = if (this == Duration.INFINITE) Long.MAX_VALUE else this.inWholeMilliseconds
+
 private class AttoNodeClientRemote(
     private val baseUrl: String,
     private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
@@ -64,7 +71,9 @@ private class AttoNodeClientRemote(
     private fun HttpRequestBuilder.configure(
         headersMap: Map<String, String>,
         accept: String = "application/json",
-        timeout: Duration = 10.seconds,
+        requestTimeout: Duration = 10.seconds,
+        socketTimeout: Duration = requestTimeout,
+        connectTimeout: Duration = requestTimeout,
     ) {
         contentType(ContentType.Application.Json)
         headers {
@@ -72,7 +81,9 @@ private class AttoNodeClientRemote(
             append("Accept", accept)
         }
         timeout {
-            socketTimeoutMillis = if (timeout == Duration.INFINITE) Long.MAX_VALUE else timeout.inWholeMilliseconds
+            connectTimeoutMillis = connectTimeout.toTimeoutMillis()
+            requestTimeoutMillis = requestTimeout.toTimeoutMillis()
+            socketTimeoutMillis = socketTimeout.toTimeoutMillis()
         }
     }
 
@@ -84,7 +95,12 @@ private class AttoNodeClientRemote(
 
         return httpClient
             .get("$baseUrl/$urlPath") {
-                configure(headers, timeout = timeout)
+                configure(
+                    headers,
+                    requestTimeout = timeout,
+                    socketTimeout = timeout,
+                    connectTimeout = timeout,
+                )
             }.body()
     }
 
@@ -97,7 +113,12 @@ private class AttoNodeClientRemote(
 
         return httpClient
             .post("$baseUrl/$urlPath") {
-                configure(headers, timeout = timeout)
+                configure(
+                    headers,
+                    requestTimeout = timeout,
+                    socketTimeout = timeout,
+                    connectTimeout = timeout,
+                )
                 setBody(body)
             }.body()
     }
@@ -108,7 +129,13 @@ private class AttoNodeClientRemote(
 
             httpClient
                 .prepareGet("$baseUrl/$urlPath") {
-                    configure(headers, accept = "application/x-ndjson", timeout = Duration.INFINITE)
+                    configure(
+                        headers,
+                        accept = "application/x-ndjson",
+                        requestTimeout = Duration.INFINITE,
+                        socketTimeout = STREAM_SOCKET_IDLE_TIMEOUT,
+                        connectTimeout = 10.seconds,
+                    )
                 }.execute { response ->
                     response.body<ByteReadChannel>().readStream<T> { send(it) }
                 }
@@ -136,7 +163,13 @@ private class AttoNodeClientRemote(
 
             httpClient
                 .preparePost("$baseUrl/$urlPath") {
-                    configure(headers, accept = "application/x-ndjson", timeout = Duration.INFINITE)
+                    configure(
+                        headers,
+                        accept = "application/x-ndjson",
+                        requestTimeout = Duration.INFINITE,
+                        socketTimeout = STREAM_SOCKET_IDLE_TIMEOUT,
+                        connectTimeout = 10.seconds,
+                    )
                     setBody(search)
                 }.execute { response ->
                     response.body<ByteReadChannel>().readStream<T> { send(it) }
@@ -206,12 +239,18 @@ private class AttoNodeClientRemote(
 
         val response: HttpResponse =
             httpClient.post(uri) {
-                configure(headers, accept = "application/x-ndjson", timeout = 5.minutes)
+                configure(
+                    headers,
+                    accept = "application/x-ndjson",
+                    requestTimeout = 1.minutes,
+                    socketTimeout = 1.minutes,
+                    connectTimeout = 10.seconds,
+                )
                 setBody(json)
             }
 
         val channel: ByteReadChannel = response.bodyAsChannel()
-        channel.readUTF8Line()
+        channel.readLineStrict(NDJSON_MAX_LINE_CHARS)
         channel.cancel()
     }
 
@@ -220,7 +259,7 @@ private class AttoNodeClientRemote(
 
 private suspend inline fun <reified T> ByteReadChannel.readStream(crossinline emit: suspend (T) -> Unit) {
     while (!isClosedForRead) {
-        val value = readUTF8Line()
+        val value = readLineStrict(NDJSON_MAX_LINE_CHARS)
         if (value != null) {
             val item = json.decodeFromString<T>(value)
             emit(item)
