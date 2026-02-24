@@ -26,7 +26,7 @@ bouncycastle = "1.83"
 java-jwt = "4.5.1"
 
 # Database
-mysql-connector = "9.5.0"
+mysql-connector = "9.6.0"
 
 # OpenCL
 jocl = "2.0.6"
