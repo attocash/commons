@@ -36,7 +36,7 @@ spring-boot = "4.0.5"
 springdoc-openapi = "3.0.2"
 
 # Swagger
-swagger = "2.2.42"
+swagger = "2.2.45"
 
 # Gradle plugins
 dokka = "2.1.0"
