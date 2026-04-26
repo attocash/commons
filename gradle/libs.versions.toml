@@ -11,7 +11,7 @@ kotlinx-benchmark = "0.4.16"
 kotlinx-browser = "0.5.0"
 
 # Ktor
-ktor = "3.4.1"
+ktor = "3.4.3"
 
 # Logging
 kotlin-logging = "8.0.01"
