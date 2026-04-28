@@ -30,13 +30,7 @@ fun AttoJWT.Companion.decode(encoded: String): AttoJWT {
 
     val base64UrlPayload = parts[1]
 
-    val base64Payload =
-        base64UrlPayload
-            .replace('-', '+')
-            .replace('_', '/')
-            .let { it.padEnd((it.length + 3) / 4 * 4, '=') }
-
-    val payloadBytes = Base64.decode(base64Payload)
+    val payloadBytes = Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT_OPTIONAL).decode(base64UrlPayload)
 
     val payloadJson = payloadBytes.decodeToString()
 
