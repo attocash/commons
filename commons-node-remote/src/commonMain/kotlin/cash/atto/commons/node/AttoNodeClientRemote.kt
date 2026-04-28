@@ -24,14 +24,11 @@ import io.ktor.client.request.post
 import io.ktor.client.request.prepareGet
 import io.ktor.client.request.preparePost
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readLineStrict
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -155,7 +152,10 @@ private class AttoNodeClientRemote(
 
     private inline fun <reified T> fetchStream(
         urlPath: String,
-        search: Any,
+        body: Any,
+        requestTimeout: Duration = Duration.INFINITE,
+        socketTimeout: Duration = STREAM_SOCKET_IDLE_TIMEOUT,
+        connectTimeout: Duration = 10.seconds,
     ): Flow<T> =
         channelFlow {
             val headers = headerProvider.invoke()
@@ -165,15 +165,17 @@ private class AttoNodeClientRemote(
                     configure(
                         headers,
                         accept = "application/x-ndjson",
-                        requestTimeout = Duration.INFINITE,
-                        socketTimeout = STREAM_SOCKET_IDLE_TIMEOUT,
-                        connectTimeout = 10.seconds,
+                        requestTimeout = requestTimeout,
+                        socketTimeout = socketTimeout,
+                        connectTimeout = connectTimeout,
                     )
-                    setBody(search)
+                    setBody(body)
                 }.execute { response ->
                     response.body<ByteReadChannel>().readStream<T> { send(it) }
                 }
         }
+
+    override fun accountStream(): Flow<AttoAccount> = fetchStream("accounts/stream")
 
     override fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount> = fetchStream("accounts/$publicKey/stream")
 
@@ -193,6 +195,10 @@ private class AttoNodeClientRemote(
     override suspend fun accountEntry(hash: AttoHash): AttoAccountEntry =
         fetchStream<AttoAccountEntry>("accounts/entries/$hash/stream").first()
 
+    override fun accountEntryStream(): Flow<AttoAccountEntry> = fetchStream("accounts/entries/stream")
+
+    override fun accountEntryStream(hash: AttoHash): Flow<AttoAccountEntry> = fetchStream("accounts/entries/$hash/stream")
+
     override fun accountEntryStream(
         publicKey: AttoPublicKey,
         fromHeight: AttoHeight,
@@ -210,7 +216,11 @@ private class AttoNodeClientRemote(
 
     override fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry> = fetchStream("accounts/entries/stream", search)
 
-    override suspend fun transaction(hash: AttoHash): AttoTransaction = fetchStream<AttoTransaction>("transactions/$hash/stream").first()
+    override suspend fun transaction(hash: AttoHash): AttoTransaction = get("transactions/$hash")
+
+    override fun transactionStream(): Flow<AttoTransaction> = fetchStream("transactions/stream")
+
+    override fun transactionStream(hash: AttoHash): Flow<AttoTransaction> = fetchStream("transactions/$hash/stream")
 
     override fun transactionStream(
         publicKey: AttoPublicKey,
@@ -232,25 +242,13 @@ private class AttoNodeClientRemote(
     override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse = get("instants/$currentTime")
 
     override suspend fun publish(transaction: AttoTransaction) {
-        val uri = "$baseUrl/transactions/stream"
-        val json = Json.encodeToString(transaction)
-        val headers = headerProvider.invoke()
-
-        val response: HttpResponse =
-            httpClient.post(uri) {
-                configure(
-                    headers,
-                    accept = "application/x-ndjson",
-                    requestTimeout = 1.minutes,
-                    socketTimeout = 1.minutes,
-                    connectTimeout = 10.seconds,
-                )
-                setBody(json)
-            }
-
-        val channel: ByteReadChannel = response.bodyAsChannel()
-        channel.readLineStrict(NDJSON_MAX_LINE_CHARS)
-        channel.cancel()
+        fetchStream<AttoTransaction>(
+            "transactions/stream",
+            transaction,
+            requestTimeout = 1.minutes,
+            socketTimeout = 1.minutes,
+            connectTimeout = 10.seconds,
+        ).first()
     }
 
     override suspend fun voterWeight(address: AttoAddress): AttoVoterWeight = get("vote-weights/${address.path}")

@@ -26,6 +26,8 @@ interface AttoNodeOperations {
 
     suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount>
 
+    fun accountStream(): Flow<AttoAccount>
+
     fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount>
 
     fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount>
@@ -42,6 +44,10 @@ interface AttoNodeOperations {
 
     suspend fun accountEntry(hash: AttoHash): AttoAccountEntry
 
+    fun accountEntryStream(): Flow<AttoAccountEntry>
+
+    fun accountEntryStream(hash: AttoHash): Flow<AttoAccountEntry>
+
     fun accountEntryStream(
         publicKey: AttoPublicKey,
         fromHeight: AttoHeight = AttoHeight(1UL),
@@ -51,6 +57,10 @@ interface AttoNodeOperations {
     fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry>
 
     suspend fun transaction(hash: AttoHash): AttoTransaction
+
+    fun transactionStream(): Flow<AttoTransaction>
+
+    fun transactionStream(hash: AttoHash): Flow<AttoTransaction>
 
     fun transactionStream(
         publicKey: AttoPublicKey,

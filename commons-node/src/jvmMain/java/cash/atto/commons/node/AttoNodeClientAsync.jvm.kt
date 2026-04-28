@@ -11,6 +11,7 @@ import cash.atto.commons.AttoJob
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.AttoVoterWeight
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -51,6 +52,16 @@ actual class AttoNodeClientAsync actual constructor(
                     onCancel(e)
                 }
             },
+        )
+
+    fun onAccount(
+        onAccount: (AttoAccount) -> Unit,
+        onCancel: (Exception?) -> Unit,
+    ): AttoJob =
+        scope.consumeStream(
+            stream = client.accountStream(),
+            onEach = { onAccount(it) },
+            onCancel = { onCancel.invoke(it) },
         )
 
     fun onAccount(
@@ -103,6 +114,27 @@ actual class AttoNodeClientAsync actual constructor(
 
     fun accountEntry(hash: AttoHash): CompletableFuture<AttoAccountEntry> = scope.future { client.accountEntry(hash) }
 
+    fun onAccountEntry(
+        onAccountEntry: (AttoAccountEntry) -> Unit,
+        onCancel: (Exception?) -> Unit,
+    ): AttoJob =
+        scope.consumeStream(
+            stream = client.accountEntryStream(),
+            onEach = { onAccountEntry.invoke(it) },
+            onCancel = { onCancel.invoke(it) },
+        )
+
+    fun onAccountEntry(
+        hash: AttoHash,
+        onAccountEntry: (AttoAccountEntry) -> Unit,
+        onCancel: (Exception?) -> Unit,
+    ): AttoJob =
+        scope.consumeStream(
+            stream = client.accountEntryStream(hash),
+            onEach = { onAccountEntry.invoke(it) },
+            onCancel = { onCancel.invoke(it) },
+        )
+
     @JvmOverloads
     fun onAccountEntry(
         publicKey: AttoPublicKey,
@@ -129,6 +161,27 @@ actual class AttoNodeClientAsync actual constructor(
         )
 
     fun transaction(hash: AttoHash): CompletableFuture<AttoTransaction> = scope.future { client.transaction(hash) }
+
+    fun onTransaction(
+        onTransaction: (AttoTransaction) -> Unit,
+        onCancel: (Exception?) -> Unit,
+    ): AttoJob =
+        scope.consumeStream(
+            stream = client.transactionStream(),
+            onEach = { onTransaction.invoke(it) },
+            onCancel = { onCancel.invoke(it) },
+        )
+
+    fun onTransaction(
+        hash: AttoHash,
+        onTransaction: (AttoTransaction) -> Unit,
+        onCancel: (Exception?) -> Unit,
+    ): AttoJob =
+        scope.consumeStream(
+            stream = client.transactionStream(hash),
+            onEach = { onTransaction.invoke(it) },
+            onCancel = { onCancel.invoke(it) },
+        )
 
     @JvmOverloads
     fun onTransaction(
@@ -158,6 +211,8 @@ actual class AttoNodeClientAsync actual constructor(
     fun now(): CompletableFuture<AttoInstant> = scope.future { client.now() }
 
     fun publish(transaction: AttoTransaction): CompletableFuture<Unit> = scope.future { client.publish(transaction) }
+
+    fun voterWeight(address: AttoAddress): CompletableFuture<AttoVoterWeight> = scope.future { client.voterWeight(address) }
 
     actual override fun close() {
         scope.cancel()
