@@ -31,6 +31,16 @@ actual class AttoAccountMonitorAsync internal actual constructor(
 
     suspend fun getAccounts(): Array<AttoAccount> = accountMonitor.getAccounts().toTypedArray()
 
+    fun onAccount(
+        onAccount: (AttoAccount) -> Any,
+        onCancel: (Exception?) -> Any,
+    ): AttoJob =
+        scope.consumeStream(
+            stream = accountMonitor.accountStream(),
+            onEach = { onAccount.invoke(it) },
+            onCancel = { onCancel.invoke(it) },
+        )
+
     fun onReceivable(
         minAmount: AttoAmount = AttoAmount.MIN,
         onReceivable: (AttoReceivable) -> Any,

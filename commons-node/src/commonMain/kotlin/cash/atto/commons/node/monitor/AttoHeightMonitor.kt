@@ -6,13 +6,22 @@ import cash.atto.commons.AttoHeight
 import cash.atto.commons.HeightSupport
 import cash.atto.commons.node.AccountHeightSearch
 import cash.atto.commons.node.HeightSearch
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
+
+private val logger = KotlinLogging.logger {}
+private val RETRY_DELAY = 10.seconds
 
 abstract class AttoHeightMonitor<T> internal constructor(
     private val accountMonitor: AttoAccountMonitor,
@@ -40,15 +49,7 @@ abstract class AttoHeightMonitor<T> internal constructor(
                 if (addresses.isEmpty()) {
                     return@flatMapLatest emptyFlow()
                 }
-                val search =
-                    mutex.withLock {
-                        heightMap.keys.retainAll(addresses)
-
-                        (addresses - heightMap.keys).forEach { address -> heightMap[address] = heightProvider.invoke(address) }
-
-                        heightMap.toHeightSearch()
-                    }
-                return@flatMapLatest stream(search)
+                return@flatMapLatest retryingStream(addresses)
             }.map {
                 val address = it.address
                 val height = it.height
@@ -59,6 +60,31 @@ abstract class AttoHeightMonitor<T> internal constructor(
                 }
             }
     }
+
+    private fun retryingStream(addresses: Set<AttoAddress>): Flow<T> =
+        flow {
+            while (true) {
+                val search = searchFor(addresses)
+                try {
+                    emitAll(stream(search))
+                    return@flow
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to stream monitor values. Retrying in $RETRY_DELAY..." }
+                    delay(RETRY_DELAY)
+                }
+            }
+        }
+
+    private suspend fun searchFor(addresses: Set<AttoAddress>): HeightSearch =
+        mutex.withLock {
+            heightMap.keys.retainAll(addresses)
+
+            (addresses - heightMap.keys).forEach { address -> heightMap[address] = heightProvider.invoke(address) }
+
+            heightMap.toHeightSearch()
+        }
 
     private fun Map<AttoAddress, AttoHeight>.toHeightSearch(): HeightSearch {
         val accounts =

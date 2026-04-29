@@ -28,6 +28,16 @@ actual class AttoAccountMonitorAsync internal actual constructor(
 
     fun getAccounts(): CompletableFuture<Collection<AttoAccount>> = scope.future { accountMonitor.getAccounts() }
 
+    fun onAccount(
+        onAccount: (AttoAccount) -> Any,
+        onCancel: (Exception?) -> Any,
+    ): AttoJob =
+        scope.consumeStream(
+            stream = accountMonitor.accountStream(),
+            onEach = { onAccount.invoke(it) },
+            onCancel = { onCancel.invoke(it) },
+        )
+
     @JvmOverloads
     fun onReceivable(
         minAmount: AttoAmount = AttoAmount.MIN,

@@ -5,15 +5,22 @@ import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.node.AttoNodeClient
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.time.Duration.Companion.seconds
+
+private val logger = KotlinLogging.logger {}
+private val RETRY_DELAY = 10.seconds
 
 class AttoAccountMonitor internal constructor(
     internal val client: AttoNodeClient,
@@ -42,6 +49,21 @@ class AttoAccountMonitor internal constructor(
     }
 
     fun membershipFlow(): Flow<Set<AttoAddress>> = state.membershipFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun accountStream(): Flow<AttoAccount> {
+        return membershipFlow()
+            .flatMapLatest { addresses ->
+                if (addresses.isEmpty()) {
+                    return@flatMapLatest emptyFlow()
+                }
+                return@flatMapLatest client.accountStream(addresses).retryWhen { e, _ ->
+                    logger.warn(e) { "Failed to stream accounts. Retrying in $RETRY_DELAY..." }
+                    delay(RETRY_DELAY)
+                    true
+                }
+            }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun receivableStream(minAmount: AttoAmount = AttoAmount.MIN): Flow<AttoReceivable> {
