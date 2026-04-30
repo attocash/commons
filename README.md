@@ -1,6 +1,6 @@
 # Atto Commons
 
-A multiplatform library of building blocks for Atto applications. It provides primitives (mnemonics, keys, addresses, blocks), client tooling to talk to a node, wallet utilities, and proof‑of‑work workers (CPU/OpenCL/remote). Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm are supported where applicable.
+A multiplatform library of building blocks for Atto applications. It provides primitives (mnemonics, keys, addresses, blocks), client tooling to talk to a node, wallet utilities, and proof‑of‑work workers (CPU/OpenCL/WebGPU/remote). Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm are supported where applicable.
 
 NOTE: The API is evolving and may include breaking changes between releases.
 
@@ -13,6 +13,7 @@ NOTE: The API is evolving and may include breaking changes between releases.
 - commons-wallet — simple wallet utilities built on top of node + worker.
 - commons-worker — CPU proof‑of‑work implementation.
 - commons-worker-opencl — OpenCL proof‑of‑work implementation (JVM only).
+- commons-worker-webgpu — WebGPU proof-of-work implementation (browser JS/Wasm).
 - commons-worker-remote — talk to a remote worker service.
 - commons-spring-boot-starter — Spring Boot integrations for Atto services.
 - commons-js — JavaScript/TypeScript bindings packaged as `@attocash/commons-js`.
@@ -35,6 +36,8 @@ dependencies {
   implementation("cash.atto:commons-worker:<version>")
   // OpenCL worker (JVM)
   runtimeOnly("cash.atto:commons-worker-opencl:<version>")
+  // WebGPU worker (browser JS/Wasm)
+  implementation("cash.atto:commons-worker-webgpu:<version>")
 }
 ```
 
@@ -108,6 +111,7 @@ For full examples and advanced flows (auto-receive, account-entry monitor, OpenC
 - commons-signer-remote/README.md — remote signer client
 - commons-worker/README.md — CPU PoW
 - commons-worker-opencl/README.md — OpenCL PoW
+- commons-worker-webgpu/README.md — WebGPU PoW
 - commons-worker-remote/README.md — remote worker client
 - commons-spring-boot-starter/README.md — Spring Boot integration
 - commons-js/README.md — JS/TS usage

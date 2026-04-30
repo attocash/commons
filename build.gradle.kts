@@ -15,7 +15,30 @@ repositories {
     mavenCentral()
     mavenLocal()
 }
+
+val installPuppeteerBrowsers by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Installs the Chromium browser used by Puppeteer-backed Karma tests."
+
+    dependsOn("kotlinNpmInstall")
+
+    doFirst {
+        val installScript =
+            rootProject.layout.buildDirectory
+                .file("js/node_modules/puppeteer/install.mjs")
+                .get()
+                .asFile
+        require(installScript.isFile) {
+            "Puppeteer install script was not found at ${installScript.absolutePath}."
+        }
+        commandLine("node", installScript.absolutePath)
+    }
+}
+
 allprojects {
+    val jvmOnlyPublicationProjects = setOf("commons-signer-remote", "commons-worker-opencl", "commons-gatekeeper-test")
+    val webOnlyPublicationProjects = setOf("commons-js", "commons-worker-webgpu")
+
     apply {
         if (name != "commons-spring-boot-starter" && name != rootProject.name) {
             apply(plugin = "org.jetbrains.kotlin.multiplatform")
@@ -26,6 +49,37 @@ allprojects {
 
     project.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
         project.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().version = "24.3.0"
+    }
+
+    project.plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        project.extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension>("kotlin") {
+            sourceSets.matching { it.name == "jsTest" || it.name == "wasmJsTest" }.configureEach {
+                dependencies {
+                    implementation(devNpm("puppeteer", "24.15.0"))
+                }
+            }
+        }
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest>().configureEach {
+        if (name.endsWith("BrowserTest")) {
+            dependsOn(rootProject.tasks.named("installPuppeteerBrowsers"))
+        }
+
+        fun configureRootKarmaDirectory(framework: org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTestFramework?) {
+            if (framework is org.jetbrains.kotlin.gradle.targets.js.testing.karma.KotlinKarma) {
+                framework.useConfigDirectory(rootProject.file("karma.config.d"))
+            }
+        }
+
+        configureRootKarmaDirectory(testFramework)
+        onTestFrameworkSet(
+            object : org.gradle.api.Action<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTestFramework> {
+                override fun execute(framework: org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTestFramework) {
+                    configureRootKarmaDirectory(framework)
+                }
+            },
+        )
     }
 
     tasks
@@ -39,12 +93,13 @@ allprojects {
             }
 
             dependsOn(tasks.named("signKotlinMultiplatformPublication"))
-            dependsOn(tasks.named("signJvmPublication"))
-            if (project.name != "commons-signer-remote" &&
-                project.name != "commons-worker-opencl" &&
-                project.name != "commons-gatekeeper-test"
-            ) {
+            if (project.name !in webOnlyPublicationProjects) {
+                dependsOn(tasks.named("signJvmPublication"))
+            }
+            if (project.name !in jvmOnlyPublicationProjects) {
                 dependsOn(tasks.named("signJsPublication"))
+            }
+            if (project.name !in jvmOnlyPublicationProjects) {
                 dependsOn(tasks.named("signWasmJsPublication"))
             }
         }
@@ -54,12 +109,14 @@ allprojects {
             return@configureEach
         }
 
-        dependsOn(tasks.named("signJvmPublication"))
-        if (project.name != "commons-signer-remote" &&
-            project.name != "commons-worker-opencl" &&
-            project.name != "commons-gatekeeper-test"
-        ) {
+        dependsOn(tasks.named("signKotlinMultiplatformPublication"))
+        if (project.name !in webOnlyPublicationProjects) {
+            dependsOn(tasks.named("signJvmPublication"))
+        }
+        if (project.name !in jvmOnlyPublicationProjects) {
             dependsOn(tasks.named("signJsPublication"))
+        }
+        if (project.name !in jvmOnlyPublicationProjects) {
             dependsOn(tasks.named("signWasmJsPublication"))
         }
     }
