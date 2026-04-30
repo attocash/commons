@@ -50,7 +50,13 @@ kotlin {
             }
         }
 
-        nodejs()
+        nodejs {
+            testTask {
+                useMocha {
+                    timeout = "60000"
+                }
+            }
+        }
 
         generateTypeScriptDefinitions()
 
