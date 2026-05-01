@@ -6,14 +6,12 @@ import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.isValid
 import cash.atto.commons.toByteArray
-import kotlinx.coroutines.await
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import org.khronos.webgl.ArrayBuffer
-import org.khronos.webgl.DataView
-import org.khronos.webgl.Uint8Array
-import org.khronos.webgl.get
-import org.khronos.webgl.set
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
+import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.Promise
 
 actual val AttoWorker.Companion.isWebgpuSupported: Boolean
@@ -67,7 +65,7 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
                 writeBuffer(state.device, resultBuffer, zeroedData(RESULT_BUFFER_SIZE))
 
                 state.dispatch(inputBuffer, resultBuffer, readBuffer)
-                readBuffer.mapAsync(gpuMapModeRead()).await<JsAny?>()
+                readBuffer.mapAsync(gpuMapModeRead()).await()
 
                 val result = readMappedResult(readBuffer, RESULT_BUFFER_SIZE)
                 readBuffer.unmap()
@@ -102,9 +100,9 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
         state?.let { return it }
 
         val gpu = getWebGPU()
-        val adapter = gpu.requestAdapter().await<GPUAdapter?>() ?: throw IllegalStateException("No WebGPU adapter is available.")
+        val adapter = gpu.requestAdapter().await() ?: throw IllegalStateException("No WebGPU adapter is available.")
 
-        val device = adapter.requestDevice().await<GPUDevice>()
+        val device = adapter.requestDevice().await()
         val configuration = createWorkConfiguration(device)
 
         val shaderModule = device.createShaderModule(shaderModuleDescriptor(shaderSource(configuration.workgroupSize.toInt())))
@@ -187,6 +185,12 @@ private external interface GPUQueue : JsAny {
 
     fun submit(commandBuffers: JsArray<GPUCommandBuffer>)
 }
+
+private external interface ArrayBuffer : JsAny
+
+private external interface Uint8Array : JsAny
+
+private external interface DataView : JsAny
 
 private external interface GPUSupportedLimits : JsAny {
     val maxComputeInvocationsPerWorkgroup: Int
@@ -277,15 +281,29 @@ private fun ULong.lowInt(): Int = (this and UInt.MAX_VALUE.toULong()).toUInt().t
 
 private fun ULong.highInt(): Int = (this shr 32).toUInt().toInt()
 
+private suspend fun <T : JsAny?> Promise<T>.await(): T =
+    suspendCoroutine { continuation ->
+        then(
+            {
+                continuation.resume(it)
+                null
+            },
+            {
+                continuation.resumeWithException(Throwable(it.toString()))
+                null
+            },
+        )
+    }
+
 private fun ByteArray.toUint8Array(): Uint8Array {
-    val output = Uint8Array(size)
+    val output = uint8Array(size)
     repeat(size) { index ->
-        output[index] = this[index]
+        setUint8(output, index, this[index])
     }
     return output
 }
 
-private fun Uint8Array.unsignedByteAt(index: Int): Int = this[index].toInt() and 0xff
+private fun Uint8Array.unsignedByteAt(index: Int): Int = getUint8(this, index) and 0xff
 
 private fun createWorkConfiguration(device: GPUDevice): WebGPUWorkConfiguration {
     val maxWorkgroupSize =
@@ -380,12 +398,12 @@ private fun createInputData(
     iterations: Int,
     target: Uint8Array,
 ): ArrayBuffer {
-    val data = ArrayBuffer(size)
-    val view = DataView(data)
-    view.setUint32(0, thresholdLow, true)
-    view.setUint32(4, thresholdHigh, true)
-    view.setUint32(8, startNonceLow, true)
-    view.setUint32(12, startNonceHigh, true)
+    val data = arrayBuffer(size)
+    val view = dataView(data)
+    setUint32(view, 0, thresholdLow, true)
+    setUint32(view, 4, thresholdHigh, true)
+    setUint32(view, 8, startNonceLow, true)
+    setUint32(view, 12, startNonceHigh, true)
 
     repeat(8) { index ->
         val offset = index * 4
@@ -394,14 +412,14 @@ private fun createInputData(
                 (target.unsignedByteAt(offset + 1) shl 8) or
                 (target.unsignedByteAt(offset + 2) shl 16) or
                 (target.unsignedByteAt(offset + 3) shl 24)
-        view.setUint32(16 + offset, word, true)
+        setUint32(view, 16 + offset, word, true)
     }
 
-    view.setUint32(48, iterations, true)
+    setUint32(view, 48, iterations, true)
     return data
 }
 
-private fun zeroedData(size: Int): ArrayBuffer = ArrayBuffer(size)
+private fun zeroedData(size: Int): ArrayBuffer = arrayBuffer(size)
 
 private fun writeBuffer(
     device: GPUDevice,
@@ -415,13 +433,43 @@ private fun readMappedResult(
     buffer: GPUBuffer,
     size: Int,
 ): WebGPUWorkResult {
-    val view = DataView(buffer.getMappedRange(0, size))
+    val view = dataView(buffer.getMappedRange(0, size))
     return WebGPUWorkResult(
-        nonceLow = view.getUint32(0, true),
-        nonceHigh = view.getUint32(4, true),
-        found = view.getUint32(8, true),
+        nonceLow = getUint32(view, 0, true),
+        nonceHigh = getUint32(view, 4, true),
+        found = getUint32(view, 8, true),
     )
 }
+
+private fun arrayBuffer(size: Int): ArrayBuffer = js("new ArrayBuffer(size)")
+
+private fun uint8Array(size: Int): Uint8Array = js("new Uint8Array(size)")
+
+private fun dataView(buffer: ArrayBuffer): DataView = js("new DataView(buffer)")
+
+private fun getUint8(
+    array: Uint8Array,
+    index: Int,
+): Int = js("array[index]")
+
+private fun setUint8(
+    array: Uint8Array,
+    index: Int,
+    value: Byte,
+): Unit = js("array[index] = value")
+
+private fun getUint32(
+    view: DataView,
+    offset: Int,
+    littleEndian: Boolean,
+): Int = js("view.getUint32(offset, littleEndian)")
+
+private fun setUint32(
+    view: DataView,
+    offset: Int,
+    value: Int,
+    littleEndian: Boolean,
+): Unit = js("view.setUint32(offset, value, littleEndian)")
 
 private fun shaderSource(workgroupSize: Int): String =
     """
