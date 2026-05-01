@@ -27,7 +27,7 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
         require(isWebGPUSupported()) { "WebGPU API not available." }
     }
 
-    override suspend fun work(
+    actual override suspend fun work(
         threshold: ULong,
         target: AttoWorkTarget,
     ): AttoWork {
@@ -92,7 +92,7 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
         }
     }
 
-    override fun close() {
+    actual override fun close() {
         closed = true
         state?.device?.destroy()
         state = null
