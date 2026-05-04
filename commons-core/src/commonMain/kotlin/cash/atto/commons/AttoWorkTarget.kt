@@ -14,6 +14,14 @@ import kotlin.js.JsExport
 data class AttoWorkTarget(
     val value: ByteArray,
 ) {
+    companion object {
+        const val SIZE = 32
+    }
+
+    init {
+        value.checkLength(SIZE)
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false

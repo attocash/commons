@@ -102,24 +102,12 @@ __kernel void work(__global ulong *result,
     const ulong global_size = get_global_size(0);
     ulong nonce = (ULONG_MAX / global_size + 1) * global_id;
 
-    __local ulong local_result;
-    __local int local_found;
-    __local ulong local_threshold;
-
-    if (get_local_id(0) == 0) {
-        local_found = *found;
-        local_threshold = threshold;
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
-
     while (atomic_cmpxchg(found, 0, 0) == 0) {
-        ulong hash_val = blake2b(nonce, hash);
+        const ulong hash_val = blake2b(nonce, hash);
 
-        if (hash_val <= local_threshold) {
-            local_result = nonce;
-
+        if (hash_val <= threshold) {
             if (atomic_cmpxchg(found, 0, 1) == 0) {
-                result[0] = local_result;
+                result[0] = nonce;
             }
 
             break;
