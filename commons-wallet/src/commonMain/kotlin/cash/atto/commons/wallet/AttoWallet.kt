@@ -132,18 +132,30 @@ class AttoWallet(
         return transaction
     }
 
+    private fun timestampProvider(timestamp: AttoInstant?): suspend () -> AttoInstant =
+        {
+            timestamp ?: client.now()
+        }
+
     suspend fun send(
         index: AttoKeyIndex,
         receiverAddress: AttoAddress,
         amount: AttoAmount,
         timestamp: AttoInstant? = null,
+    ): AttoTransaction = send(index, receiverAddress, amount, timestampProvider(timestamp))
+
+    private suspend fun send(
+        index: AttoKeyIndex,
+        receiverAddress: AttoAddress,
+        amount: AttoAmount,
+        timestampProvider: suspend () -> AttoInstant,
     ): AttoTransaction {
         val walletAccount = accounts.get(index)
 
         return walletAccount.withLock {
             val account = walletAccount.account ?: throw IllegalStateException("Account is not open yet for index $index")
 
-            val timestamp = timestamp ?: client.now()
+            val timestamp = timestampProvider.invoke()
 
             val (block, updatedAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, timestamp)
 
@@ -160,25 +172,29 @@ class AttoWallet(
         receiverAddress: AttoAddress,
         amount: AttoAmount,
         timestamp: AttoInstant? = null,
-    ): AttoTransaction = send(accounts.get(address).index, receiverAddress, amount, timestamp)
+    ): AttoTransaction = send(accounts.get(address).index, receiverAddress, amount, timestampProvider(timestamp))
 
     suspend fun receive(
         receivable: AttoReceivable,
         representativeAddress: AttoAddress? = null,
         timestamp: AttoInstant? = null,
+    ): AttoTransaction = receive(receivable, representativeAddress, timestampProvider(timestamp))
+
+    private suspend fun receive(
+        receivable: AttoReceivable,
+        representativeAddress: AttoAddress? = null,
+        timestampProvider: suspend () -> AttoInstant,
     ): AttoTransaction {
         val walletAccount = accounts.get(receivable.receiverAddress)
 
         return walletAccount.withLock {
             val account = walletAccount.account
-            val timestamp = timestamp ?: client.now()
 
             val (block, updatedAccount) =
                 if (account == null) {
-                    require(representativeAddress != null) { "Representative address must be provided for a new account" }
-                    AttoAccount.open(representativeAddress.algorithm, representativeAddress.publicKey, receivable, timestamp)
+                    open(representativeAddress, receivable, timestampProvider)
                 } else {
-                    account.receive(receivable, timestamp)
+                    receive(account, receivable, timestampProvider)
                 }
 
             val transaction = publish(walletAccount.index, block)
@@ -189,17 +205,42 @@ class AttoWallet(
         }
     }
 
+    private suspend fun open(
+        representativeAddress: AttoAddress?,
+        receivable: AttoReceivable,
+        timestampProvider: suspend () -> AttoInstant,
+    ): Pair<AttoBlock, AttoAccount> {
+        require(representativeAddress != null) { "Representative address must be provided for a new account" }
+        val timestamp = timestampProvider.invoke()
+        return AttoAccount.open(representativeAddress.algorithm, representativeAddress.publicKey, receivable, timestamp)
+    }
+
+    private suspend fun receive(
+        account: AttoAccount,
+        receivable: AttoReceivable,
+        timestampProvider: suspend () -> AttoInstant,
+    ): Pair<AttoBlock, AttoAccount> {
+        val timestamp = timestampProvider.invoke()
+        return account.receive(receivable, timestamp)
+    }
+
     suspend fun change(
         index: AttoKeyIndex,
         representativeAddress: AttoAddress,
         timestamp: AttoInstant? = null,
+    ): AttoTransaction = change(index, representativeAddress, timestampProvider(timestamp))
+
+    private suspend fun change(
+        index: AttoKeyIndex,
+        representativeAddress: AttoAddress,
+        timestampProvider: suspend () -> AttoInstant,
     ): AttoTransaction {
         val walletAccount = accounts.get(index)
 
         return walletAccount.withLock {
             val account = walletAccount.account ?: throw IllegalStateException("Account is not open yet for index $index")
 
-            val timestamp = timestamp ?: client.now()
+            val timestamp = timestampProvider.invoke()
 
             val (block, updatedAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey, timestamp)
 
