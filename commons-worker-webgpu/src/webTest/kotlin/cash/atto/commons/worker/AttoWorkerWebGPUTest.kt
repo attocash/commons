@@ -16,8 +16,8 @@ class AttoWorkerWebGPUTest {
     @Test
     fun `should perform work with webgpu`() =
         runTest {
-            if (!AttoWorker.isWebgpuSupported) {
-                println("Skipping WebGPU worker test because this JavaScript runtime does not expose the WebGPU API.")
+            if (!AttoWorker.isWebgpuSupported()) {
+                println("Skipping WebGPU worker test because this JavaScript runtime does not expose a WebGPU API or adapter.")
                 return@runTest
             }
 
@@ -26,16 +26,7 @@ class AttoWorkerWebGPUTest {
                 val network = AttoNetwork.LOCAL
                 val timestamp = AttoNetwork.INITIAL_INSTANT
                 val target = AttoWorkTarget(hash.value)
-                val work =
-                    try {
-                        worker.work(network, timestamp, target)
-                    } catch (exception: IllegalStateException) {
-                        if (exception.message == "No WebGPU adapter is available.") {
-                            println("Skipping WebGPU worker test because this JavaScript runtime does not expose a WebGPU adapter.")
-                            return@runTest
-                        }
-                        throw exception
-                    }
+                val work = worker.work(network, timestamp, target)
                 assertTrue(AttoWork.isValid(network, timestamp, target, work.value))
             } finally {
                 worker.close()

@@ -14,15 +14,16 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.Promise
 
-actual val AttoWorker.Companion.isWebgpuSupported: Boolean
-    get() = isWebGPUSupported()
+actual suspend fun AttoWorker.Companion.isWebgpuSupported(): Boolean = isWebGPUSupported()
+
+private var webGPUAdapterRequest: Promise<GPUAdapter?>? = null
 
 actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
     private var state: WebGPUState? = null
     private var closed = false
 
     init {
-        require(isWebGPUSupported()) { "WebGPU API not available." }
+        require(isWebGPUApiSupported()) { "WebGPU API not available." }
     }
 
     actual override suspend fun work(
@@ -99,8 +100,7 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
     private suspend fun state(): WebGPUState {
         state?.let { return it }
 
-        val gpu = getWebGPU()
-        val adapter = gpu.requestAdapter().await() ?: throw IllegalStateException("No WebGPU adapter is available.")
+        val adapter = requestWebGPUAdapter() ?: throw IllegalStateException("GPU is not supported.")
 
         val device = adapter.requestDevice().await()
         val configuration = createWorkConfiguration(device)
@@ -328,12 +328,31 @@ private fun createWorkConfiguration(device: GPUDevice): WebGPUWorkConfiguration 
 }
 
 private fun validateWebGPUSupported() {
-    if (!isWebGPUSupported()) {
+    if (!isWebGPUApiSupported()) {
         throw IllegalStateException("WebGPU API not available.")
     }
 }
 
-private fun isWebGPUSupported(): Boolean =
+private suspend fun isWebGPUSupported(): Boolean =
+    try {
+        requestWebGPUAdapter() != null
+    } catch (_: Throwable) {
+        false
+    }
+
+private suspend fun requestWebGPUAdapter(): GPUAdapter? {
+    if (!isWebGPUApiSupported()) {
+        return null
+    }
+
+    val request =
+        webGPUAdapterRequest ?: globalWebGPU().requestAdapter().also {
+            webGPUAdapterRequest = it
+        }
+    return request.await()
+}
+
+private fun isWebGPUApiSupported(): Boolean =
     js(
         """
         !!(
