@@ -3,14 +3,11 @@ package cash.atto.commons.worker
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
 
-
 expect suspend fun AttoWorker.Companion.isWebgpuSupported(): Boolean
 
 expect fun AttoWorker.Companion.isWebglSupported(): Boolean
 
-suspend fun AttoWorker.Companion.isWebSupported(): Boolean {
-    return AttoWorker.isWebgpuSupported() || AttoWorker.isWebglSupported()
-}
+suspend fun AttoWorker.Companion.isWebSupported(): Boolean = AttoWorker.isWebgpuSupported() || AttoWorker.isWebglSupported()
 
 fun AttoWorker.Companion.webgpu(): AttoWorker = AttoWorkerWebGPU()
 
@@ -22,7 +19,6 @@ suspend fun AttoWorker.Companion.web(): AttoWorker {
     }
     return AttoWorker.webgl()
 }
-
 
 expect class AttoWorkerWebGPU() : AttoWorker {
     override suspend fun work(
