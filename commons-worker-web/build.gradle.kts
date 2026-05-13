@@ -37,7 +37,7 @@ kotlin {
         generateTypeScriptDefinitions()
 
         compilations["main"].packageJson {
-            customField("name", "@attocash/commons-worker-webgpu")
+            customField("name", "@attocash/commons-worker-web")
         }
 
         compilerOptions {
@@ -100,9 +100,9 @@ publishing {
         artifact(javadocJar)
 
         pom {
-            name.set("Atto Commons Worker WebGPU")
+            name.set("Atto Commons Worker Web")
             description.set(
-                "Atto Commons Worker provides WebGPU proof-of-work implementation for browser JavaScript and Wasm.",
+                "Atto Commons Worker provides WebGPU and WebGL proof-of-work implementations for browser JavaScript and Wasm.",
             )
             url.set("https://github.com/attocash/commons")
 

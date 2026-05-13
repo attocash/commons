@@ -37,7 +37,7 @@ val installPuppeteerBrowsers by tasks.registering(Exec::class) {
 
 allprojects {
     val jvmOnlyPublicationProjects = setOf("commons-signer-remote", "commons-worker-opencl", "commons-gatekeeper-test")
-    val webOnlyPublicationProjects = setOf("commons-js", "commons-worker-webgpu")
+    val webOnlyPublicationProjects = setOf("commons-js", "commons-worker-web")
 
     apply {
         if (name != "commons-spring-boot-starter" && name != rootProject.name) {
