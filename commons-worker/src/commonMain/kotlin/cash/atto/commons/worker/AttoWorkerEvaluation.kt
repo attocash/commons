@@ -106,7 +106,7 @@ private class WorkEvaluator(
                 estimatedSampleSafetyFactor = estimatedSampleSafetyFactor(),
             )
 
-        if (!hasEnoughTimeForSample(budget, plan.estimatedSampleSeconds, plan.estimatedSampleSafetyFactor)) {
+        if (!canMeaningfullyMeasureNetwork(budget, plan.estimatedSampleSeconds, plan.estimatedSampleSafetyFactor)) {
             publish()
             return false
         }
@@ -140,6 +140,23 @@ private class WorkEvaluator(
         } else {
             NEXT_SAMPLE_SAFETY_FACTOR
         }
+
+    private fun canMeaningfullyMeasureNetwork(
+        budget: Duration,
+        estimatedSampleSeconds: Double?,
+        safetyFactor: Double,
+    ): Boolean {
+        if (samples.distinctBy { it.network }.size < MIN_NETWORKS_BEFORE_PROJECTION_SKIP) {
+            return true
+        }
+        if (estimatedSampleSeconds == null) {
+            return true
+        }
+
+        val estimatedSamplesPerSecond = 1.0 / (estimatedSampleSeconds * safetyFactor)
+        val minimumSamplesPerSecond = MIN_MEANINGFUL_STAGE_SAMPLES / budget.toDouble(DurationUnit.SECONDS)
+        return estimatedSamplesPerSecond >= minimumSamplesPerSecond
+    }
 
     private fun publish(stageSamples: List<WorkEvaluationSample> = emptyList()) {
         val currentSamples = samples + stageSamples
@@ -285,58 +302,39 @@ private data class WorkEvaluationSample(
 )
 
 private data class WorkEvaluationModel(
-    private val fixedSeconds: Double,
-    private val secondsPerAttempt: Double,
+    private val measuredExpectedAttempts: Double,
+    private val measuredSecondsPerWork: Double,
 ) {
     fun estimateSeconds(expectedAttempts: Double): Double =
         max(
             MINIMUM_ESTIMATED_SECONDS,
-            fixedSeconds + secondsPerAttempt * expectedAttempts,
+            measuredSecondsPerWork * expectedAttempts / measuredExpectedAttempts,
         )
 
     fun estimateWps(expectedAttempts: Double): Double = 1.0 / estimateSeconds(expectedAttempts)
 
     companion object {
         fun fit(samples: List<WorkEvaluationSample>): WorkEvaluationModel {
-            if (samples.size < 2 || samples.distinctBy { it.network }.size < 2) {
-                val totalSeconds = samples.sumOf { it.elapsed.toDouble(DurationUnit.SECONDS) }
-                val averageSeconds = totalSeconds / samples.size
-                val totalExpectedAttempts = samples.sumOf { it.expectedAttempts }
-                val averageExpectedAttempts = totalExpectedAttempts / samples.size
-                val fixedSeconds = averageSeconds * SINGLE_NETWORK_FIXED_SECONDS_SHARE
-                return WorkEvaluationModel(
-                    fixedSeconds = fixedSeconds,
-                    secondsPerAttempt = (averageSeconds - fixedSeconds) / averageExpectedAttempts,
-                )
-            }
-
-            val averageExpectedAttempts = samples.map { it.expectedAttempts }.average()
-            val averageSeconds = samples.map { it.elapsed.toDouble(DurationUnit.SECONDS) }.average()
-            val variance =
-                samples.sumOf {
-                    val attemptDelta = it.expectedAttempts - averageExpectedAttempts
-                    attemptDelta * attemptDelta
-                }
-            if (variance == 0.0) {
-                return WorkEvaluationModel(
-                    fixedSeconds = 0.0,
-                    secondsPerAttempt = averageSeconds / averageExpectedAttempts,
-                )
-            }
-
-            val covariance =
-                samples.sumOf {
-                    (it.expectedAttempts - averageExpectedAttempts) * (it.elapsed.toDouble(DurationUnit.SECONDS) - averageSeconds)
-                }
-            val secondsPerAttempt = max(0.0, covariance / variance)
-            val fixedSeconds = max(0.0, averageSeconds - secondsPerAttempt * averageExpectedAttempts)
-
+            val networkSamples = samples.groupBy { it.network }
+            val hardestSamples =
+                networkSamples
+                    .values
+                    .filter { it.hasEnoughEvidence() }
+                    .ifEmpty { networkSamples.values }
+                    .maxBy { it.first().expectedAttempts }
+            val measuredSecondsPerWork =
+                hardestSamples.sumOf { it.elapsed.toDouble(DurationUnit.SECONDS) } / hardestSamples.size
             return WorkEvaluationModel(
-                fixedSeconds = fixedSeconds,
-                secondsPerAttempt = secondsPerAttempt,
+                measuredExpectedAttempts = hardestSamples.first().expectedAttempts,
+                measuredSecondsPerWork = measuredSecondsPerWork,
             )
         }
     }
+}
+
+private fun List<WorkEvaluationSample>.hasEnoughEvidence(): Boolean {
+    val elapsedSeconds = sumOf { it.elapsed.toDouble(DurationUnit.SECONDS) }
+    return size >= MIN_MODEL_NETWORK_SAMPLES && elapsedSeconds >= MIN_MODEL_NETWORK_SECONDS
 }
 
 private fun AttoNetwork.evaluationLadder(): List<AttoNetwork> =
@@ -373,8 +371,11 @@ private const val CONFIDENT_MODEL_NETWORKS = 3
 private val EVALUATION_EMIT_INTERVAL = 1.toDuration(DurationUnit.SECONDS)
 private const val FIRST_SAMPLE_SAFETY_FACTOR = 4.0
 private const val MINIMUM_ESTIMATED_SECONDS = 1.0e-12
+private const val MIN_MODEL_NETWORK_SAMPLES = 30
+private const val MIN_MODEL_NETWORK_SECONDS = 2.0
+private val MIN_MEANINGFUL_STAGE_SAMPLES = MIN_MODEL_NETWORK_SAMPLES.toDouble()
+private const val MIN_NETWORKS_BEFORE_PROJECTION_SKIP = 2
 private const val NEXT_SAMPLE_SAFETY_FACTOR = 1.25
-private const val SINGLE_NETWORK_FIXED_SECONDS_SHARE = 2.0 / 3.0
 private const val STABILITY_RELATIVE_TOLERANCE = 0.10
 private val STABILITY_WINDOW = 2.toDuration(DurationUnit.SECONDS)
 private val TWO_TO_64 = ULong.MAX_VALUE.toDouble() + 1.0

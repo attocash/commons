@@ -12,13 +12,15 @@ config.set({
 
 config.customLaunchers = config.customLaunchers || {};
 config.customLaunchers.PuppeteerChromeHeadless = {
-    base: "ChromeHeadless",
+    base: "Chrome",
     flags: [
+        "--headless=new",
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--ignore-gpu-blocklist",
         "--enable-unsafe-webgpu",
-        "--enable-features=Vulkan",
+        "--enable-features=Vulkan,WebGPU,WebGPUDeveloperFeatures",
         "--use-angle=vulkan"
     ]
 };

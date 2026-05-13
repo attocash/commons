@@ -8,6 +8,7 @@ import cash.atto.commons.isValid
 import cash.atto.commons.toByteArray
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.yield
 import kotlin.js.ExperimentalWasmJsInterop
 
 actual fun AttoWorker.Companion.isWebglSupported(): Boolean = isWebGLSupported()
@@ -58,6 +59,7 @@ actual class AttoWorkerWebGL actual constructor() : AttoWorker {
             }
 
             startNonce += batchSize
+            yield()
         }
     }
 
@@ -177,7 +179,7 @@ private const val WEBGL_TARGET_WORDS = 8
 private const val WEBGL_RESULT_WORDS = 4
 private const val WEBGL_BATCH_WIDTH = 256
 private const val WEBGL_BATCH_HEIGHT = 256
-private const val WEBGL_ITERATIONS = 64
+private const val WEBGL_ITERATIONS = 8
 
 private fun ULong.webglLowInt(): Int = (this and UInt.MAX_VALUE.toULong()).toUInt().toInt()
 
@@ -205,35 +207,36 @@ private fun createWebGLConfiguration(gl: WebGL2RenderingContext): WebGLWorkConfi
     )
 }
 
-private fun isWebGLSupported(): Boolean =
-    try {
-        val gl = createWebGLContext() ?: return false
-        val texture = createWebGLResultTexture(gl, 1, 1)
-        val framebuffer = createWebGLFramebuffer(gl, texture)
-        val supported = isWebGLFramebufferComplete(gl)
-        deleteWebGLFramebuffer(gl, framebuffer)
-        deleteWebGLTexture(gl, texture)
-        supported
-    } catch (_: Throwable) {
-        false
+private fun isWebGLSupported(): Boolean {
+    val gl = createWebGLContext() ?: return false
+    val maxTextureSize = getWebGLParameterInt(gl, "MAX_TEXTURE_SIZE")
+    if (maxTextureSize < WEBGL_BATCH_WIDTH || maxTextureSize < WEBGL_BATCH_HEIGHT) {
+        return false
     }
+
+    return isWebGLResultFramebufferSupported(gl, WEBGL_BATCH_WIDTH, WEBGL_BATCH_HEIGHT)
+}
 
 private fun createWebGLContext(): WebGL2RenderingContext? =
     js(
         """
         (() => {
-            const canvas = typeof OffscreenCanvas === "function"
-                ? new OffscreenCanvas(1, 1)
-                : (globalThis.document && globalThis.document.createElement("canvas"));
-            if (!canvas || typeof canvas.getContext !== "function") return null;
-            return canvas.getContext("webgl2", {
-                alpha: false,
-                antialias: false,
-                depth: false,
-                stencil: false,
-                preserveDrawingBuffer: false,
-                powerPreference: "high-performance"
-            });
+            try {
+                const canvas = typeof OffscreenCanvas === "function"
+                    ? new OffscreenCanvas(1, 1)
+                    : (globalThis.document && globalThis.document.createElement("canvas"));
+                if (!canvas || typeof canvas.getContext !== "function") return null;
+                return canvas.getContext("webgl2", {
+                    alpha: false,
+                    antialias: false,
+                    depth: false,
+                    stencil: false,
+                    preserveDrawingBuffer: false,
+                    powerPreference: "high-performance"
+                });
+            } catch (_) {
+                return null;
+            }
         })()
         """,
     )
@@ -340,8 +343,47 @@ private fun createWebGLFramebuffer(
         """,
     )
 
-private fun isWebGLFramebufferComplete(gl: WebGL2RenderingContext): Boolean =
-    js("gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE")
+private fun isWebGLResultFramebufferSupported(
+    gl: WebGL2RenderingContext,
+    width: Int,
+    height: Int,
+): Boolean =
+    js(
+        """
+        (() => {
+            let texture = null;
+            let framebuffer = null;
+
+            try {
+                if (!gl || typeof gl.createTexture !== "function" || typeof gl.createFramebuffer !== "function") {
+                    return false;
+                }
+
+                texture = gl.createTexture();
+                framebuffer = gl.createFramebuffer();
+                if (!texture || !framebuffer) return false;
+
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32UI, width, height);
+
+                gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+                return gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+            } catch (_) {
+                return false;
+            } finally {
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                gl.bindTexture(gl.TEXTURE_2D, null);
+                if (framebuffer) gl.deleteFramebuffer(framebuffer);
+                if (texture) gl.deleteTexture(texture);
+            }
+        })()
+        """,
+    )
 
 private fun useWebGLProgram(
     gl: WebGL2RenderingContext,
@@ -432,7 +474,6 @@ private fun webGLFragmentShaderSource(iterations: Int): String =
     #version 300 es
     precision highp float;
     precision highp int;
-    precision highp uint;
 
     struct U64 {
         uint low;

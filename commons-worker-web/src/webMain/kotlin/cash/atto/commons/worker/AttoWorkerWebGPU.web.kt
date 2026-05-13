@@ -8,15 +8,22 @@ import cash.atto.commons.isValid
 import cash.atto.commons.toByteArray
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.Promise
 
-actual suspend fun AttoWorker.Companion.isWebgpuSupported(): Boolean = isWebGPUSupported()
+actual suspend fun AttoWorker.Companion.isWebgpuSupported(): Boolean {
+    webGPUSupported?.let { return it }
 
-private var webGPUAdapterRequest: Promise<GPUAdapter?>? = null
+    val supported = isWebGPUSupported()
+    webGPUSupported = supported
+    return supported
+}
+
+private var webGPUAdapter: GPUAdapter? = null
+private var webGPUSupported: Boolean? = null
 
 actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
     private var state: WebGPUState? = null
@@ -68,8 +75,12 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
                 state.dispatch(inputBuffer, resultBuffer, readBuffer)
                 readBuffer.mapAsync(gpuMapModeRead()).await()
 
-                val result = readMappedResult(readBuffer, RESULT_BUFFER_SIZE)
-                readBuffer.unmap()
+                val result =
+                    try {
+                        readMappedResult(readBuffer, RESULT_BUFFER_SIZE)
+                    } finally {
+                        readBuffer.unmap()
+                    }
 
                 if (result.found != 0) {
                     val nonceLow = result.nonceLow.toUInt().toULong()
@@ -149,10 +160,6 @@ private class WebGPUState(
             },
         )
     }
-}
-
-private external interface GPU : JsAny {
-    fun requestAdapter(): Promise<GPUAdapter?>
 }
 
 private external interface GPUAdapter : JsAny {
@@ -282,18 +289,55 @@ private fun ULong.lowInt(): Int = (this and UInt.MAX_VALUE.toULong()).toUInt().t
 private fun ULong.highInt(): Int = (this shr 32).toUInt().toInt()
 
 private suspend fun <T : JsAny?> Promise<T>.await(): T =
-    suspendCoroutine { continuation ->
+    suspendCancellableCoroutine { continuation ->
         then(
             {
-                continuation.resume(it)
+                if (continuation.isActive) {
+                    continuation.resume(it)
+                }
                 null
             },
             {
-                continuation.resumeWithException(Throwable(it.toString()))
+                if (continuation.isActive) {
+                    continuation.resumeWithException(
+                        IllegalStateException(promiseRejectionMessage(it)),
+                    )
+                }
                 null
             },
         )
     }
+
+private suspend fun <T : JsAny?> Promise<T>.awaitOrNull(): T? =
+    suspendCancellableCoroutine { continuation ->
+        then(
+            {
+                if (continuation.isActive) {
+                    continuation.resume(it)
+                }
+                null
+            },
+            {
+                if (continuation.isActive) {
+                    continuation.resume(null)
+                }
+                null
+            },
+        )
+    }
+
+private fun promiseRejectionMessage(reason: JsAny?): String =
+    js(
+        """
+        (() => {
+            const value = reason;
+            if (value == null) return "Promise rejected.";
+            if (value instanceof Error) return value.message || value.name || String(value);
+            if (typeof value === "object" && "message" in value) return String(value.message);
+            return String(value);
+        })()
+        """,
+    )
 
 private fun ByteArray.toUint8Array(): Uint8Array {
     val output = uint8Array(size)
@@ -327,29 +371,24 @@ private fun createWorkConfiguration(device: GPUDevice): WebGPUWorkConfiguration 
     )
 }
 
-private fun validateWebGPUSupported() {
-    if (!isWebGPUApiSupported()) {
-        throw IllegalStateException("WebGPU API not available.")
-    }
+private suspend fun isWebGPUSupported(): Boolean {
+    val adapter = requestWebGPUAdapter() ?: return false
+    val device = requestWebGPUDeviceOrNull(adapter).awaitOrNull() ?: return false
+    val supported = isWebGPUDeviceSupported(device)
+    destroyWebGPUDevice(device)
+    return supported
 }
 
-private suspend fun isWebGPUSupported(): Boolean =
-    try {
-        requestWebGPUAdapter() != null
-    } catch (_: Throwable) {
-        false
-    }
-
 private suspend fun requestWebGPUAdapter(): GPUAdapter? {
+    webGPUAdapter?.let { return it }
+
     if (!isWebGPUApiSupported()) {
         return null
     }
 
-    val request =
-        webGPUAdapterRequest ?: globalWebGPU().requestAdapter().also {
-            webGPUAdapterRequest = it
-        }
-    return request.await()
+    val adapter = requestWebGPUAdapterOrNull().awaitOrNull()
+    webGPUAdapter = adapter
+    return adapter
 }
 
 private fun isWebGPUApiSupported(): Boolean =
@@ -365,12 +404,83 @@ private fun isWebGPUApiSupported(): Boolean =
         """,
     )
 
-private fun getWebGPU(): GPU {
-    validateWebGPUSupported()
-    return globalWebGPU()
-}
+private fun requestWebGPUAdapterOrNull(): Promise<GPUAdapter?> =
+    js(
+        """
+        (() => {
+            if (!(
+                globalThis.navigator &&
+                globalThis.navigator.gpu &&
+                typeof globalThis.navigator.gpu.requestAdapter === "function"
+            )) {
+                return Promise.resolve(null);
+            }
 
-private fun globalWebGPU(): GPU = js("globalThis.navigator.gpu")
+            try {
+                return globalThis.navigator.gpu.requestAdapter().then(
+                    adapter => (!adapter || typeof adapter.requestDevice !== "function") ? null : adapter,
+                    () => null
+                );
+            } catch (_) {
+                return Promise.resolve(null);
+            }
+        })()
+        """,
+    )
+
+private fun requestWebGPUDeviceOrNull(adapter: GPUAdapter): Promise<GPUDevice?> =
+    js(
+        """
+        (() => {
+            if (!adapter || typeof adapter.requestDevice !== "function") return Promise.resolve(null);
+
+            try {
+                return adapter.requestDevice().then(
+                    device => device || null,
+                    () => null
+                );
+            } catch (_) {
+                return Promise.resolve(null);
+            }
+        })()
+        """,
+    )
+
+private fun isWebGPUDeviceSupported(device: GPUDevice): Boolean =
+    js(
+        """
+        !!(
+            device &&
+            device.limits &&
+            Number.isFinite(device.limits.maxComputeInvocationsPerWorkgroup) &&
+            Number.isFinite(device.limits.maxComputeWorkgroupSizeX) &&
+            Number.isFinite(device.limits.maxComputeWorkgroupsPerDimension) &&
+            device.limits.maxComputeInvocationsPerWorkgroup > 0 &&
+            device.limits.maxComputeWorkgroupSizeX > 0 &&
+            device.limits.maxComputeWorkgroupsPerDimension > 0 &&
+            device.queue &&
+            typeof device.queue.writeBuffer === "function" &&
+            typeof device.queue.submit === "function" &&
+            typeof device.createBuffer === "function" &&
+            typeof device.createShaderModule === "function" &&
+            typeof device.createComputePipeline === "function" &&
+            typeof device.createBindGroup === "function" &&
+            typeof device.createCommandEncoder === "function" &&
+            typeof device.destroy === "function"
+        )
+        """,
+    )
+
+private fun destroyWebGPUDevice(device: GPUDevice): Unit =
+    js(
+        """
+        (() => {
+            if (device && typeof device.destroy === "function") {
+                device.destroy();
+            }
+        })()
+        """,
+    )
 
 private fun inputBufferUsage(): Int = js("globalThis.GPUBufferUsage.STORAGE | globalThis.GPUBufferUsage.COPY_DST")
 

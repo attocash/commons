@@ -17,7 +17,11 @@ suspend fun AttoWorker.Companion.web(): AttoWorker {
     if (AttoWorker.isWebgpuSupported()) {
         return AttoWorker.webgpu()
     }
-    return AttoWorker.webgl()
+    if (AttoWorker.isWebglSupported()) {
+        return AttoWorker.webgl()
+    }
+
+    error("No supported web worker available.")
 }
 
 expect class AttoWorkerWebGPU() : AttoWorker {
