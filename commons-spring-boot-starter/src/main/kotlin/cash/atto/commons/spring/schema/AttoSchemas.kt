@@ -10,6 +10,7 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoVersion
 import cash.atto.commons.AttoWork
+import cash.atto.commons.AttoWorkTarget
 import io.swagger.v3.oas.models.media.IntegerSchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
@@ -54,6 +55,13 @@ object AttoSchemas {
                     .maxLength(16)
                     .description("Work nonce (hex)")
                     .example(AttoWork(Random.nextBytes(8)).toString()),
+            AttoWorkTarget::class to
+                StringSchema()
+                    .format("hex")
+                    .minLength(64)
+                    .maxLength(64)
+                    .description("32-byte work target (hex)")
+                    .example(AttoWorkTarget(Random.nextBytes(32)).toString()),
             AttoHeight::class to
                 StringSchema()
                     .description("Block height as unsigned 64-bit integer (1..18446744073709551615)")

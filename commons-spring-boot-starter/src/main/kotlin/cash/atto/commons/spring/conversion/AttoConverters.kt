@@ -10,6 +10,8 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoVersion
 import cash.atto.commons.AttoWork
+import cash.atto.commons.AttoWorkTarget
+import cash.atto.commons.fromHexToByteArray
 import cash.atto.commons.toAtto
 import cash.atto.commons.toBigInteger
 import cash.atto.commons.toBuffer
@@ -124,6 +126,16 @@ object AttoConverters {
             },
             object : Converter<ByteArray, AttoWork> {
                 override fun convert(source: ByteArray) = AttoWork(source)
+            },
+            // AttoWorkTarget <-> ByteArray / String
+            object : Converter<String, AttoWorkTarget> {
+                override fun convert(source: String) = AttoWorkTarget(source.fromHexToByteArray())
+            },
+            object : Converter<AttoWorkTarget, ByteArray> {
+                override fun convert(source: AttoWorkTarget) = source.value
+            },
+            object : Converter<ByteArray, AttoWorkTarget> {
+                override fun convert(source: ByteArray) = AttoWorkTarget(source)
             },
             // AttoAddress <-> String
             object : Converter<String, AttoAddress> {
