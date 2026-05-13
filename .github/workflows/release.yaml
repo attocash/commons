@@ -27,6 +27,9 @@ jobs:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
   release-npm:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
 
@@ -34,6 +37,7 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org/'
+          package-manager-cache: false
 
       - uses: actions/setup-java@v5
         with:
@@ -65,8 +69,6 @@ jobs:
 
           npm version "$VERSION"
           npm publish --access public --tag "$TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish commons-test
         working-directory: ./commons-test/build/dist/js/productionLibrary
@@ -74,5 +76,3 @@ jobs:
           VERSION=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/v//")
           npm version "$VERSION"
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
