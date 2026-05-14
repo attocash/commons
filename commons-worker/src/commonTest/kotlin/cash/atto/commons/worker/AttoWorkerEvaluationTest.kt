@@ -23,7 +23,7 @@ class AttoWorkerEvaluationTest {
 
                 // then
                 assertTrue(evaluations.isNotEmpty(), "Expected at least one work evaluation sample.")
-                println(evaluations.joinToString("\n"))
+                println("Sample: " + evaluations.size + " " + evaluations.last())
             }
         }
 
@@ -36,7 +36,7 @@ class AttoWorkerEvaluationTest {
 
                 // then
                 assertTrue(evaluations.isNotEmpty(), "Expected at least one work evaluation sample.")
-                println(evaluations.joinToString("\n"))
+                println("Sample: " + evaluations.size + " " + evaluations.last())
             }
         }
 
@@ -49,7 +49,7 @@ class AttoWorkerEvaluationTest {
 
                 // then
                 assertTrue(evaluations.isNotEmpty(), "Expected at least one work evaluation sample.")
-                println(evaluations.joinToString("\n"))
+                println("Sample: " + evaluations.size + " " + evaluations.last())
             }
         }
 }

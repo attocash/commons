@@ -1,29 +1,22 @@
 package cash.atto.commons.worker
 
-import cash.atto.commons.AttoInstant
+import cash.atto.commons.AttoHasher
 import cash.atto.commons.AttoNetwork
-import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
-import cash.atto.commons.getThreshold
-import cash.atto.commons.isValid
-import cash.atto.commons.utils.SecureRandom
+import cash.atto.commons.toAtto
+import cash.atto.commons.toByteArray
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.yield
-import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.max
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
-import kotlin.time.toDuration
+import kotlin.time.measureTime
 
 data class AttoWorkEvaluation(
     val environment: AttoNetwork,
@@ -36,346 +29,149 @@ fun AttoWorker.evaluate(
 ): Flow<AttoWorkEvaluation> {
     require(maxDuration > Duration.ZERO) { "maxDuration must be greater than zero." }
 
-    return WorkEvaluator(
+    return Evaluator(
         worker = this,
-        environment = network,
+        network = network,
         maxDuration = maxDuration,
     ).evaluate()
 }
 
-private class WorkEvaluator(
+private val networks =
+    listOf(
+        AttoNetwork.LOCAL,
+        AttoNetwork.DEV,
+        AttoNetwork.BETA,
+        AttoNetwork.LIVE,
+    )
+
+private val multipliers =
+    mapOf(
+        AttoNetwork.LOCAL to
+            mapOf(
+                AttoNetwork.LOCAL to 1.0,
+                AttoNetwork.DEV to 0.0071042649,
+                AttoNetwork.BETA to 0.0007203817,
+                AttoNetwork.LIVE to 0.0000696977,
+            ),
+        AttoNetwork.DEV to
+            mapOf(
+                AttoNetwork.DEV to 1.0,
+                AttoNetwork.BETA to 0.1014012945,
+                AttoNetwork.LIVE to 0.0098106796,
+            ),
+        AttoNetwork.BETA to
+            mapOf(
+                AttoNetwork.BETA to 1.0,
+                AttoNetwork.LIVE to 0.0967510293,
+            ),
+    )
+
+private class Evaluator(
     private val worker: AttoWorker,
-    private val environment: AttoNetwork,
+    private val network: AttoNetwork,
     private val maxDuration: Duration,
+    private val targetCount: Int = 100,
 ) {
-    private val timestamp = AttoInstant.now()
-    private val targetExpectedAttempts = AttoWork.getExpectedAttempts(environment, timestamp)
-    private val ladder = environment.evaluationLadder()
-    private val stageBudget = maxDuration / ladder.size
-    private val started = TimeSource.Monotonic.markNow()
-    private val samples = mutableListOf<WorkEvaluationSample>()
-    private val latestWps = MutableStateFlow<Double?>(null)
+    init {
+        require(network != AttoNetwork.UNKNOWN) { "Atto network can't be UNKNOWN." }
+    }
+
+    private val targets =
+        Array(targetCount) {
+            AttoWorkTarget(AttoHasher.hash(32, network.name.encodeToByteArray(), it.toULong().toByteArray()))
+        }
 
     fun evaluate(): Flow<AttoWorkEvaluation> =
-        channelFlow {
-            val measurement = launch(Dispatchers.Default) { measureLadder() }
-            var emittedWps: Double? = null
+        flow {
+            val evaluationStartedAt = Clock.System.now()
+            val evaluationStarted = TimeSource.Monotonic.markNow()
+            val networksToMeasure = networks.take(networks.indexOf(network) + 1)
 
-            suspend fun emitLatest(force: Boolean) {
-                val wps = latestWps.value
-                if (wps != null && (force || wps != emittedWps)) {
-                    send(AttoWorkEvaluation(environment, wps))
-                    emittedWps = wps
+            for (currentNetwork in networksToMeasure) {
+                val multiplier = currentNetwork.multiplierTo(network)
+                var sumNanos = 0L
+                var counter = 0L
+
+                fun calculateWps(): Double {
+                    if (sumNanos == 0L || counter == 0L) return 0.0
+                    return counter.toDouble() * NANOS_PER_SECOND / sumNanos
+                }
+
+                fun calculateProjectedWps(): Double = calculateWps() * multiplier
+
+                suspend fun report(): Double {
+                    val projectedWps = calculateProjectedWps()
+                    emit(AttoWorkEvaluation(network, projectedWps))
+                    return projectedWps
+                }
+
+                var targetCounter = 0
+                var nextReportSecond = 1L
+                var lastCooperativePause = TimeSource.Monotonic.markNow()
+                val networkStarted = TimeSource.Monotonic.markNow()
+                val wpsHistory = linkedMapOf<Long, Double>()
+
+                while (evaluationStarted.elapsedNow() < maxDuration) {
+                    currentCoroutineContext().ensureActive()
+
+                    val duration =
+                        measureTime {
+                            worker.work(currentNetwork, evaluationStartedAt.toAtto(), targets[targetCounter++ % targetCount])
+                        }
+                    sumNanos += duration.inWholeNanoseconds.coerceAtLeast(1)
+                    counter++
+
+                    val elapsedSecond = networkStarted.elapsedNow().inWholeSeconds
+                    if (elapsedSecond >= nextReportSecond) {
+                        wpsHistory[elapsedSecond] = report()
+                        nextReportSecond = elapsedSecond + 1
+                        lastCooperativePause = TimeSource.Monotonic.markNow()
+                        delay(COOPERATIVE_PAUSE)
+
+                        if (wpsHistory.enoughSample()) {
+                            break
+                        }
+                    } else if (lastCooperativePause.elapsedNow() >= COOPERATIVE_PAUSE_INTERVAL) {
+                        lastCooperativePause = TimeSource.Monotonic.markNow()
+                        delay(COOPERATIVE_PAUSE)
+                    }
+                }
+
+                if (counter > 0L) {
+                    report()
+                }
+
+                val projectedWps = calculateProjectedWps()
+                if (currentNetwork == network || projectedWps < MIN_PROJECTED_WPS_TO_MEASURE_NEXT_NETWORK) {
+                    break
                 }
             }
+        }.flowOn(Dispatchers.Default)
 
-            var emittedIntervals = 0
-            val maxIntervals = maxDuration.emissionIntervals()
-            while (emittedIntervals < maxIntervals && !measurement.joinWithin(EVALUATION_EMIT_INTERVAL)) {
-                emittedIntervals += 1
-                emitLatest(force = true)
-            }
-            if (!measurement.isCompleted) {
-                measurement.cancelAndJoin()
-            }
-            emitLatest(force = false)
+    private fun AttoNetwork.multiplierTo(target: AttoNetwork): Double {
+        if (this == target) {
+            return 1.0
         }
-
-    private suspend fun measureLadder() {
-        for (network in ladder) {
-            if (!measureNetwork(network)) {
-                break
-            }
-        }
+        return multipliers[this]?.get(target) ?: error("No work multiplier from $this to $target.")
     }
 
-    private suspend fun measureNetwork(network: AttoNetwork): Boolean {
-        val budget =
-            nextBudget()
-                ?: run {
-                    publish()
-                    return false
-                }
-        val model = samples.takeIf { it.isNotEmpty() }?.let(WorkEvaluationModel::fit)
-        val plan =
-            WorkMeasurementPlan(
-                network = network,
-                timestamp = timestamp,
-                maxDuration = budget,
-                estimatedSampleSeconds = model?.estimateSeconds(AttoWork.getExpectedAttempts(network, timestamp)),
-                estimatedSampleSafetyFactor = estimatedSampleSafetyFactor(),
-            )
+    private fun LinkedHashMap<Long, Double>.enoughSample(): Boolean {
+        val recent = this.values.toList().takeLast(5)
+        if (this.size < 5) return false
 
-        if (!canMeaningfullyMeasureNetwork(budget, plan.estimatedSampleSeconds, plan.estimatedSampleSafetyFactor)) {
-            publish()
-            return false
-        }
+        val avg = recent.average()
+        if (avg == 0.0) return false
 
-        val stage =
-            worker.measureStage(plan) { stage ->
-                publish(stage.toModelSamples())
-            }
-        if (stage.samples.isEmpty()) {
-            publish()
-            return false
-        }
+        val min = recent.min()
+        val max = recent.max()
 
-        samples += stage.toModelSamples()
-        publish()
-        return true
+        return (max - min) / avg <= 0.10
     }
 
-    private fun nextBudget(): Duration? {
-        val remaining = maxDuration - started.elapsedNow()
-        if (remaining <= Duration.ZERO) {
-            return null
-        }
-
-        return minOf(stageBudget, remaining)
-    }
-
-    private fun estimatedSampleSafetyFactor(): Double =
-        if (samples.distinctBy { it.network }.size < CONFIDENT_MODEL_NETWORKS) {
-            FIRST_SAMPLE_SAFETY_FACTOR
-        } else {
-            NEXT_SAMPLE_SAFETY_FACTOR
-        }
-
-    private fun canMeaningfullyMeasureNetwork(
-        budget: Duration,
-        estimatedSampleSeconds: Double?,
-        safetyFactor: Double,
-    ): Boolean {
-        if (samples.distinctBy { it.network }.size < MIN_NETWORKS_BEFORE_PROJECTION_SKIP) {
-            return true
-        }
-        if (estimatedSampleSeconds == null) {
-            return true
-        }
-
-        val estimatedSamplesPerSecond = 1.0 / (estimatedSampleSeconds * safetyFactor)
-        val minimumSamplesPerSecond = MIN_MEANINGFUL_STAGE_SAMPLES / budget.toDouble(DurationUnit.SECONDS)
-        return estimatedSamplesPerSecond >= minimumSamplesPerSecond
-    }
-
-    private fun publish(stageSamples: List<WorkEvaluationSample> = emptyList()) {
-        val currentSamples = samples + stageSamples
-        if (currentSamples.isEmpty()) {
-            return
-        }
-
-        latestWps.value = WorkEvaluationModel.fit(currentSamples).estimateWps(targetExpectedAttempts)
+    private companion object {
+        private const val MIN_PROJECTED_WPS_TO_MEASURE_NEXT_NETWORK = 5.0
+        private const val NANOS_PER_SECOND = 1_000_000_000.0
+        private val COOPERATIVE_PAUSE = 1L.milliseconds
+        private val COOPERATIVE_PAUSE_INTERVAL = 16.milliseconds
     }
 }
-
-private suspend fun AttoWorker.measureStage(
-    plan: WorkMeasurementPlan,
-    onProgress: suspend (WorkEvaluationStage) -> Unit,
-): WorkEvaluationStage {
-    val samples = mutableListOf<WorkEvaluationSample>()
-    val started = TimeSource.Monotonic.markNow()
-    var windowStarted = TimeSource.Monotonic.markNow()
-    var previousWindowWps: Double? = null
-    var windowSamples = 0
-    val expectedAttempts = AttoWork.getExpectedAttempts(plan.network, plan.timestamp)
-
-    while (true) {
-        val remaining = plan.maxDuration - started.elapsedNow()
-        if (remaining <= Duration.ZERO) {
-            return WorkEvaluationStage(samples.toList(), started.elapsedNow())
-        }
-
-        val measuredSampleSeconds = samples.estimateNextSampleSeconds(started.elapsedNow())
-        val nextSampleSeconds = measuredSampleSeconds ?: plan.estimatedSampleSeconds
-        val safetyFactor =
-            if (measuredSampleSeconds == null) {
-                plan.estimatedSampleSafetyFactor
-            } else {
-                NEXT_SAMPLE_SAFETY_FACTOR
-            }
-        if (!hasEnoughTimeForSample(remaining, nextSampleSeconds, safetyFactor)) {
-            return WorkEvaluationStage(samples.toList(), started.elapsedNow())
-        }
-
-        val sampleStarted = TimeSource.Monotonic.markNow()
-        val completed =
-            withTimeoutOrNull(remaining) {
-                val target = AttoWorkTarget(SecureRandom.randomByteArray(ATTO_WORK_TARGET_SIZE.toUInt()))
-                val work = work(plan.network, plan.timestamp, target)
-                WorkEvaluationCompleted(target, work)
-            } ?: return WorkEvaluationStage(samples.toList(), started.elapsedNow())
-        val elapsed = sampleStarted.elapsedNow()
-
-        check(AttoWork.isValid(plan.network, plan.timestamp, completed.target, completed.work.value)) {
-            "Worker returned invalid work while evaluating ${plan.network}."
-        }
-
-        samples +=
-            WorkEvaluationSample(
-                network = plan.network,
-                expectedAttempts = expectedAttempts,
-                elapsed = elapsed,
-            )
-        onProgress(WorkEvaluationStage(samples.toList(), started.elapsedNow()))
-        yield()
-
-        windowSamples += 1
-        val windowElapsed = windowStarted.elapsedNow()
-        if (windowElapsed >= STABILITY_WINDOW) {
-            val currentWindowWps = windowSamples.toDouble() / windowElapsed.toDouble(DurationUnit.SECONDS)
-            val previousWps = previousWindowWps
-            if (previousWps != null && isStable(previousWps, currentWindowWps)) {
-                return WorkEvaluationStage(samples.toList(), started.elapsedNow())
-            }
-
-            previousWindowWps = currentWindowWps
-            windowStarted = TimeSource.Monotonic.markNow()
-            windowSamples = 0
-        }
-    }
-}
-
-private fun List<WorkEvaluationSample>.estimateNextSampleSeconds(elapsed: Duration): Double? {
-    if (isEmpty()) {
-        return null
-    }
-
-    return elapsed.toDouble(DurationUnit.SECONDS) / size
-}
-
-private fun WorkEvaluationStage.toModelSamples(): List<WorkEvaluationSample> {
-    if (samples.isEmpty()) {
-        return emptyList()
-    }
-
-    val sampleElapsed = elapsed / samples.size
-    return samples.map { it.copy(elapsed = sampleElapsed) }
-}
-
-private fun hasEnoughTimeForSample(
-    remaining: Duration,
-    estimatedSeconds: Double?,
-    safetyFactor: Double,
-): Boolean {
-    if (estimatedSeconds == null) {
-        return true
-    }
-
-    return estimatedSeconds * safetyFactor <= remaining.toDouble(DurationUnit.SECONDS)
-}
-
-private suspend fun Job.joinWithin(duration: Duration): Boolean =
-    withContext(Dispatchers.Default) {
-        withTimeoutOrNull(duration) {
-            join()
-            true
-        } ?: false
-    }
-
-private fun Duration.emissionIntervals(): Int {
-    val intervalSeconds = EVALUATION_EMIT_INTERVAL.toDouble(DurationUnit.SECONDS)
-    return ceil(toDouble(DurationUnit.SECONDS) / intervalSeconds).toInt().coerceAtLeast(1)
-}
-
-private data class WorkEvaluationCompleted(
-    val target: AttoWorkTarget,
-    val work: AttoWork,
-)
-
-private data class WorkMeasurementPlan(
-    val network: AttoNetwork,
-    val timestamp: AttoInstant,
-    val maxDuration: Duration,
-    val estimatedSampleSeconds: Double?,
-    val estimatedSampleSafetyFactor: Double,
-)
-
-private data class WorkEvaluationStage(
-    val samples: List<WorkEvaluationSample>,
-    val elapsed: Duration,
-)
-
-private data class WorkEvaluationSample(
-    val network: AttoNetwork,
-    val expectedAttempts: Double,
-    val elapsed: Duration,
-)
-
-private data class WorkEvaluationModel(
-    private val measuredExpectedAttempts: Double,
-    private val measuredSecondsPerWork: Double,
-) {
-    fun estimateSeconds(expectedAttempts: Double): Double =
-        max(
-            MINIMUM_ESTIMATED_SECONDS,
-            measuredSecondsPerWork * expectedAttempts / measuredExpectedAttempts,
-        )
-
-    fun estimateWps(expectedAttempts: Double): Double = 1.0 / estimateSeconds(expectedAttempts)
-
-    companion object {
-        fun fit(samples: List<WorkEvaluationSample>): WorkEvaluationModel {
-            val networkSamples = samples.groupBy { it.network }
-            val hardestSamples =
-                networkSamples
-                    .values
-                    .filter { it.hasEnoughEvidence() }
-                    .ifEmpty { networkSamples.values }
-                    .maxBy { it.first().expectedAttempts }
-            val measuredSecondsPerWork =
-                hardestSamples.sumOf { it.elapsed.toDouble(DurationUnit.SECONDS) } / hardestSamples.size
-            return WorkEvaluationModel(
-                measuredExpectedAttempts = hardestSamples.first().expectedAttempts,
-                measuredSecondsPerWork = measuredSecondsPerWork,
-            )
-        }
-    }
-}
-
-private fun List<WorkEvaluationSample>.hasEnoughEvidence(): Boolean {
-    val elapsedSeconds = sumOf { it.elapsed.toDouble(DurationUnit.SECONDS) }
-    return size >= MIN_MODEL_NETWORK_SAMPLES && elapsedSeconds >= MIN_MODEL_NETWORK_SECONDS
-}
-
-private fun AttoNetwork.evaluationLadder(): List<AttoNetwork> =
-    when (this) {
-        AttoNetwork.LOCAL -> listOf(AttoNetwork.LOCAL)
-        AttoNetwork.DEV -> listOf(AttoNetwork.LOCAL, AttoNetwork.DEV)
-        AttoNetwork.BETA -> listOf(AttoNetwork.LOCAL, AttoNetwork.DEV, AttoNetwork.BETA)
-        AttoNetwork.LIVE -> listOf(AttoNetwork.LOCAL, AttoNetwork.DEV, AttoNetwork.BETA, AttoNetwork.LIVE)
-        AttoNetwork.UNKNOWN -> throw IllegalArgumentException("Cannot evaluate work for UNKNOWN network.")
-    }
-
-private fun AttoWork.Companion.getExpectedAttempts(
-    network: AttoNetwork,
-    timestamp: AttoInstant,
-): Double {
-    val threshold = getThreshold(network, timestamp)
-    return TWO_TO_64 / (threshold.toDouble() + 1.0)
-}
-
-private fun isStable(
-    previousWps: Double,
-    currentWps: Double,
-): Boolean {
-    val larger = max(previousWps, currentWps)
-    if (larger == 0.0) {
-        return true
-    }
-
-    return abs(previousWps - currentWps) / larger <= STABILITY_RELATIVE_TOLERANCE
-}
-
-private const val ATTO_WORK_TARGET_SIZE = 32
-private const val CONFIDENT_MODEL_NETWORKS = 3
-private val EVALUATION_EMIT_INTERVAL = 1.toDuration(DurationUnit.SECONDS)
-private const val FIRST_SAMPLE_SAFETY_FACTOR = 4.0
-private const val MINIMUM_ESTIMATED_SECONDS = 1.0e-12
-private const val MIN_MODEL_NETWORK_SAMPLES = 30
-private const val MIN_MODEL_NETWORK_SECONDS = 2.0
-private val MIN_MEANINGFUL_STAGE_SAMPLES = MIN_MODEL_NETWORK_SAMPLES.toDouble()
-private const val MIN_NETWORKS_BEFORE_PROJECTION_SKIP = 2
-private const val NEXT_SAMPLE_SAFETY_FACTOR = 1.25
-private const val STABILITY_RELATIVE_TOLERANCE = 0.10
-private val STABILITY_WINDOW = 2.toDuration(DurationUnit.SECONDS)
-private val TWO_TO_64 = ULong.MAX_VALUE.toDouble() + 1.0
