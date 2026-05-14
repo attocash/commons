@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.kotlinx.benchmark)
 }
 
+val npmRepository =
+    mapOf(
+        "type" to "git",
+        "url" to "https://github.com/attocash/commons",
+    )
+
 group = "cash.atto"
 
 repositories {
@@ -49,6 +55,7 @@ kotlin {
 
         compilations["main"].packageJson {
             customField("name", "@attocash/commons-js")
+            customField("repository", npmRepository)
 
             customField("main", "index.mjs") // CommonJS entry
             customField("module", "index.mjs") // ESM entry
@@ -96,4 +103,8 @@ kotlin {
         val jsMain by getting
         val jsTest by getting
     }
+}
+
+tasks.named<Copy>("jsProcessResources") {
+    from(layout.projectDirectory.file("README.md"))
 }

@@ -9,6 +9,12 @@ plugins {
     signing
 }
 
+val npmRepository =
+    mapOf(
+        "type" to "git",
+        "url" to "https://github.com/attocash/commons",
+    )
+
 group = "cash.atto"
 
 repositories {
@@ -44,6 +50,7 @@ kotlin {
 
         compilations["main"].packageJson {
             customField("name", "@attocash/commons-test")
+            customField("repository", npmRepository)
         }
 
         compilerOptions {
@@ -161,4 +168,8 @@ signing {
         useInMemoryPgpKeys(signingKey, "")
         sign(publishing.publications)
     }
+}
+
+tasks.named<Copy>("jsProcessResources") {
+    from(layout.projectDirectory.file("README.md"))
 }
