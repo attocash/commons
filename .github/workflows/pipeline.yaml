@@ -1,4 +1,5 @@
 name: Pipeline
+
 on:
   push:
     branches:
@@ -8,7 +9,37 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      has_release: ${{ steps.version.outputs.has_release }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      short_sha: ${{ steps.version.outputs.short_sha }}
+      maven_snapshot_version: ${{ steps.version.outputs.maven_snapshot_version }}
+      npm_snapshot_version: ${{ steps.version.outputs.npm_snapshot_version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+
+      - id: version
+        name: Determine Version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node ./scripts/next-release-version.mjs
+
   test:
     runs-on: ubuntu-latest
     permissions:
@@ -33,16 +64,22 @@ jobs:
 
       - run: |
           ./gradlew --info --no-daemon ktlintCheck allTests --stacktrace
-  npm:
+
+  npm-snapshot:
     runs-on: ubuntu-latest
-    needs: test
-    if: ${{ github.triggering_actor != 'dependabot[bot]' }}
+    needs:
+      - version
+      - test
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]') }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+          package-manager-cache: false
 
       - uses: actions/setup-java@v5
         with:
@@ -51,23 +88,35 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: Build JS Library
+      - name: Build JS Packages
         run: ./gradlew jsNodeProductionLibraryDistribution
 
-      - name: Run npm pack
+      - name: Pack commons-js snapshot
         working-directory: ./commons-js/build/dist/js/productionLibrary
-        run: npm pack
+        run: |
+          npm version "${{ needs.version.outputs.npm_snapshot_version }}" --no-git-tag-version
+          npm pack
 
-      - name: Upload .tgz to GitHub
+      - name: Pack commons-test snapshot
+        working-directory: ./commons-test/build/dist/js/productionLibrary
+        run: |
+          npm version "${{ needs.version.outputs.npm_snapshot_version }}" --no-git-tag-version
+          npm pack
+
+      - name: Upload npm snapshots
         uses: actions/upload-artifact@v7
         with:
-          name: attocash-commons-js-0.0.0-unspecified.tgz
-          path: ./commons-js/build/dist/js/productionLibrary/attocash-commons-js-0.0.0-unspecified.tgz
-  snapshot:
+          name: npm-snapshots-${{ needs.version.outputs.npm_snapshot_version }}
+          path: |
+            ./commons-js/build/dist/js/productionLibrary/*.tgz
+            ./commons-test/build/dist/js/productionLibrary/*.tgz
+
+  maven-snapshot:
     runs-on: ubuntu-latest
     needs:
+      - version
       - test
-    if: ${{ github.triggering_actor != 'dependabot[bot]' }}
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]') }}
     steps:
       - uses: actions/checkout@v6
 
@@ -78,12 +127,80 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: release jar
+      - name: Publish Maven Snapshot
         run: |
-          VERSION=$(git rev-parse --short HEAD)
-          echo "Version: $VERSION"
-          ./gradlew publishToSonatype --stacktrace -P version="$VERSION-SNAPSHOT"
+          echo "Version: ${{ needs.version.outputs.maven_snapshot_version }}"
+          ./gradlew publishToSonatype --stacktrace -P version="${{ needs.version.outputs.maven_snapshot_version }}"
         env:
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+    needs:
+      - version
+      - test
+      - npm-snapshot
+      - maven-snapshot
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.version.outputs.has_release == 'true' }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org/'
+          package-manager-cache: false
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Publish Maven Release
+        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --stacktrace -P version="${{ needs.version.outputs.version }}"
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+
+      - name: Build JS Packages
+        run: ./gradlew jsNodeProductionLibraryDistribution
+
+      - name: Publish npm Packages
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          MAJOR=${VERSION%%.*}
+          LATEST_VERSION=$(npm view @attocash/commons-js version 2>/dev/null || echo "0.0.0")
+          LATEST_MAJOR=${LATEST_VERSION%%.*}
+
+          if [ "$MAJOR" -ge "$LATEST_MAJOR" ]; then
+            TAG="latest"
+          else
+            TAG="v${MAJOR}-line"
+          fi
+
+          echo "Publishing npm packages at version $VERSION with tag $TAG"
+
+          npm version "$VERSION" --no-git-tag-version --prefix ./commons-js/build/dist/js/productionLibrary
+          npm publish ./commons-js/build/dist/js/productionLibrary --access public --tag "$TAG"
+
+          npm version "$VERSION" --no-git-tag-version --prefix ./commons-test/build/dist/js/productionLibrary
+          npm publish ./commons-test/build/dist/js/productionLibrary --access public --tag "$TAG"
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --yes -p semantic-release@24.2.7 -p @semantic-release/commit-analyzer@13.0.1 -p @semantic-release/release-notes-generator@14.1.0 -p @semantic-release/github@11.0.6 semantic-release
