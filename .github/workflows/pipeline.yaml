@@ -19,12 +19,10 @@ jobs:
     permissions:
       contents: write
     outputs:
-      has_release: ${{ steps.version.outputs.has_release }}
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
-      short_sha: ${{ steps.version.outputs.short_sha }}
-      maven_snapshot_version: ${{ steps.version.outputs.maven_snapshot_version }}
-      npm_snapshot_version: ${{ steps.version.outputs.npm_snapshot_version }}
+      has_release: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.semantic.outputs.new_release_version != '' }}
+      version: ${{ steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0' }}
+      maven_snapshot_version: ${{ github.event_name == 'pull_request' && format('{0}-pr-{1}-sha{2}-SNAPSHOT', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.event.pull_request.number, github.sha) || format('{0}-SNAPSHOT', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0') }}
+      npm_snapshot_version: ${{ github.event_name == 'pull_request' && format('{0}-pr.{1}.sha{2}', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.event.pull_request.number, github.sha) || format('{0}-snapshot.sha{1}', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.sha) }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -34,11 +32,17 @@ jobs:
         with:
           node-version: 'lts/*'
 
-      - id: version
-        name: Determine Version
+      - id: semantic
+        name: Semantic Release Dry Run
+        if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]') }}
+        uses: cycjimmy/semantic-release-action@v6
+        with:
+          semantic_version: 24.2.7
+          dry_run: true
+          ci: ${{ github.event_name == 'pull_request' && 'false' || 'true' }}
+          unset_gha_env: ${{ github.event_name == 'pull_request' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./scripts/next-release-version.mjs
 
   test:
     runs-on: ubuntu-latest
@@ -138,7 +142,8 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    environment: release
+    environment:
+      name: release
     needs:
       - version
       - test
@@ -168,6 +173,13 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      - name: Create GitHub Release
+        uses: cycjimmy/semantic-release-action@v6
+        with:
+          semantic_version: 24.2.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish Maven Release
         run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --stacktrace -P version="${{ needs.version.outputs.version }}"
         env:
@@ -182,25 +194,10 @@ jobs:
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
-          MAJOR=${VERSION%%.*}
-          LATEST_VERSION=$(npm view @attocash/commons-js version 2>/dev/null || echo "0.0.0")
-          LATEST_MAJOR=${LATEST_VERSION%%.*}
-
-          if [ "$MAJOR" -ge "$LATEST_MAJOR" ]; then
-            TAG="latest"
-          else
-            TAG="v${MAJOR}-line"
-          fi
-
-          echo "Publishing npm packages at version $VERSION with tag $TAG"
-
-          npm version "$VERSION" --no-git-tag-version --prefix ./commons-js/build/dist/js/productionLibrary
-          npm publish ./commons-js/build/dist/js/productionLibrary --access public --tag "$TAG"
-
-          npm version "$VERSION" --no-git-tag-version --prefix ./commons-test/build/dist/js/productionLibrary
-          npm publish ./commons-test/build/dist/js/productionLibrary --access public --tag "$TAG"
-
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx --yes -p semantic-release@24.2.7 -p @semantic-release/commit-analyzer@13.0.1 -p @semantic-release/release-notes-generator@14.1.0 -p @semantic-release/github@11.0.6 semantic-release
+          for package_dir in \
+            ./commons-js/build/dist/js/productionLibrary \
+            ./commons-test/build/dist/js/productionLibrary
+          do
+            npm version "$VERSION" --no-git-tag-version --prefix "$package_dir"
+            npm publish "$package_dir" --access public
+          done
