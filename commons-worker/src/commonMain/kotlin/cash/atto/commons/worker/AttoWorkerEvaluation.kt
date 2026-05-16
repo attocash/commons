@@ -12,6 +12,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -114,10 +115,18 @@ private class Evaluator(
                 while (evaluationStarted.elapsedNow() < maxDuration) {
                     currentCoroutineContext().ensureActive()
 
+                    val remaining = maxDuration - evaluationStarted.elapsedNow()
+                    if (remaining <= Duration.ZERO) {
+                        break
+                    }
+
                     val duration =
-                        measureTime {
-                            worker.work(currentNetwork, evaluationStartedAt.toAtto(), targets[targetCounter++ % targetCount])
-                        }
+                        withTimeoutOrNull(remaining) {
+                            measureTime {
+                                worker.work(currentNetwork, evaluationStartedAt.toAtto(), targets[targetCounter++ % targetCount])
+                            }
+                        } ?: break
+
                     sumNanos += duration.inWholeNanoseconds.coerceAtLeast(1)
                     counter++
 
