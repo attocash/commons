@@ -22,7 +22,9 @@ actual suspend fun AttoWorker.Companion.isWebgpuSupported(): Boolean {
     return supported
 }
 
-private var webGPUAdapter: GPUAdapter? = null
+private val webGPUDevicePromise: Promise<GPUDevice?> by lazy {
+    requestWebGPUDeviceOrNull()
+}
 private var webGPUSupported: Boolean? = null
 
 actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
@@ -104,16 +106,13 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
 
     actual override fun close() {
         closed = true
-        state?.device?.destroy()
         state = null
     }
 
     private suspend fun state(): WebGPUState {
         state?.let { return it }
 
-        val adapter = requestWebGPUAdapter() ?: throw IllegalStateException("GPU is not supported.")
-
-        val device = adapter.requestDevice().await()
+        val device = requestWebGPUDevice() ?: throw IllegalStateException("GPU is not supported.")
         val configuration = createWorkConfiguration(device)
 
         val shaderModule = device.createShaderModule(shaderModuleDescriptor(shaderSource(configuration.workgroupSize.toInt())))
@@ -160,10 +159,6 @@ private class WebGPUState(
             },
         )
     }
-}
-
-private external interface GPUAdapter : JsAny {
-    fun requestDevice(): Promise<GPUDevice>
 }
 
 private external interface GPUDevice : JsAny {
@@ -372,24 +367,11 @@ private fun createWorkConfiguration(device: GPUDevice): WebGPUWorkConfiguration 
 }
 
 private suspend fun isWebGPUSupported(): Boolean {
-    val adapter = requestWebGPUAdapter() ?: return false
-    val device = requestWebGPUDeviceOrNull(adapter).awaitOrNull() ?: return false
-    val supported = isWebGPUDeviceSupported(device)
-    destroyWebGPUDevice(device)
-    return supported
+    val device = requestWebGPUDevice() ?: return false
+    return isWebGPUDeviceSupported(device)
 }
 
-private suspend fun requestWebGPUAdapter(): GPUAdapter? {
-    webGPUAdapter?.let { return it }
-
-    if (!isWebGPUApiSupported()) {
-        return null
-    }
-
-    val adapter = requestWebGPUAdapterOrNull().awaitOrNull()
-    webGPUAdapter = adapter
-    return adapter
-}
+private suspend fun requestWebGPUDevice(): GPUDevice? = webGPUDevicePromise.awaitOrNull()
 
 private fun isWebGPUApiSupported(): Boolean =
     js(
@@ -404,7 +386,7 @@ private fun isWebGPUApiSupported(): Boolean =
         """,
     )
 
-private fun requestWebGPUAdapterOrNull(): Promise<GPUAdapter?> =
+private fun requestWebGPUDeviceOrNull(): Promise<GPUDevice?> =
     js(
         """
         (() => {
@@ -417,26 +399,21 @@ private fun requestWebGPUAdapterOrNull(): Promise<GPUAdapter?> =
             }
 
             try {
-                return globalThis.navigator.gpu.requestAdapter().then(
-                    adapter => (!adapter || typeof adapter.requestDevice !== "function") ? null : adapter,
-                    () => null
-                );
-            } catch (_) {
-                return Promise.resolve(null);
-            }
-        })()
-        """,
-    )
+                return globalThis.navigator.gpu.requestAdapter({
+                    powerPreference: "high-performance"
+                }).then(
+                    adapter => {
+                        if (!adapter || typeof adapter.requestDevice !== "function") return null;
 
-private fun requestWebGPUDeviceOrNull(adapter: GPUAdapter): Promise<GPUDevice?> =
-    js(
-        """
-        (() => {
-            if (!adapter || typeof adapter.requestDevice !== "function") return Promise.resolve(null);
-
-            try {
-                return adapter.requestDevice().then(
-                    device => device || null,
+                        try {
+                            return adapter.requestDevice().then(
+                                device => device || null,
+                                () => null
+                            );
+                        } catch (_) {
+                            return null;
+                        }
+                    },
                     () => null
                 );
             } catch (_) {
@@ -468,17 +445,6 @@ private fun isWebGPUDeviceSupported(device: GPUDevice): Boolean =
             typeof device.createCommandEncoder === "function" &&
             typeof device.destroy === "function"
         )
-        """,
-    )
-
-private fun destroyWebGPUDevice(device: GPUDevice): Unit =
-    js(
-        """
-        (() => {
-            if (device && typeof device.destroy === "function") {
-                device.destroy();
-            }
-        })()
         """,
     )
 
