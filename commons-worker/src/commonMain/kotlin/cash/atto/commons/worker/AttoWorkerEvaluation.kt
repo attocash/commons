@@ -87,7 +87,7 @@ private class Evaluator(
             val evaluationStarted = TimeSource.Monotonic.markNow()
             val networksToMeasure = networks.take(networks.indexOf(network) + 1)
 
-            for (currentNetwork in networksToMeasure) {
+            for ((networkIndex, currentNetwork) in networksToMeasure.withIndex()) {
                 val multiplier = currentNetwork.multiplierTo(network)
                 var sumNanos = 0L
                 var counter = 0L
@@ -141,9 +141,16 @@ private class Evaluator(
                     report()
                 }
 
-                val projectedWps = calculateProjectedWps()
-                if (currentNetwork == network || projectedWps < MIN_PROJECTED_WPS_TO_MEASURE_NEXT_NETWORK) {
-                    break
+                val nextNetwork = networksToMeasure.getOrNull(networkIndex + 1) ?: break
+
+                if (networkIndex > 1) {
+                    // Easier networks finish so quickly that fixed worker round-trip overhead dominates the sample:
+                    // sending the target and consuming the result costs proportionally more than the work itself.
+                    // Measure far enough up the difficulty curve before trusting projections for the next network.
+                    val projectedNextNetworkWps = calculateWps() * currentNetwork.multiplierTo(nextNetwork)
+                    if (projectedNextNetworkWps < MIN_PROJECTED_WPS_TO_MEASURE_NEXT_NETWORK) {
+                        break
+                    }
                 }
             }
         }.flowOn(Dispatchers.Default)
