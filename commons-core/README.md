@@ -10,6 +10,20 @@ What you get:
 - Serialization (buffer/JSON/Protobuf) and validation helpers
 - Hashing and proof‑of‑work interfaces
 
+## Installation
+
+Gradle:
+
+```kotlin
+implementation("cash.atto:commons-core:<version>")
+```
+
+NPM:
+
+```sh
+npm install @attocash/commons-core
+```
+
 ## Examples (from tests)
 
 ### Generate mnemonic, derive seed, and keys
@@ -59,6 +73,8 @@ val txFromJson = Json.decodeFromString<AttoTransaction>(json)
 ```
 
 ### CPU proof‑of‑work
+
+This example also requires `commons-worker` or `@attocash/commons-worker`.
 
 ```kotlin
 val work = AttoWorker.cpu().work(receiveBlock)

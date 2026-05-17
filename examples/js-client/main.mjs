@@ -1,27 +1,31 @@
 import {createRequire} from 'node:module';
 
 import {
-  AttoAccountEntryMonitorAsyncBuilder,
-  AttoAccountMonitorAsyncBuilder,
   AttoAddress,
   AttoAlgorithm,
   AttoAmount,
   AttoHeight,
   AttoMnemonic,
-  AttoNodeClientAsyncBuilder,
   AttoPublicKey,
-  AttoTransactionMonitorAsyncBuilder,
   AttoUnit,
-  AttoWalletAsyncBuilder,
-  AttoWorkerAsyncBuilder,
   toAttoHeight,
   toAttoIndex,
   toPrivateKey,
   toPublicKey,
   toSeedAsync,
-  transactionToJson,
+} from '@attocash/commons-core';
+
+import {
   accountEntryToJson,
-} from '@attocash/commons-js';
+  AttoAccountEntryMonitorAsyncBuilder,
+  AttoAccountMonitorAsyncBuilder,
+  AttoTransactionMonitorAsyncBuilder,
+  transactionToJson,
+} from '@attocash/commons-node';
+
+import {AttoNodeClientAsyncBuilder} from '@attocash/commons-node-remote';
+import {AttoWalletAsyncBuilder} from '@attocash/commons-wallet';
+import {AttoWorkerAsyncBuilder} from '@attocash/commons-worker-remote';
 
 import {AttoNodeMockAsyncBuilder, AttoWorkerMockAsyncBuilder,} from '@attocash/commons-test';
 

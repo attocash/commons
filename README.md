@@ -1,6 +1,8 @@
 # Atto Commons
 
-A multiplatform library of building blocks for Atto applications. It provides primitives (mnemonics, keys, addresses, blocks), client tooling to talk to a node, wallet utilities, and proof‑of‑work workers (CPU/OpenCL/WebGPU/WebGL/remote). Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm are supported where applicable.
+A multiplatform library of building blocks for Atto applications. It provides primitives (mnemonics, keys, addresses,
+blocks), client tooling to talk to a node, wallet utilities, and proof‑of‑work workers (CPU/OpenCL/WebGPU/WebGL/remote).
+Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm are supported where applicable.
 
 NOTE: The API is evolving and may include breaking changes between releases.
 
@@ -15,8 +17,10 @@ NOTE: The API is evolving and may include breaking changes between releases.
 - commons-worker-opencl — OpenCL proof‑of‑work implementation (JVM only).
 - commons-worker-web — WebGPU and WebGL proof-of-work implementations (browser JS/Wasm).
 - commons-worker-remote — talk to a remote worker service.
+- commons-gatekeeper — backend/gatekeeper client helpers.
 - commons-spring-boot-starter — Spring Boot integrations for Atto services.
-- commons-js — JavaScript/TypeScript bindings packaged as `@attocash/commons-js`.
+- commons-test — test utilities and mock node/worker services.
+- commons-js — deprecated aggregate JavaScript/TypeScript package. Prefer the individual `@attocash/commons-*` packages.
 
 Each module has its own README with detailed examples based on tests. Start here for a quick taste.
 
@@ -35,17 +39,25 @@ dependencies {
   // CPU worker (pure Kotlin)
   implementation("cash.atto:commons-worker:<version>")
   // OpenCL worker (JVM)
-  runtimeOnly("cash.atto:commons-worker-opencl:<version>")
+  implementation("cash.atto:commons-worker-opencl:<version>")
   // Web workers (browser JS/Wasm)
   implementation("cash.atto:commons-worker-web:<version>")
 }
 ```
 
-On JS/Node you can use the NPM package:
+On JS/Node, install the package for each module you use:
 
 ```sh
-npm i @attocash/commons-js
+npm i @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
+npm i @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
+npm i -D @attocash/commons-test
 ```
+
+Browser-only WebGPU/WebGL workers are available as `@attocash/commons-worker-web`.
+`@attocash/commons-js` remains as a deprecated aggregate package for existing applications during the transition.
+
+For unreleased checkouts before the split packages are available on npm, build local tarballs with
+`./gradlew packJsPackage -Pversion=0.0.0-local` and install the packages from each module's `build/packages` directory.
 
 ## Quick start
 
@@ -113,5 +125,7 @@ For full examples and advanced flows (auto-receive, account-entry monitor, OpenC
 - commons-worker-opencl/README.md — OpenCL PoW
 - commons-worker-web/README.md — WebGPU/WebGL PoW
 - commons-worker-remote/README.md — remote worker client
+- commons-gatekeeper/README.md — Atto backend authentication helpers
+- commons-test/README.md — mock services for tests and demos
 - commons-spring-boot-starter/README.md — Spring Boot integration
-- commons-js/README.md — JS/TS usage
+- commons-js/README.md — deprecated aggregate JS/TS package

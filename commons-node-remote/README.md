@@ -3,11 +3,26 @@
 Remote HTTP implementation of `AttoNodeClient`. Uses Ktor under the hood and streams NDJSON where supported.
 
 Highlights:
+
 - `AttoNodeClient.remote(baseUrl, headerProvider)` convenience
-- `AttoNodeClientAsyncBuilder.remote(url)` for incremental setup
+- `AttoNodeClientAsyncBuilder(url)` for incremental setup
 - Streams for accounts, receivables, transactions, and account entries
 - `publish(AttoTransaction)` to send blocks to the node
 - `now()` to synchronize time with the node
+
+## Installation
+
+Gradle:
+
+```kotlin
+implementation("cash.atto:commons-node-remote:<version>")
+```
+
+NPM:
+
+```sh
+npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
+```
 
 ## Quick start
 
@@ -36,7 +51,7 @@ client.publish(transaction)
 ## Async builder
 
 ```kotlin
-val async = AttoNodeClientAsyncBuilder.remote("http://localhost:8080")
+val async = AttoNodeClientAsyncBuilder("http://localhost:8080")
   .header("Authorization", "Bearer <jwt>")
   .build()
 

@@ -1,17 +1,27 @@
 # commons-signer-remote
 
-Remote HTTP implementation of `AttoSigner`. Useful when private keys live in an external signer service (HSM, KMS, wallet server) and the app needs to request signatures.
+Remote HTTP implementation of `AttoSigner`. Useful when private keys live in an external signer service (HSM, KMS,
+wallet server) and the app needs to request signatures.
 
 Highlights:
+
 - `AttoSigner.remote(url, retryEvery, headerProvider)` convenience
 - Lazily resolves `publicKey` from the remote service
 - Signs `AttoChallenge` + `AttoInstant` (challenge timestamps)
+
+## Installation
+
+```kotlin
+implementation("cash.atto:commons-signer-remote:<version>")
+```
+
+This module is JVM-only and is not published as an npm package.
 
 ## Quick start
 
 ```kotlin
 // Create a remote signer (retries on failure)
-val signer = AttoSigner.remote("http://localhost:8081")
+val signer = AttoSigner.remote("http://localhost:8081") { emptyMap() }
 
 // Remote public key
 val address = signer.address

@@ -3,9 +3,24 @@
 Remote HTTP worker implementation of `AttoWorker`. Useful to offload PoW to a separate service.
 
 Highlights:
+
 - `AttoWorker.remote(url, headerProvider)` convenience
 - Same `AttoWorker` API as CPU/OpenCL: `work(block)` and `work(network, timestamp, target)`
 - Low-level request API via `AttoWorkerOperations.Request`
+
+## Installation
+
+Gradle:
+
+```kotlin
+implementation("cash.atto:commons-worker-remote:<version>")
+```
+
+NPM:
+
+```sh
+npm install @attocash/commons-core @attocash/commons-worker @attocash/commons-worker-remote
+```
 
 ## Quick start
 
@@ -32,4 +47,5 @@ val response = (worker as AttoWorkerOperations).work(request)
 val work = response.work
 ```
 
-Implementation details: see `AttoWorkerRemote.kt`. The client uses Ktor and posts to `/works` with JSON, expecting a JSON response.
+Implementation details: see `AttoWorkerRemote.kt`. The client uses Ktor and posts to `/works` with JSON, expecting a
+JSON response.

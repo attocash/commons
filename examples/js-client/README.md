@@ -1,6 +1,7 @@
 # Atto JavaScript Client Example
 
-This example demonstrates how to use the Atto Commons JavaScript library to create wallets, manage accounts, and perform
+This example demonstrates how to use the Atto Commons JavaScript packages to create wallets, manage accounts, and
+perform
 transactions using Node.js.
 
 ## Prerequisites
@@ -14,8 +15,14 @@ transactions using Node.js.
 Install the released npm packages in this directory:
 
 ```bash
-npm install @attocash/commons-js @attocash/commons-test
+npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
+npm install @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
+npm install --save-dev @attocash/commons-test
 ```
+
+For an unreleased checkout before the split packages are available on npm, build local tarballs with
+`./gradlew packJsPackage -Pversion=0.0.0-local` from the repository root and install the tarballs from each module's
+`build/packages` directory.
 
 ## Running the Example
 

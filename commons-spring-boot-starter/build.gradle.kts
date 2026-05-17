@@ -52,6 +52,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("io.r2dbc:r2dbc-h2")
     testImplementation(libs.mockk)
 }
