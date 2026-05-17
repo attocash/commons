@@ -1,11 +1,27 @@
 # commons-wallet
 
 A thin wallet utility layer built on top of the node client and a PoW worker. Provides helpers to:
+
 - Derive addresses from a seed (per index)
 - Open accounts, send funds, and query balances
 - Start an auto-receiver that listens for receivables and publishes receive/open blocks
 
 Examples below are distilled from `commons-wallet` and integration tests.
+
+## Installation
+
+Gradle:
+
+```kotlin
+implementation("cash.atto:commons-wallet:<version>")
+```
+
+NPM:
+
+```sh
+npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
+npm install @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
+```
 
 ## Setup
 
@@ -52,7 +68,8 @@ val tx = wallet.send(0U.toAttoIndex(), destination, amount)
 
 ## Monitors and auto-receive
 
-You can subscribe to node monitors and acknowledge processed heights. Start an auto-receiver to handle incoming receivables.
+You can subscribe to node monitors and acknowledge processed heights. Start an auto-receiver to handle incoming
+receivables.
 
 ```kotlin
 // Create account membership monitor from the client

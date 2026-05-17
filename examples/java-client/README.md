@@ -1,6 +1,7 @@
 # Atto Java Client Example
 
-This example demonstrates how to use the Atto Commons Java library to create wallets, manage accounts, and perform transactions.
+This example demonstrates how to use the Atto Commons Java library to create wallets, manage accounts, and perform
+transactions.
 
 ## Prerequisites
 
@@ -10,6 +11,7 @@ This example demonstrates how to use the Atto Commons Java library to create wal
 ## Building
 
 Build the example:
+
 ```bash
 ./mvnw clean package
 ```
@@ -17,6 +19,7 @@ Build the example:
 ## Running the Example
 
 Execute the example:
+
 ```bash
 ./mvnw exec:java
 ```

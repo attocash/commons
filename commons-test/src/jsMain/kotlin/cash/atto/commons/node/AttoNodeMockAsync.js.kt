@@ -3,7 +3,6 @@ package cash.atto.commons.node
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlin.js.ExperimentalJsExport
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs

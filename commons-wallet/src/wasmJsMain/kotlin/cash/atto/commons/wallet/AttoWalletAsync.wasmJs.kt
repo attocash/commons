@@ -9,7 +9,6 @@ import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlin.js.JsName
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs

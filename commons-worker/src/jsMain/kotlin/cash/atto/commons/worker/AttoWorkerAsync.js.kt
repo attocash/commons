@@ -8,7 +8,6 @@ import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlin.js.JsName
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs

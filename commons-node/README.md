@@ -1,16 +1,33 @@
 # commons-node
 
-Node-facing operations and higher-level monitors. This module defines the interfaces and helpers used by remote clients and wallet flows.
+Node-facing operations and higher-level monitors. This module defines the interfaces and helpers used by remote clients
+and wallet flows.
 
 Highlights:
+
 - `AttoNodeClient` + `AttoNodeOperations`
 - Account membership monitor: `AttoAccountMonitor`
 - Height-aware monitors: `toTransactionMonitor()`, `toAccountEntryMonitor()`
 - Receivable stream utilities
 
+## Installation
+
+Gradle:
+
+```kotlin
+implementation("cash.atto:commons-node:<version>")
+```
+
+NPM:
+
+```sh
+npm install @attocash/commons-node
+```
+
 ## Basic client operations
 
-The concrete remote client lives in `commons-node-remote`. Example below assumes you built a client there and pass it in.
+The concrete remote client lives in `commons-node-remote`. Example below assumes you built a client there and pass it
+in.
 
 ```kotlin
 val client: AttoNodeClient = AttoNodeClient.remote("http://localhost:8080")
@@ -70,5 +87,6 @@ msg.acknowledge() // moves height
 ```
 
 See:
+
 - `commons-node/src/commonMain/kotlin/cash/atto/commons/node/monitor/*`
 - `commons-wallet` README for end-to-end usage with a wallet.

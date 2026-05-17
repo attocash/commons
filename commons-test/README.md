@@ -5,13 +5,16 @@
 
 Test utilities for Atto JavaScript and TypeScript integrations.
 
-`@attocash/commons-test` provides local mock services for applications that use `@attocash/commons-js`. It starts a real Atto node container with a MySQL container and a real Work Server container, then exposes their mapped URLs so your tests can use the normal node, worker, wallet, and monitor clients.
+`@attocash/commons-test` provides local mock services for applications that use the individual Atto Commons JavaScript
+packages. It starts a real Atto node container with a MySQL container and a real Work Server container, then exposes
+their mapped URLs so your tests can use the normal node, worker, wallet, and monitor clients.
 
 ## Install
 
 ```sh
 npm install --save-dev @attocash/commons-test
-npm install @attocash/commons-js
+npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
+npm install @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
 ```
 
 This package is published as ESM and includes TypeScript declarations.
@@ -26,7 +29,7 @@ This package is published as ESM and includes TypeScript declarations.
 Node.js examples that use the Atto clients should expose `require` for the underlying runtime:
 
 ```js
-import { createRequire } from 'node:module'
+import {createRequire} from 'node:module'
 
 globalThis.require = createRequire(import.meta.url)
 ```
@@ -42,18 +45,18 @@ globalThis.require = createRequire(import.meta.url)
 ## Quick Example
 
 ```js
-import { createRequire } from 'node:module'
+import {createRequire} from 'node:module'
 import {
   AttoAmount,
   AttoMnemonic,
-  AttoNodeClientAsyncBuilder,
   AttoUnit,
-  AttoWalletAsyncBuilder,
-  AttoWorkerAsyncBuilder,
   toAttoIndex,
   toPrivateKey,
   toSeedAsync,
-} from '@attocash/commons-js'
+} from '@attocash/commons-core'
+import {AttoNodeClientAsyncBuilder} from '@attocash/commons-node-remote'
+import {AttoWorkerAsyncBuilder} from '@attocash/commons-worker-remote'
+import {AttoWalletAsyncBuilder} from '@attocash/commons-wallet'
 import {
   AttoNodeMockAsyncBuilder,
   AttoWorkerMockAsyncBuilder,
@@ -142,19 +145,20 @@ afterAll(() => {
 
 ## Full Example
 
-The repository includes a runnable JavaScript example that uses `@attocash/commons-test` with `@attocash/commons-js` to start mock services, create a wallet, open accounts, send transactions, and listen to monitors:
+The repository includes a runnable JavaScript example that uses `@attocash/commons-test` with the individual Atto
+Commons packages to start mock services, create a wallet, open accounts, send transactions, and listen to monitors:
 
 - [examples/js-client](https://github.com/attocash/commons/tree/main/examples/js-client)
 
 ## API Summary
 
-| Export | Purpose |
-| --- | --- |
-| `AttoNodeMockAsyncBuilder` | Builds a node mock backed by an Atto node container and a MySQL container. |
-| `AttoNodeMockAsync` | Starts, closes, and exposes the node mock `baseUrl` and `genesisTransaction`. |
-| `AttoWorkerMockAsyncBuilder` | Builds a Work Server mock container. |
-| `AttoWorkerMockAsync` | Starts, closes, and exposes the worker mock `baseUrl`. |
-| `AttoNodeMockConfiguration` | Configuration object for lower-level Kotlin/JVM use. |
+| Export                       | Purpose                                                                       |
+|------------------------------|-------------------------------------------------------------------------------|
+| `AttoNodeMockAsyncBuilder`   | Builds a node mock backed by an Atto node container and a MySQL container.    |
+| `AttoNodeMockAsync`          | Starts, closes, and exposes the node mock `baseUrl` and `genesisTransaction`. |
+| `AttoWorkerMockAsyncBuilder` | Builds a Work Server mock container.                                          |
+| `AttoWorkerMockAsync`        | Starts, closes, and exposes the worker mock `baseUrl`.                        |
+| `AttoNodeMockConfiguration`  | Configuration object for lower-level Kotlin/JVM use.                          |
 
 ## Documentation
 

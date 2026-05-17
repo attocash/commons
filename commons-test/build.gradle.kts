@@ -169,7 +169,3 @@ signing {
         sign(publishing.publications)
     }
 }
-
-tasks.named<Copy>("jsProcessResources") {
-    from(layout.projectDirectory.file("README.md"))
-}

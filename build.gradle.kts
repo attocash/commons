@@ -6,6 +6,7 @@ plugins {
 
     alias(libs.plugins.dokka)
     alias(libs.plugins.nexus.publish)
+    alias(libs.plugins.npm.publish) apply false
     alias(libs.plugins.ktlint)
 }
 
@@ -38,10 +39,29 @@ val installPuppeteerBrowsers by tasks.registering(Exec::class) {
 allprojects {
     val jvmOnlyPublicationProjects = setOf("commons-signer-remote", "commons-worker-opencl", "commons-gatekeeper-test")
     val webOnlyPublicationProjects = setOf("commons-js", "commons-worker-web")
+    val npmPublicationDescriptions =
+        mapOf(
+            "commons-core" to "Core Atto primitives, serialization, hashing, signing, keys, addresses, blocks, and transactions.",
+            "commons-node" to "Node-facing Atto client interfaces, operations, monitors, and receivable stream helpers.",
+            "commons-node-remote" to "Remote HTTP Atto node client for JavaScript and TypeScript applications.",
+            "commons-gatekeeper" to "Gatekeeper client helpers for Atto backend operations.",
+            "commons-worker" to "CPU proof-of-work worker implementation for Atto applications.",
+            "commons-worker-remote" to "Remote HTTP proof-of-work worker client for Atto applications.",
+            "commons-worker-web" to "Browser WebGPU and WebGL proof-of-work workers for Atto applications.",
+            "commons-wallet" to "Wallet utilities for deriving accounts, opening accounts, sending funds, and receiving funds.",
+            "commons-test" to "Test utilities and mock Atto node and worker services for JavaScript and TypeScript integrations.",
+            "commons-js" to
+                "Deprecated aggregate Atto Commons JavaScript package. " +
+                "Use the individual @attocash/commons-* packages instead.",
+        )
+    val npmPublicationProjects = npmPublicationDescriptions.keys
 
     apply {
         if (name != "commons-spring-boot-starter" && name != rootProject.name) {
             apply(plugin = "org.jetbrains.kotlin.multiplatform")
+        }
+        if (name in npmPublicationProjects) {
+            apply(plugin = "org.jetbrains.kotlin.npm-publish")
         }
         plugin("org.jetbrains.dokka")
         plugin("org.jlleitschuh.gradle.ktlint")
@@ -59,6 +79,74 @@ allprojects {
                 }
             }
         }
+    }
+
+    project.plugins.withId("org.jetbrains.kotlin.npm-publish") {
+        project.extensions.configure<dev.petuska.npm.publish.extension.NpmPublishExtension>("npmPublish") {
+            organization.set("attocash")
+            version.set(project.provider { project.version.toString() })
+            access.set(PUBLIC)
+
+            registries {
+                npmjs {}
+            }
+
+            packages.configureEach {
+                if (name != "js") {
+                    return@configureEach
+                }
+
+                packageName.set(project.name)
+                types.set("${rootProject.name}-${project.name}.d.mts")
+                readme.set(project.layout.projectDirectory.file("README.md"))
+
+                files {
+                    from(rootProject.layout.projectDirectory.file("LICENSE"))
+                }
+
+                packageJson {
+                    description.set(npmPublicationDescriptions.getValue(project.name))
+                    license.set("BSD-3-Clause")
+                    homepage.set("https://atto.cash")
+                    keywords.addAll("atto", "kotlin", "kotlin-js", "cryptocurrency")
+                    repository {
+                        type.set("git")
+                        url.set("git+https://github.com/attocash/commons.git")
+                        directory.set(project.path.removePrefix(":"))
+                    }
+                    bugs {
+                        url.set("https://github.com/attocash/commons/issues")
+                    }
+                }
+            }
+        }
+
+        afterEvaluate {
+            project.extensions.configure<dev.petuska.npm.publish.extension.NpmPublishExtension>("npmPublish") {
+                packages.matching { it.name != "js" }.configureEach {
+                    files.setFrom(emptyList<Any>())
+                }
+            }
+
+            tasks
+                .matching {
+                    it.name == "assembleWasmJsPackage" ||
+                        it.name == "packWasmJsPackage" ||
+                        it.name.startsWith("publishWasmJsPackage")
+                }.configureEach {
+                    enabled = false
+                    setDependsOn(emptyList<Any>())
+                }
+        }
+
+        tasks
+            .matching {
+                it.name == "assembleWasmJsPackage" ||
+                    it.name == "packWasmJsPackage" ||
+                    it.name.startsWith("publishWasmJsPackage")
+            }.configureEach {
+                enabled = false
+            }
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest>().configureEach {

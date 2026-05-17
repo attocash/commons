@@ -6,6 +6,15 @@ OpenCL proof‑of‑work (PoW) implementation for JVM. It uses JOCL to run PoW o
 - Device selection by index (default 0)
 - Same `AttoWorker` interface as CPU/remote workers
 
+## Installation
+
+```kotlin
+implementation("cash.atto:commons-worker-opencl:<version>")
+```
+
+This module is JVM-only and is not published as an npm package. Use `@attocash/commons-worker-web` for browser GPU work
+or `@attocash/commons-worker-remote` for JavaScript clients that call a Work Server.
+
 ## Usage
 
 ```kotlin
@@ -22,6 +31,7 @@ worker.close()
 ```
 
 Notes:
+
 - Requires OpenCL runtime and drivers installed on the host.
 - See `commons-worker-opencl/src/jvmTest` for basic tests.
 - There is also a micro-benchmark in `commons-core/benchmarks` using OpenCL.

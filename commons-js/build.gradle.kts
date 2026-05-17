@@ -100,11 +100,11 @@ kotlin {
                 api(project(":commons-wallet"))
             }
         }
-        val jsMain by getting
+        val webMain by getting {
+            dependencies {
+                api(project(":commons-worker-web"))
+            }
+        }
         val jsTest by getting
     }
-}
-
-tasks.named<Copy>("jsProcessResources") {
-    from(layout.projectDirectory.file("README.md"))
 }

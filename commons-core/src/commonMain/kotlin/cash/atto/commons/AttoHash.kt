@@ -20,7 +20,7 @@ data class AttoHash(
         fun hash(
             size: Int,
             vararg byteArrays: ByteArray,
-        ): AttoHash = AttoHash(AttoHasher.hash(size, * byteArrays))
+        ): AttoHash = AttoHash(AttoHasher.hash(size, *byteArrays))
 
         fun hashVote(
             blockHash: AttoHash,

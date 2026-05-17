@@ -1,11 +1,27 @@
 # commons-worker
 
-CPU proof‑of‑work (PoW) implementation. Multiplatform (JVM/JS/Wasm). Useful for local development, tests, and environments without OpenCL.
+CPU proof‑of‑work (PoW) implementation. Multiplatform (JVM/JS/Wasm). Useful for local development, tests, and
+environments without OpenCL.
 
 Features:
+
 - `AttoWorker.cpu()` factory (platform default parallelism)
 - `AttoWorker.cpu(parallelism: UShort)` to tune threads on JVM/JS
 - High‑level helpers: `work(block)` and `work(network, timestamp, target)`
+
+## Installation
+
+Gradle:
+
+```kotlin
+implementation("cash.atto:commons-worker:<version>")
+```
+
+NPM:
+
+```sh
+npm install @attocash/commons-core @attocash/commons-worker
+```
 
 ## Basic usage
 

@@ -14,7 +14,14 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@attocash/commons-js": "^6.3.2",
-    "@attocash/commons-test": "^6.3.2"
+    "@attocash/commons-core": "^6.6.0",
+    "@attocash/commons-node": "^6.6.0",
+    "@attocash/commons-node-remote": "^6.6.0",
+    "@attocash/commons-wallet": "^6.6.0",
+    "@attocash/commons-worker": "^6.6.0",
+    "@attocash/commons-worker-remote": "^6.6.0"
+  },
+  "devDependencies": {
+    "@attocash/commons-test": "^6.6.0"
   }
 }
