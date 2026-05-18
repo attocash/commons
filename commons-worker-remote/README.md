@@ -4,7 +4,8 @@ Remote HTTP worker implementation of `AttoWorker`. Useful to offload PoW to a se
 
 Highlights:
 
-- `AttoWorker.remote(url, headerProvider)` convenience
+- `AttoWorker.remote(url, timeout, headerProvider)` convenience, with a 5 minute default timeout
+- `AttoWorkerAsyncBuilder.timeout(...)` for async worker clients
 - Same `AttoWorker` API as CPU/OpenCL: `work(block)` and `work(network, timestamp, target)`
 - Low-level request API via `AttoWorkerOperations.Request`
 
@@ -28,7 +29,15 @@ npm install @attocash/commons-core @attocash/commons-worker @attocash/commons-wo
 // Optional headers (JWT/API keys)
 suspend fun headers(): Map<String, String> = mapOf("Authorization" to "Bearer <jwt>")
 
-val worker = AttoWorker.remote("http://localhost:8085", ::headers)
+val worker = AttoWorker.remote("http://localhost:8085", headerProvider = ::headers)
+
+// Optional timeout override
+val workerWithTimeout = AttoWorker.remote("http://localhost:8085", 10.minutes, ::headers)
+
+val asyncWorker =
+  AttoWorkerAsyncBuilder("http://localhost:8085")
+    .timeout(10.minutes)
+    .build()
 
 // Compute work for a block
 val work = worker.work(block)

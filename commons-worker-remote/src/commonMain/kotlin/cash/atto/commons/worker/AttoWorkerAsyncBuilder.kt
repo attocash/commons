@@ -16,6 +16,10 @@ expect class AttoWorkerAsyncBuilder private constructor(
 
     fun cached(value: Boolean): AttoWorkerAsyncBuilder
 
+    fun timeout(value: Duration): AttoWorkerAsyncBuilder
+
+    fun timeoutSeconds(value: Long): AttoWorkerAsyncBuilder
+
     fun retryEvery(value: Duration): AttoWorkerAsyncBuilder
 
     fun retryEverySeconds(value: Long): AttoWorkerAsyncBuilder

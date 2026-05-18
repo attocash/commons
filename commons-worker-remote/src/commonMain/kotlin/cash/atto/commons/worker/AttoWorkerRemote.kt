@@ -15,6 +15,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 private val json =
@@ -32,8 +33,13 @@ private val httpClient =
         expectSuccess = true
     }
 
+internal val DEFAULT_TIMEOUT: Duration = 5.minutes
+
+private fun Duration.toTimeoutMillis(): Long = if (this == Duration.INFINITE) Long.MAX_VALUE else inWholeMilliseconds
+
 private class WorkerRemote(
     private val url: String,
+    private val timeout: Duration = DEFAULT_TIMEOUT,
     private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
 ) : AttoWorkerOperations {
     override suspend fun work(
@@ -55,7 +61,7 @@ private class WorkerRemote(
                     headers.forEach { (key, value) -> append(key, value) }
                 }
                 timeout {
-                    socketTimeoutMillis = 5.minutes.inWholeMilliseconds
+                    socketTimeoutMillis = timeout.toTimeoutMillis()
                 }
             }.body<AttoWorkerOperations.Response>()
     }
@@ -66,5 +72,6 @@ private class WorkerRemote(
 
 fun AttoWorker.Companion.remote(
     url: String,
+    timeout: Duration = DEFAULT_TIMEOUT,
     headerProvider: suspend () -> Map<String, String> = { emptyMap() },
-): AttoWorker = WorkerRemote(url, headerProvider)
+): AttoWorker = WorkerRemote(url, timeout, headerProvider)

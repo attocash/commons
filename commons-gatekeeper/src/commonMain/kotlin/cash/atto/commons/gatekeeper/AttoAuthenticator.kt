@@ -150,7 +150,7 @@ internal fun AttoWorker.Companion.attoBackend(
     headerProvider: suspend () -> Map<String, String> = { emptyMap() },
 ): AttoWorker {
     val gatekeeperUrl = "https://gatekeeper.${network.name.lowercase()}.application.atto.cash"
-    return AttoWorker.remote(gatekeeperUrl, headerProvider)
+    return AttoWorker.remote(gatekeeperUrl, headerProvider = headerProvider)
 }
 
 fun AttoWorker.Companion.attoBackend(

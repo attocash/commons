@@ -11,6 +11,7 @@ actual class AttoWorkerAsyncBuilder actual constructor(
 ) {
     private var cached: Boolean = true
     private var headers: Map<String, String> = emptyMap()
+    private var timeout: Duration = DEFAULT_TIMEOUT
     private var retryEvery: Duration? = null
 
     actual fun headers(value: Map<String, String>) = apply { headers = value }
@@ -22,13 +23,17 @@ actual class AttoWorkerAsyncBuilder actual constructor(
 
     actual fun cached(value: Boolean) = apply { cached = value }
 
+    actual fun timeout(value: Duration) = apply { timeout = value }
+
+    actual fun timeoutSeconds(value: Long) = apply { timeout = value.seconds }
+
     actual fun retryEvery(value: Duration) = apply { retryEvery = value }
 
     actual fun retryEverySeconds(value: Long) = apply { retryEvery = value.seconds }
 
     actual fun build(): AttoWorkerAsync =
         AttoWorker
-            .remote(url, { headers })
+            .remote(url, timeout, headerProvider = { headers })
             .let {
                 if (cached) {
                     it.cached()
