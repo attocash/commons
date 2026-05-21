@@ -6,6 +6,7 @@ import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
+import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoVersion
@@ -13,6 +14,7 @@ import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.fromHexToByteArray
 import cash.atto.commons.toAtto
+import cash.atto.commons.toAttoIndex
 import cash.atto.commons.toBigInteger
 import cash.atto.commons.toBuffer
 import cash.atto.commons.toJavaInstant
@@ -86,6 +88,19 @@ object AttoConverters {
             },
             object : Converter<String, AttoHeight> {
                 override fun convert(source: String) = AttoHeight(source.toULong())
+            },
+            // AttoKeyIndex <-> Long / String
+            object : Converter<AttoKeyIndex, Long> {
+                override fun convert(source: AttoKeyIndex) = source.value.toLong()
+            },
+            object : Converter<Long, AttoKeyIndex> {
+                override fun convert(source: Long) = source.toString().toUInt().toAttoIndex()
+            },
+            object : Converter<AttoKeyIndex, String> {
+                override fun convert(source: AttoKeyIndex) = source.value.toString()
+            },
+            object : Converter<String, AttoKeyIndex> {
+                override fun convert(source: String) = source.toUInt().toAttoIndex()
             },
             // AttoPublicKey <-> ByteArray / String
             object : Converter<String, AttoPublicKey> {

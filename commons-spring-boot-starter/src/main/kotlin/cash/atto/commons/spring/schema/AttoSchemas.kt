@@ -6,6 +6,7 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
+import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoVersion
@@ -67,6 +68,13 @@ object AttoSchemas {
                     .description("Block height as unsigned 64-bit integer (1..18446744073709551615)")
                     .pattern("^[0-9]{1,20}$")
                     .example("1"),
+            AttoKeyIndex::class to
+                IntegerSchema()
+                    .format("int64")
+                    .minimum(BigDecimal.ZERO)
+                    .maximum(BigDecimal.valueOf(UInt.MAX_VALUE.toLong()))
+                    .description("Deterministic wallet account index (0..4294967295)")
+                    .example("0"),
             AttoVersion::class to
                 IntegerSchema()
                     .format("int32")
