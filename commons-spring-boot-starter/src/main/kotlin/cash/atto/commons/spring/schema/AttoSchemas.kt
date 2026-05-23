@@ -3,10 +3,12 @@ package cash.atto.commons.spring.schema
 import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoAmount
+import cash.atto.commons.AttoBlockType
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoKeyIndex
+import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoVersion
@@ -23,11 +25,21 @@ object AttoSchemas {
     @JvmField
     val primitiveMap: Map<KClass<*>, Schema<*>> =
         mapOf(
+            AttoAlgorithm::class to
+                StringSchema()
+                    ._enum(AttoAlgorithm.entries.map { it.name })
+                    .description("Atto cryptographic algorithm")
+                    .example(AttoAlgorithm.V1.toString()),
             AttoAmount::class to
                 StringSchema()
                     .description("Unsigned 64-bit amount in raw units (0..18000000000000000000U)")
                     .pattern("^[0-9]{1,20}$")
                     .example("1000000000000000000"),
+            AttoBlockType::class to
+                StringSchema()
+                    ._enum(AttoBlockType.entries.filter { it != AttoBlockType.UNKNOWN }.map { it.name })
+                    .description("Atto block type")
+                    .example(AttoBlockType.RECEIVE.toString()),
             AttoHash::class to
                 StringSchema()
                     .format("hex")
@@ -75,6 +87,12 @@ object AttoSchemas {
                     .maximum(BigDecimal.valueOf(UInt.MAX_VALUE.toLong()))
                     .description("Deterministic wallet account index (0..4294967295)")
                     .example("0"),
+            AttoNetwork::class to
+                enumStringSchema(
+                    values = AttoNetwork.entries,
+                    description = "Atto network",
+                    example = AttoNetwork.LIVE,
+                ),
             AttoVersion::class to
                 IntegerSchema()
                     .format("int32")
@@ -98,4 +116,15 @@ object AttoSchemas {
 
     @JvmField
     val primitives = primitiveMap.values
+
+    private fun <T : Enum<T>> enumStringSchema(
+        values: List<T>,
+        description: String,
+        example: T,
+    ): StringSchema =
+        StringSchema().apply {
+            _enum(values.map { it.name })
+            description(description)
+            example(example.name)
+        }
 }
