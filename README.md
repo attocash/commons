@@ -17,7 +17,6 @@ NOTE: The API is evolving and may include breaking changes between releases.
 - commons-worker-opencl — OpenCL proof‑of‑work implementation (JVM only).
 - commons-worker-web — WebGPU and WebGL proof-of-work implementations (browser JS/Wasm).
 - commons-worker-remote — talk to a remote worker service.
-- commons-gatekeeper — backend/gatekeeper client helpers.
 - commons-spring-boot-starter — Spring Boot integrations for Atto services.
 - commons-test — test utilities and mock node/worker services.
 - commons-js — deprecated aggregate JavaScript/TypeScript package. Prefer the individual `@attocash/commons-*` packages.
@@ -125,7 +124,6 @@ For full examples and advanced flows (auto-receive, account-entry monitor, OpenC
 - commons-worker-opencl/README.md — OpenCL PoW
 - commons-worker-web/README.md — WebGPU/WebGL PoW
 - commons-worker-remote/README.md — remote worker client
-- commons-gatekeeper/README.md — Atto backend authentication helpers
 - commons-test/README.md — mock services for tests and demos
 - commons-spring-boot-starter/README.md — Spring Boot integration
 - commons-js/README.md — deprecated aggregate JS/TS package

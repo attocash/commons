@@ -61,7 +61,6 @@ import {AttoWorkerAsyncBuilder} from '@attocash/commons-worker-remote'
 | `@attocash/commons-worker-remote` | HTTP Work Server client builder.                                                                      |
 | `@attocash/commons-worker-web`    | Browser WebGPU/WebGL proof-of-work worker.                                                            |
 | `@attocash/commons-wallet`        | Wallet builder and async wallet helpers.                                                              |
-| `@attocash/commons-gatekeeper`    | Gatekeeper client helpers.                                                                            |
 | `@attocash/commons-test`          | Mock node and worker services for tests and demos.                                                    |
 
 ## Requirements

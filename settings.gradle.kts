@@ -3,8 +3,6 @@ plugins {
 }
 rootProject.name = "commons"
 include("commons-core")
-include("commons-gatekeeper")
-include("commons-gatekeeper-test")
 include("commons-node")
 include("commons-node-remote")
 include("commons-test")

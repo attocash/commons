@@ -37,7 +37,6 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":commons-gatekeeper"))
                 api(project(":commons-worker"))
 
                 implementation(libs.ktor.client.logging)
