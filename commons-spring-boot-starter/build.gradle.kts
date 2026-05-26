@@ -30,7 +30,9 @@ kotlin {
 }
 
 dependencies {
-    api(project(":commons-gatekeeper"))
+    api(project(":commons-core"))
+    api(project(":commons-node"))
+    api(libs.kotlinx.coroutines.core)
 
     implementation(platform(libs.spring.boot.dependencies))
 

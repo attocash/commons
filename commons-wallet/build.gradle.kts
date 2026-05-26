@@ -96,7 +96,6 @@ kotlin {
                 api(project(":commons-node"))
                 api(project(":commons-node-remote"))
                 api(project(":commons-worker-remote"))
-                api(project(":commons-gatekeeper"))
 
                 api(libs.kotlinx.coroutines.core)
 
@@ -124,8 +123,6 @@ kotlin {
 
         val jvmTest by getting {
             dependencies {
-                implementation(project(":commons-gatekeeper-test"))
-
                 implementation(libs.java.jwt)
 
                 implementation(libs.slf4j.simple)

@@ -37,14 +37,13 @@ val installPuppeteerBrowsers by tasks.registering(Exec::class) {
 }
 
 allprojects {
-    val jvmOnlyPublicationProjects = setOf("commons-signer-remote", "commons-worker-opencl", "commons-gatekeeper-test")
+    val jvmOnlyPublicationProjects = setOf("commons-signer-remote", "commons-worker-opencl")
     val webOnlyPublicationProjects = setOf("commons-js", "commons-worker-web")
     val npmPublicationDescriptions =
         mapOf(
             "commons-core" to "Core Atto primitives, serialization, hashing, signing, keys, addresses, blocks, and transactions.",
             "commons-node" to "Node-facing Atto client interfaces, operations, monitors, and receivable stream helpers.",
             "commons-node-remote" to "Remote HTTP Atto node client for JavaScript and TypeScript applications.",
-            "commons-gatekeeper" to "Gatekeeper client helpers for Atto backend operations.",
             "commons-worker" to "CPU proof-of-work worker implementation for Atto applications.",
             "commons-worker-remote" to "Remote HTTP proof-of-work worker client for Atto applications.",
             "commons-worker-web" to "Browser WebGPU and WebGL proof-of-work workers for Atto applications.",

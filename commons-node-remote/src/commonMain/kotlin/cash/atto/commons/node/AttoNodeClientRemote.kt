@@ -100,9 +100,9 @@ private class AttoNodeClientRemote(
             }.body()
     }
 
-    private suspend inline fun <reified T> post(
+    private suspend inline fun <reified T, reified B : Any> post(
         urlPath: String,
-        body: Any,
+        body: B,
         timeout: Duration = 10.seconds,
     ): T {
         val headers = headerProvider.invoke()
@@ -148,11 +148,12 @@ private class AttoNodeClientRemote(
             }
         }
 
-    override suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount> = post("accounts", AccountSearch(addresses))
+    override suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount> =
+        post<List<AttoAccount>, AccountSearch>("accounts", AccountSearch(addresses))
 
-    private inline fun <reified T> fetchStream(
+    private inline fun <reified T, reified B : Any> fetchStream(
         urlPath: String,
-        body: Any,
+        body: B,
         requestTimeout: Duration = Duration.INFINITE,
         socketTimeout: Duration = STREAM_SOCKET_IDLE_TIMEOUT,
         connectTimeout: Duration = 10.seconds,
@@ -242,7 +243,7 @@ private class AttoNodeClientRemote(
     override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse = get("instants/$currentTime")
 
     override suspend fun publish(transaction: AttoTransaction) {
-        fetchStream<AttoTransaction>(
+        fetchStream<AttoTransaction, AttoTransaction>(
             "transactions/stream",
             transaction,
             requestTimeout = 1.minutes,
