@@ -41,8 +41,23 @@ actual class AttoWorkerMock internal actual constructor(
 
     actual override fun close() {
         if (started && container != null) {
-            container.stop()
+            val worker = container
+            container = null
             started = false
+            js(
+                """
+                (function() {
+                    var cleanupQueue = globalThis.__attoCommonsTestcontainerCleanupQueue || Promise.resolve();
+                    globalThis.__attoCommonsTestcontainerCleanupQueue = cleanupQueue
+                        .then(function() {
+                            return worker == null ? undefined : worker.stop();
+                        })
+                        .catch(function(error) {
+                        console.warn(error);
+                    });
+                })()
+                """,
+            )
         }
     }
 

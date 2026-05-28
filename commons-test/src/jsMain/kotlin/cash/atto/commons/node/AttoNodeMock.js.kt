@@ -88,10 +88,33 @@ actual class AttoNodeMock actual constructor(
 
     actual override fun close() {
         if (started) {
-            nodeContainer?.stop()
-            mysqlContainer?.stop()
-            network?.stop()
+            val node = nodeContainer
+            val mysql = mysqlContainer
+            val nodeNetwork = network
+            nodeContainer = null
+            mysqlContainer = null
+            network = null
             started = false
+            js(
+                """
+                (function() {
+                    var cleanupQueue = globalThis.__attoCommonsTestcontainerCleanupQueue || Promise.resolve();
+                    globalThis.__attoCommonsTestcontainerCleanupQueue = cleanupQueue
+                        .then(function() {
+                            return (node == null ? Promise.resolve() : node.stop())
+                                .then(function() {
+                                    return mysql == null ? undefined : mysql.stop();
+                                })
+                                .then(function() {
+                                    return nodeNetwork == null ? undefined : nodeNetwork.stop();
+                                });
+                        })
+                        .catch(function(error) {
+                        console.warn(error);
+                    });
+                })()
+                """,
+            )
         }
     }
 
