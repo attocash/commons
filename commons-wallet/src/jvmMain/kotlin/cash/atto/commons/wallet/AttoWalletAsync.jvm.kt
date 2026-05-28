@@ -4,6 +4,7 @@ import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoInstant
+import cash.atto.commons.AttoJob
 import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
@@ -11,6 +12,7 @@ import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.future
 import java.util.concurrent.CompletableFuture
 
@@ -20,6 +22,7 @@ actual class AttoWalletAsync internal actual constructor(
     dispatcher: CoroutineDispatcher,
 ) {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
+    internal var autoReceiverJob: AttoJob? = null
 
     fun openAccount(indexes: Collection<AttoKeyIndex>): CompletableFuture<Collection<AttoWalletAccount>> =
         scope.future { wallet.openAccount(indexes) }
@@ -77,4 +80,9 @@ actual class AttoWalletAsync internal actual constructor(
         representativeAddress: AttoAddress,
         timestamp: AttoInstant? = null,
     ): CompletableFuture<AttoTransaction> = scope.future { wallet.change(index, representativeAddress, timestamp) }
+
+    actual fun close() {
+        autoReceiverJob?.cancel()
+        scope.cancel()
+    }
 }

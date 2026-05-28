@@ -9,4 +9,6 @@ expect class AttoWalletAsync internal constructor(
     dispatcher: CoroutineDispatcher,
 ) {
     internal val wallet: AttoWallet
+
+    fun close()
 }
