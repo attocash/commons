@@ -32,6 +32,9 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
     @get:Internal
     abstract val packageDirectory: DirectoryProperty
 
+    @get:Internal
+    abstract val canonicalPackageDirectory: DirectoryProperty
+
     @TaskAction
     fun externalize() {
         val stagingDirectory = packageDirectory.get().asFile
@@ -56,6 +59,13 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
             apiDependencyProjectNames
                 .get()
                 .filterTo(mutableSetOf()) { it != currentProjectName && it in publishedProjects }
+
+        replaceWithCanonicalGeneratedFiles(stagingDirectory)
+
+        if (currentProjectName != COMMONS_CORE_PROJECT_NAME) {
+            externalizeSharedRuntimeModuleImports(stagingDirectory)
+            internalDependencyProjectNames.add(COMMONS_CORE_PROJECT_NAME)
+        }
 
         stagingDirectory
             .walkTopDown()
@@ -88,6 +98,12 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
             Files.deleteIfExists(packagePath.resolve(moduleFileName))
             Files.deleteIfExists(packagePath.resolve("$moduleFileName.map"))
         }
+        if (currentProjectName != COMMONS_CORE_PROJECT_NAME) {
+            sharedRuntimeModuleFileNames.forEach { moduleFileName ->
+                Files.deleteIfExists(packagePath.resolve(moduleFileName))
+                Files.deleteIfExists(packagePath.resolve("$moduleFileName.map"))
+            }
+        }
 
         val unresolvedInternalImports =
             stagingDirectory
@@ -105,10 +121,71 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
             "Generated npm package still has relative internal Commons imports: " +
                 unresolvedInternalImports.joinToString()
         }
+        if (currentProjectName != COMMONS_CORE_PROJECT_NAME) {
+            val unresolvedSharedRuntimeImports =
+                stagingDirectory
+                    .walkTopDown()
+                    .filter { it.isFile && it.extension == "mjs" }
+                    .flatMap { moduleFile ->
+                        val moduleText = moduleFile.readText()
+                        sharedRuntimeModuleFileNames
+                            .filter { moduleFileName ->
+                                moduleText.contains("'./$moduleFileName'") ||
+                                    moduleText.contains("\"./$moduleFileName\"")
+                            }.map { moduleFileName -> "${moduleFile.name} imports ./$moduleFileName" }
+                    }.toList()
+            check(unresolvedSharedRuntimeImports.isEmpty()) {
+                "Generated npm package still has relative shared Kotlin runtime imports: " +
+                    unresolvedSharedRuntimeImports.joinToString()
+            }
+        }
 
         if (internalDependencyProjectNames.isNotEmpty()) {
             addInternalDependencies(packageJsonFile, internalDependencyProjectNames)
         }
+    }
+
+    private fun replaceWithCanonicalGeneratedFiles(stagingDirectory: File) {
+        val canonicalDirectory = canonicalPackageDirectory.asFile.orNull ?: return
+        if (!canonicalDirectory.isDirectory) {
+            return
+        }
+
+        canonicalDirectory
+            .walkTopDown()
+            .filter { it.isFile && (it.extension == "mjs" || it.name.endsWith(".mjs.map")) }
+            .filter { canonicalFile -> stagingDirectory.resolve(canonicalFile.name).isFile }
+            .forEach { canonicalFile ->
+                canonicalFile.copyTo(stagingDirectory.resolve(canonicalFile.name), overwrite = true)
+            }
+    }
+
+    private fun externalizeSharedRuntimeModuleImports(stagingDirectory: File) {
+        stagingDirectory
+            .walkTopDown()
+            .filter { it.isFile && it.extension == "mjs" }
+            .forEach { moduleFile ->
+                var moduleText = moduleFile.readText()
+                var changed = false
+
+                sharedRuntimeModuleFileNames.forEach { moduleFileName ->
+                    val localSpecifier = "./$moduleFileName"
+                    val packageSpecifier = "${packageName(COMMONS_CORE_PROJECT_NAME)}/$moduleFileName"
+                    val updatedModuleText =
+                        moduleText
+                            .replace("'$localSpecifier'", "'$packageSpecifier'")
+                            .replace("\"$localSpecifier\"", "\"$packageSpecifier\"")
+
+                    if (updatedModuleText != moduleText) {
+                        changed = true
+                        moduleText = updatedModuleText
+                    }
+                }
+
+                if (changed) {
+                    moduleFile.writeText(moduleText)
+                }
+            }
     }
 
     private fun addInternalDependencies(
@@ -148,6 +225,22 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
         rootProjectName: String,
         projectName: String,
     ) = "$rootProjectName-$projectName.mjs"
+
+    private companion object {
+        const val COMMONS_CORE_PROJECT_NAME = "commons-core"
+
+        val sharedRuntimeModuleFileNames =
+            setOf(
+                "Kotlin-DateTime-library-kotlinx-datetime.mjs",
+                "kotlin-kotlin-stdlib.mjs",
+                "kotlin_org_jetbrains_kotlin_kotlin_dom_api_compat.mjs",
+                "kotlinx-atomicfu.mjs",
+                "kotlinx-coroutines-core.mjs",
+                "kotlinx-io-kotlinx-io-bytestring.mjs",
+                "kotlinx-io-kotlinx-io-core.mjs",
+                "kotlinx-serialization-kotlinx-serialization-core.mjs",
+            )
+    }
 }
 
 fun Project.moduleDescriptionProvider(): Property<String> {
@@ -164,6 +257,8 @@ fun Project.moduleDescriptionProvider(): Property<String> {
 fun Project.configureCommonsNpmPackageExternalization() {
     val apiConfigurationNames = listOf("commonMainApi", "jsMainApi", "webMainApi")
     val packageDir = layout.buildDirectory.dir("packages/js")
+    val canonicalPackageDir =
+        rootProject.layout.buildDirectory.dir("js/packages/${rootProject.name}-commons-npm-bundle/kotlin")
     val externalizeCommonsJsPackageDependencies =
         tasks.register(
             "externalizeCommonsJsPackageDependencies",
@@ -173,8 +268,10 @@ fun Project.configureCommonsNpmPackageExternalization() {
                 task.description = "Rewrites internal Commons JS module imports to npm package imports before packing."
 
                 task.dependsOn("assembleJsPackage")
+                task.dependsOn(":commons-npm-bundle:compileProductionLibraryKotlinJs")
 
                 task.packageDirectory.set(packageDir)
+                task.canonicalPackageDirectory.set(canonicalPackageDir)
                 task.currentProjectName.set(project.name)
                 task.rootProjectName.set(rootProject.name)
                 task.packageVersion.set(provider { project.version.toString() })
