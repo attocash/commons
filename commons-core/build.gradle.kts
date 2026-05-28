@@ -9,6 +9,8 @@ plugins {
 }
 
 group = "cash.atto"
+description = "Core Atto primitives, serialization, hashing, signing, keys, addresses, blocks, and transactions."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

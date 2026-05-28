@@ -10,6 +10,8 @@ plugins {
 }
 
 group = "cash.atto"
+description = "Remote HTTP Atto node client for JavaScript and TypeScript applications."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

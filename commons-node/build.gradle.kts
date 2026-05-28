@@ -10,6 +10,8 @@ plugins {
 }
 
 group = "cash.atto"
+description = "Node-facing Atto client interfaces, operations, monitors, and receivable stream helpers."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

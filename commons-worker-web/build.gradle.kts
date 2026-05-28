@@ -6,6 +6,8 @@ plugins {
 }
 
 group = "cash.atto"
+description = "Browser WebGPU and WebGL proof-of-work workers for Atto applications."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

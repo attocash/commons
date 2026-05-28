@@ -11,6 +11,8 @@ plugins {
 }
 
 group = "cash.atto"
+description = "CPU proof-of-work worker implementation for Atto applications."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

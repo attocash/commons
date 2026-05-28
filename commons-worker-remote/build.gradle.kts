@@ -10,6 +10,8 @@ plugins {
 }
 
 group = "cash.atto"
+description = "Remote HTTP proof-of-work worker client for Atto applications."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

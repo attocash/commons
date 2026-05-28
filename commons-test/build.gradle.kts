@@ -16,6 +16,8 @@ val npmRepository =
     )
 
 group = "cash.atto"
+description = "Test utilities and mock Atto node and worker services for JavaScript and TypeScript integrations."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

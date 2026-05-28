@@ -10,6 +10,8 @@ plugins {
 }
 
 group = "cash.atto"
+description = "Wallet utilities for deriving accounts, opening accounts, sending funds, and receiving funds."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()

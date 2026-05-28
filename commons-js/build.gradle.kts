@@ -13,6 +13,9 @@ val npmRepository =
     )
 
 group = "cash.atto"
+description =
+    "Deprecated aggregate Atto Commons JavaScript package. Use the individual @attocash/commons-* packages instead."
+apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
     mavenCentral()
