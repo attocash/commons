@@ -50,7 +50,7 @@ allprojects {
     }
 
     project.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
-        project.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().version = "24.3.0"
+        project.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().version = libs.versions.nodejs.get()
     }
 
     project.plugins.withId("org.jetbrains.kotlin.multiplatform") {

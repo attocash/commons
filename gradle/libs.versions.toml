@@ -49,7 +49,7 @@ npm-publish = "3.7.0"
 stablelib = "1.0.1"
 
 # Node.js
-nodejs = "24.3.0"
+nodejs = "24.6.0"
 
 [libraries]
 # Kotlinx Coroutines
