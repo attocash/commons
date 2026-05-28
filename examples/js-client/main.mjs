@@ -54,16 +54,24 @@ async function main() {
     await workerMock.start();
     console.log(`Worker mock started at: ${workerMock.baseUrl}`);
 
+    let wallet;
+    let transactionJob;
+    let accountEntryJob;
+    let accountMonitor;
+    let transactionMonitor;
+    let accountEntryMonitor;
+    let nodeClient;
+
     try {
       // Create async client and worker using the mock server URLs
-      const nodeClient = new AttoNodeClientAsyncBuilder(nodeMock.baseUrl).build();
+      nodeClient = new AttoNodeClientAsyncBuilder(nodeMock.baseUrl).build();
       const worker = new AttoWorkerAsyncBuilder(workerMock.baseUrl).build();
 
       // Create account monitor for auto-receive functionality
-      const accountMonitor = new AttoAccountMonitorAsyncBuilder(nodeClient).build();
+      accountMonitor = new AttoAccountMonitorAsyncBuilder(nodeClient).build();
 
       // Create transaction monitor to track transactions
-      const transactionMonitor = new AttoTransactionMonitorAsyncBuilder(nodeClient, accountMonitor)
+      transactionMonitor = new AttoTransactionMonitorAsyncBuilder(nodeClient, accountMonitor)
         .heightProvider(async (address) => {
           // Start from height 2 for genesis (skip genesis block at height 1)
           const genesisPublicKey = toPublicKey(genesisPrivateKey);
@@ -76,7 +84,7 @@ async function main() {
         .build();
 
       // Create account entry monitor to track account entries
-      const accountEntryMonitor = new AttoAccountEntryMonitorAsyncBuilder(nodeClient, accountMonitor)
+      accountEntryMonitor = new AttoAccountEntryMonitorAsyncBuilder(nodeClient, accountMonitor)
         .heightProvider(async (address) => {
           // Start from height 2 for genesis (skip genesis block at height 1)
           const genesisPublicKey = toPublicKey(genesisPrivateKey);
@@ -89,7 +97,7 @@ async function main() {
         .build();
 
       // Create AttoWalletAsync using builder with auto-receive enabled
-      const wallet = new AttoWalletAsyncBuilder(nodeClient, worker)
+      wallet = new AttoWalletAsyncBuilder(nodeClient, worker)
         .signerProviderSeed(seed)
         .enableAutoReceiver(
           accountMonitor,
@@ -133,14 +141,14 @@ async function main() {
 
       // Register transaction monitor to track all transactions
       console.log("\n=== Registering Transaction Monitor ===");
-      const transactionJob = transactionMonitor.onTransaction(
+      transactionJob = transactionMonitor.onTransaction(
         async (transaction) => console.log(`Transaction monitor received: ${transactionToJson(transaction)}`),
         async (err) => err && console.error(err)
       );
 
       // Register account entry monitor to track all account entries
       console.log("=== Registering Account Entry Monitor ===");
-      const accountEntryJob = accountEntryMonitor.onAccountEntry(
+      accountEntryJob = accountEntryMonitor.onAccountEntry(
         async (entry) => console.log(`Account entry monitor received: ${accountEntryToJson(entry)}`),
         async (err) => err && console.error(err)
       );
@@ -206,14 +214,20 @@ async function main() {
 
     } finally {
       // Clean up resources
-      nodeMock.close();
-      workerMock.close();
-      console.log("Mock servers stopped");
+      try {
+        accountEntryJob?.cancel?.();
+        transactionJob?.cancel?.();
+        wallet?.close?.();
+      } finally {
+        nodeMock.close();
+        workerMock.close();
+        console.log("Mock servers stopped");
+      }
     }
   } catch (error) {
     console.error("Error:", error);
+    process.exitCode = 1;
   }
-  process.exit(1);
 }
 
 main();
