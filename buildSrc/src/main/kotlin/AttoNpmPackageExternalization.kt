@@ -35,6 +35,9 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
     @get:Internal
     abstract val canonicalPackageDirectory: DirectoryProperty
 
+    @get:Internal
+    abstract val rootProjectDirectory: DirectoryProperty
+
     @TaskAction
     fun externalize() {
         val stagingDirectory = packageDirectory.get().asFile
@@ -140,6 +143,7 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
             }
         }
 
+        internalDependencyProjectNames.addAll(externalizeTypeDeclarations(stagingDirectory, currentProjectName))
         if (internalDependencyProjectNames.isNotEmpty()) {
             addInternalDependencies(packageJsonFile, internalDependencyProjectNames)
         }
@@ -219,7 +223,151 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
         packageJsonFile.writeText(JsonOutput.prettyPrint(JsonOutput.toJson(updatedPackageJson)) + "\n")
     }
 
+    private fun externalizeTypeDeclarations(
+        stagingDirectory: File,
+        currentProjectName: String,
+    ): Set<String> {
+        if (currentProjectName == COMMONS_CORE_PROJECT_NAME || currentProjectName == COMMONS_JS_PROJECT_NAME) {
+            return emptySet()
+        }
+
+        val declarationFile =
+            stagingDirectory.resolve(declarationFileName(rootProjectName.get(), currentProjectName))
+        if (!declarationFile.isFile) {
+            return emptySet()
+        }
+
+        val declarationText = declarationFile.readText()
+        val currentDeclarationNames = exportedDeclarationNames(declarationText)
+        val declarationOwners = declarationOwners(currentProjectName, currentDeclarationNames)
+        val dependencyImports =
+            declarationOwners
+                .entries
+                .groupBy({ it.value }, { it.key })
+                .toSortedMap(compareBy(::publicationProjectPriority).thenBy { it })
+                .map { (dependencyProjectName, names) -> dependencyProjectName to names.sorted() }
+        if (dependencyImports.isEmpty()) {
+            return emptySet()
+        }
+
+        val externalizedDeclarationText = removeExportedDeclarations(declarationText, declarationOwners.keys)
+        val importText =
+            dependencyImports.joinToString(separator = "\n") { (dependencyProjectName, names) ->
+                buildString {
+                    append("import type {\n")
+                    names.forEach { name -> append("  $name,\n") }
+                    append("} from \"${packageName(dependencyProjectName)}\";")
+                }
+            }
+
+        declarationFile.writeText("$importText\n\n${externalizedDeclarationText.trimStart()}")
+
+        return dependencyImports.map { it.first }.toSet()
+    }
+
+    private fun declarationOwners(
+        currentProjectName: String,
+        currentDeclarationNames: Set<String>,
+    ): Map<String, String> {
+        val assignedNames = mutableSetOf<String>()
+        return npmPublicationProjects
+            .get()
+            .filterNot { it == COMMONS_JS_PROJECT_NAME }
+            .sortedWith(compareBy(::publicationProjectPriority).thenBy { it })
+            .flatMap { projectName ->
+                val names = projectExportedDeclarationNames(projectName) - assignedNames
+                assignedNames.addAll(names)
+                if (projectName == currentProjectName) {
+                    emptyList()
+                } else {
+                    names
+                        .filter { it in currentDeclarationNames }
+                        .map { name -> name to projectName }
+                }
+            }.toMap()
+    }
+
+    private fun projectExportedDeclarationNames(projectName: String): Set<String> {
+        val declarationFile =
+            rootProjectDirectory
+                .get()
+                .asFile
+                .resolve(projectName)
+                .resolve("build/packages/js")
+                .resolve(declarationFileName(rootProjectName.get(), projectName))
+        require(declarationFile.isFile) {
+            "Type declarations for $projectName were not found at ${declarationFile.absolutePath}."
+        }
+
+        return exportedDeclarationNames(declarationFile.readText()) - nonExternalizedDeclarationNames
+    }
+
+    private fun exportedDeclarationNames(declarationText: String): Set<String> =
+        declarationText
+            .lineSequence()
+            .mapNotNull(::exportedDeclarationName)
+            .toSet()
+
+    private fun removeExportedDeclarations(
+        declarationText: String,
+        declarationNames: Set<String>,
+    ): String {
+        val lines = declarationText.lines()
+        val retainedLines = mutableListOf<String>()
+        var index = 0
+        while (index < lines.size) {
+            val declarationName = exportedDeclarationName(lines[index])
+            if (declarationName != null && declarationName in declarationNames) {
+                index = declarationEndIndex(lines, index) + 1
+            } else {
+                retainedLines += lines[index]
+                index += 1
+            }
+        }
+
+        return retainedLines.joinToString("\n")
+    }
+
+    private fun exportedDeclarationName(line: String): String? =
+        declarationExportRegex.matchEntire(line)?.groupValues?.get(1)
+
+    private fun declarationEndIndex(
+        lines: List<String>,
+        startIndex: Int,
+    ): Int {
+        var depth = 0
+        var sawBrace = false
+        for (index in startIndex until lines.size) {
+            lines[index].forEach { character ->
+                when (character) {
+                    '{' -> {
+                        sawBrace = true
+                        depth += 1
+                    }
+                    '}' -> depth -= 1
+                }
+            }
+
+            if (!sawBrace && lines[index].trimEnd().endsWith(";")) {
+                return index
+            }
+            if (sawBrace && depth == 0) {
+                return index
+            }
+        }
+
+        return startIndex
+    }
+
     private fun packageName(projectName: String) = "@attocash/$projectName"
+
+    private fun publicationProjectPriority(projectName: String): Int =
+        publicationProjectPriorities[projectName] ?: Int.MAX_VALUE
+
+    private fun declarationFileName(
+        rootProjectName: String,
+        projectName: String,
+    ) = "${moduleFileName(rootProjectName, projectName).removeSuffix(".mjs")}.d.mts"
 
     private fun moduleFileName(
         rootProjectName: String,
@@ -228,6 +376,28 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
 
     private companion object {
         const val COMMONS_CORE_PROJECT_NAME = "commons-core"
+        const val COMMONS_JS_PROJECT_NAME = "commons-js"
+
+        val declarationExportRegex =
+            Regex(
+                "^export declare (?:(?:abstract )?class|interface|function|const|namespace|type) " +
+                    "([A-Za-z_$][A-Za-z0-9_$]*).*$",
+            )
+
+        val nonExternalizedDeclarationNames = setOf("KtMap", "initHook")
+
+        val publicationProjectPriorities =
+            mapOf(
+                "commons-core" to 0,
+                "commons-node" to 10,
+                "commons-node-remote" to 20,
+                "commons-worker" to 30,
+                "commons-worker-remote" to 40,
+                "commons-worker-web" to 50,
+                "commons-wallet" to 60,
+                "commons-test" to 70,
+                "commons-js" to 80,
+            )
 
         val sharedRuntimeModuleFileNames =
             setOf(
@@ -272,6 +442,7 @@ fun Project.configureCommonsNpmPackageExternalization() {
 
                 task.packageDirectory.set(packageDir)
                 task.canonicalPackageDirectory.set(canonicalPackageDir)
+                task.rootProjectDirectory.set(rootProject.layout.projectDirectory)
                 task.currentProjectName.set(project.name)
                 task.rootProjectName.set(rootProject.name)
                 task.packageVersion.set(provider { project.version.toString() })
@@ -304,6 +475,16 @@ fun Project.configureCommonsNpmPackageExternalization() {
                 task.inputs.dir(packageDir)
                 task.outputs.dir(packageDir)
                 task.outputs.upToDateWhen { false }
+                if (project.name != "commons-core" && project.name != "commons-js") {
+                    task.dependsOn(
+                        provider {
+                            task.npmPublicationProjects
+                                .get()
+                                .filter { it != project.name }
+                                .map { ":$it:assembleJsPackage" }
+                        },
+                    )
+                }
             },
         )
 

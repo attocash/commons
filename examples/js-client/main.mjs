@@ -106,7 +106,7 @@ async function main() {
           () => {
             // Default representative address provider
             // Using a dummy address as default representative
-            const dummyBytes = new Uint8Array(32);
+            const dummyBytes = new Int8Array(32);
             return new AttoAddress(AttoAlgorithm.V1, new AttoPublicKey(dummyBytes));
           }
         )

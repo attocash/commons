@@ -15,8 +15,7 @@ transactions using Node.js.
 Install the released npm packages in this directory:
 
 ```bash
-npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
-npm install @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
+npm install @attocash/commons-node-remote @attocash/commons-worker-remote @attocash/commons-wallet
 npm install --save-dev @attocash/commons-test
 ```
 
