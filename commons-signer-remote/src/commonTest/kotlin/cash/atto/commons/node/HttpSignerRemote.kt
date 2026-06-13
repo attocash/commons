@@ -18,11 +18,13 @@ import cash.atto.commons.isValid
 import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoVersion
-import cash.atto.commons.toByteArray
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 expect fun randomPort(): Int
 
@@ -77,26 +79,73 @@ class SignerRemoteTest {
             val signature = signer.sign(challenge, timestamp)
 
             // then
-            val hash = AttoHash.hash(64, signer.publicKey.value, challenge.value, timestamp.toByteArray())
-            assertTrue { signature.isValid(signer.publicKey, hash) }
+            assertTrue { signature.isValid(signer.publicKey, challenge, timestamp) }
         }
 
-    private fun AttoVote.Companion.sample(): AttoVote =
+    @Test
+    fun `should fail fast on terminal client error`(): Unit =
+        runBlocking {
+            val port = randomPort()
+            val backend = MocktRemoteSigner(port, statusByPath = mapOf("/blocks" to HttpStatusCode.Unauthorized))
+            backend.start()
+            try {
+                val signer =
+                    AttoSigner.remote(
+                        "http://localhost:$port",
+                        retryEvery = 10.seconds,
+                        headerProvider = { emptyMap() },
+                        maxAttempts = 1U,
+                    )
+                val block = AttoBlock.sample(signer.publicKey)
+
+                assertFailsWith<AttoRemoteSignerTerminalException> {
+                    signer.sign(block)
+                }
+            } finally {
+                backend.stop()
+            }
+        }
+
+    @Test
+    fun `should reject invalid remote signature`(): Unit =
+        runBlocking {
+            val port = randomPort()
+            val backend = MocktRemoteSigner(port, invalidSignatures = true)
+            backend.start()
+            try {
+                val signer =
+                    AttoSigner.remote(
+                        "http://localhost:$port",
+                        retryEvery = 10.seconds,
+                        headerProvider = { emptyMap() },
+                        maxAttempts = 1U,
+                    )
+                val block = AttoBlock.sample(signer.publicKey)
+
+                assertFailsWith<AttoRemoteSignerInvalidSignatureException> {
+                    signer.sign(block)
+                }
+            } finally {
+                backend.stop()
+            }
+        }
+
+    private fun AttoVote.Companion.sample(publicKey: AttoPublicKey = signer.publicKey): AttoVote =
         AttoVote(
             version = AttoVersion(0U),
             algorithm = AttoAlgorithm.V1,
-            publicKey = signer.publicKey,
+            publicKey = publicKey,
             blockAlgorithm = AttoAlgorithm.V1,
             blockHash = AttoHash(Random.nextBytes(ByteArray(32))),
             timestamp = AttoInstant.now(),
         )
 
-    private fun AttoBlock.Companion.sample(): AttoBlock =
+    private fun AttoBlock.Companion.sample(publicKey: AttoPublicKey = signer.publicKey): AttoBlock =
         AttoReceiveBlock(
             version = 0U.toAttoVersion(),
             network = AttoNetwork.LOCAL,
             algorithm = AttoAlgorithm.V1,
-            publicKey = signer.publicKey,
+            publicKey = publicKey,
             height = 2U.toAttoHeight(),
             balance = AttoAmount.MAX,
             timestamp = AttoInstant.now(),

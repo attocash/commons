@@ -10,6 +10,7 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoVote
+import cash.atto.commons.isValid
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -26,13 +27,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.utils.io.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -55,6 +56,7 @@ internal class HttpSignerRemote(
     private val url: String,
     private val retryEvery: Duration = 1.seconds,
     private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
+    private val maxAttempts: UInt? = null,
 ) : AttoSigner {
     private val logger = KotlinLogging.logger {}
 
@@ -66,30 +68,59 @@ internal class HttpSignerRemote(
     }
     override val address: AttoAddress by lazy { AttoAddress(algorithm, publicKey) }
 
-    private suspend fun getPublicKey(): AttoPublicKey {
+    private suspend fun <T> retrying(
+        operation: String,
+        action: suspend () -> T,
+    ): T {
+        var attempts = 0U
         while (currentCoroutineContext().isActive) {
             try {
-                val headers = headerProvider.invoke()
-
-                return httpClient
-                    .get("$url/public-keys") {
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        headers {
-                            headers.forEach { (key, value) -> append(key, value) }
-                        }
-                        timeout {
-                            socketTimeoutMillis = 5.seconds.inWholeMilliseconds
-                        }
-                    }.body<PublicKeyResponse>()
-                    .publicKey
+                return action()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                logger.warn(e) { "Failed to get publicKey. Retrying in $retryEvery" }
+                val terminalStatus = e.terminalClientStatus()
+                if (terminalStatus != null) {
+                    throw AttoRemoteSignerTerminalException(operation, terminalStatus, e)
+                }
+
+                attempts += 1U
+                if (maxAttempts != null && attempts >= maxAttempts) {
+                    throw AttoRemoteSignerRetriesExhaustedException(operation, attempts, e)
+                }
+
+                logger.warn(e) { "Failed to $operation. Retrying in $retryEvery" }
                 delay(retryEvery)
             }
         }
-        throw CancellationException("Getting public key cancelled.")
+        throw CancellationException("$operation cancelled.")
     }
+
+    private fun Exception.terminalClientStatus(): HttpStatusCode? {
+        if (this !is ClientRequestException) return null
+
+        val status = response.status
+        if (status == HttpStatusCode.RequestTimeout || status == HttpStatusCode.TooManyRequests) return null
+        return status
+    }
+
+    private suspend fun getPublicKey(): AttoPublicKey =
+        retrying("get publicKey") {
+            val headers = headerProvider.invoke()
+
+            httpClient
+                .get("$url/public-keys") {
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    headers {
+                        headers.forEach { (key, value) -> append(key, value) }
+                    }
+                    timeout {
+                        socketTimeoutMillis = 5.seconds.inWholeMilliseconds
+                    }
+                }.body<PublicKeyResponse>()
+                .publicKey
+        }
 
     override suspend fun sign(hash: AttoHash): AttoSignature = throw NotImplementedError("Remote signer doesn't accept direct hash signing")
 
@@ -105,11 +136,11 @@ internal class HttpSignerRemote(
                 timestamp = timestamp,
             )
 
-        while (currentCoroutineContext().isActive) {
-            try {
+        val signature =
+            retrying("sign $challenge") {
                 val headers = headerProvider.invoke()
 
-                return httpClient
+                httpClient
                     .post(uri) {
                         contentType(ContentType.Application.Json)
                         accept(ContentType.Application.Json)
@@ -122,12 +153,12 @@ internal class HttpSignerRemote(
                         }
                     }.body<SignatureResponse>()
                     .signature
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to sign $challenge. Retrying in $retryEvery" }
-                delay(retryEvery)
             }
+
+        if (!signature.isValid(publicKey, challenge, timestamp)) {
+            throw AttoRemoteSignerInvalidSignatureException("challenge")
         }
-        throw CancellationException("Signing cancelled.")
+        return signature
     }
 
     override suspend fun sign(block: AttoBlock): AttoSignature {
@@ -140,11 +171,11 @@ internal class HttpSignerRemote(
                 target = block,
             )
 
-        while (currentCoroutineContext().isActive) {
-            try {
+        val signature =
+            retrying("sign $block") {
                 val headers = headerProvider.invoke()
 
-                return httpClient
+                httpClient
                     .post(uri) {
                         contentType(ContentType.Application.Json)
                         accept(ContentType.Application.Json)
@@ -157,12 +188,12 @@ internal class HttpSignerRemote(
                         }
                     }.body<SignatureResponse>()
                     .signature
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to sign $block. Retrying in $retryEvery" }
-                delay(retryEvery)
             }
+
+        if (!signature.isValid(block.publicKey, block.hash)) {
+            throw AttoRemoteSignerInvalidSignatureException("block")
         }
-        throw CancellationException("Signing cancelled.")
+        return signature
     }
 
     override suspend fun sign(vote: AttoVote): AttoSignature {
@@ -175,11 +206,11 @@ internal class HttpSignerRemote(
                 target = vote,
             )
 
-        while (currentCoroutineContext().isActive) {
-            try {
+        val signature =
+            retrying("sign $vote") {
                 val headers = headerProvider.invoke()
 
-                return httpClient
+                httpClient
                     .post(uri) {
                         contentType(ContentType.Application.Json)
                         accept(ContentType.Application.Json)
@@ -192,15 +223,12 @@ internal class HttpSignerRemote(
                         }
                     }.body<SignatureResponse>()
                     .signature
-            } catch (e: Exception) {
-                if (e is ClientRequestException && e.response.status == HttpStatusCode.BadRequest) {
-                    throw e
-                }
-                logger.warn(e) { "Failed to sign $vote. Retrying in $retryEvery" }
-                delay(retryEvery)
             }
+
+        if (!signature.isValid(vote.publicKey, vote.hash)) {
+            throw AttoRemoteSignerInvalidSignatureException("vote")
         }
-        throw CancellationException("Signing cancelled.")
+        return signature
     }
 
     @Serializable
@@ -234,8 +262,25 @@ internal class HttpSignerRemote(
     )
 }
 
+class AttoRemoteSignerTerminalException internal constructor(
+    operation: String,
+    val status: HttpStatusCode,
+    cause: Throwable,
+) : IllegalStateException("Remote signer failed to $operation with terminal status $status", cause)
+
+class AttoRemoteSignerRetriesExhaustedException internal constructor(
+    operation: String,
+    attempts: UInt,
+    cause: Throwable,
+) : IllegalStateException("Remote signer failed to $operation after $attempts attempts", cause)
+
+class AttoRemoteSignerInvalidSignatureException internal constructor(
+    targetType: String,
+) : IllegalStateException("Remote signer returned invalid $targetType signature")
+
 fun AttoSigner.Companion.remote(
     url: String,
     retryEvery: Duration = 1.seconds,
+    maxAttempts: UInt? = null,
     headerProvider: suspend () -> Map<String, String>,
-): AttoSigner = HttpSignerRemote(url, retryEvery, headerProvider)
+): AttoSigner = HttpSignerRemote(url, retryEvery, headerProvider, maxAttempts)
