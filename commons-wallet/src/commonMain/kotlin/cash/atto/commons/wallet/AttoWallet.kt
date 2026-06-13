@@ -11,6 +11,7 @@ import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoSeed
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoTransaction
+import cash.atto.commons.AttoValidation
 import cash.atto.commons.compareTo
 import cash.atto.commons.node.AttoNodeClient
 import cash.atto.commons.node.monitor.AttoAccountMonitor
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -126,6 +128,10 @@ class AttoWallet(
         val work = worker.work(block)
 
         val transaction = AttoTransaction(block, signature, work)
+        when (val validation = transaction.validate()) {
+            AttoValidation.Ok -> Unit
+            is AttoValidation.Error -> throw IllegalStateException("Invalid transaction: ${validation.getError()}")
+        }
 
         client.publish(transaction)
 
@@ -446,8 +452,19 @@ fun AttoWallet.startAutoReceiver(
     return monitor
         .receivableStream(minAmount)
         .buffer()
-        .onEach {
-            receive(it, defaultRepresentativeAddressProvider.invoke())
+        .onEach { receivable ->
+            if (!isOpen(receivable.receiverAddress)) {
+                logger.warn { "Skipping receivable for non-wallet address ${receivable.receiverAddress}" }
+                return@onEach
+            }
+
+            try {
+                receive(receivable, defaultRepresentativeAddressProvider.invoke())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to process receivable ${receivable.hash}" }
+            }
         }.retryWhen { e, _ ->
             logger.warn(e) { "Failed to collect receivables. Retrying in $retryAfter..." }
             delay(retryAfter)

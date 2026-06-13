@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
@@ -72,7 +73,9 @@ class AttoAccountMonitor internal constructor(
                 if (addresses.isEmpty()) {
                     return@flatMapLatest emptyFlow()
                 }
-                return@flatMapLatest client.receivableStream(addresses, minAmount)
+                return@flatMapLatest client.receivableStream(addresses, minAmount).filter {
+                    it.receiverAddress in addresses
+                }
             }
     }
 
