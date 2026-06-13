@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 internal class AttoSignatureTest {
     private val privateKey = AttoPrivateKey("00".repeat(32).fromHexToByteArray())
@@ -51,6 +52,19 @@ internal class AttoSignatureTest {
 
             // then
             assertTrue(signature.isValid(publicKey, hash16))
+        }
+
+    @Test
+    fun `should validate timestamped challenge signature`() =
+        runTest {
+            val challenge = AttoChallenge.generate()
+            val timestamp = AttoInstant.now()
+            val signature = privateKey.toSigner().sign(challenge, timestamp)
+
+            assertTrue(signature.isValid(publicKey, challenge, timestamp))
+            assertFalse(signature.isValid(publicKey, AttoChallenge.generate(), timestamp))
+            assertFalse(signature.isValid(publicKey, challenge, timestamp + 1.seconds))
+            assertFalse(signature.isValid(AttoPrivateKey.generate().toPublicKey(), challenge, timestamp))
         }
 
     @Test

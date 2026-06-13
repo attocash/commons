@@ -19,7 +19,7 @@ data class AttoSignature(
     companion object {
         const val SIZE = 64
 
-        fun parse(value: String): AttoSignature = AttoSignature(value.fromHexToByteArray())
+        fun parse(value: String): AttoSignature = AttoSignature(value.fromHexToByteArray(SIZE))
     }
 
     init {
@@ -46,9 +46,10 @@ expect fun AttoSignature.isValid(
 fun AttoSignature.isValid(
     publicKey: AttoPublicKey,
     challenge: AttoChallenge,
+    timestamp: AttoInstant,
 ): Boolean {
-    val hash = AttoHash.hash(64, publicKey.value, challenge.value)
-    return isValid(publicKey, challenge)
+    val hash = AttoHash.hash(64, publicKey.value, challenge.value, timestamp.toByteArray())
+    return isValid(publicKey, hash)
 }
 
 object AttoSignatureAsStringSerializer : KSerializer<AttoSignature> {

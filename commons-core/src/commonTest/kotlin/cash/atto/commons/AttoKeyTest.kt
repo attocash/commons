@@ -4,6 +4,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 internal class AttoKeyTest {
     @Test
@@ -56,5 +57,30 @@ internal class AttoKeyTest {
 
         // then
         assertEquals(expectedJson, json)
+    }
+
+    @Test
+    fun `should reject non canonical fixed size hex`() {
+        listOf("0".repeat(63), "0".repeat(65)).forEach {
+            assertFailsWith<IllegalArgumentException> { AttoPublicKey.parse(it) }
+            assertFailsWith<IllegalArgumentException> { AttoPrivateKey.parse(it) }
+        }
+
+        listOf("0".repeat(127), "0".repeat(129)).forEach {
+            assertFailsWith<IllegalArgumentException> { AttoSignature.parse(it) }
+        }
+
+        listOf("0".repeat(15), "0".repeat(17)).forEach {
+            assertFailsWith<IllegalArgumentException> { AttoWork.parse(it) }
+        }
+
+        assertFailsWith<IllegalArgumentException> { AttoHash.parse("0".repeat(63)) }
+        assertFailsWith<IllegalArgumentException> { AttoHash.parse("GG" + "0".repeat(62)) }
+        assertFailsWith<IllegalArgumentException> {
+            Json.decodeFromString(AttoWorkTargetAsStringSerializer, "\"${"0".repeat(63)}\"")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            Json.decodeFromString(AttoChallengeSerializer, "\"${"0".repeat(127)}\"")
+        }
     }
 }

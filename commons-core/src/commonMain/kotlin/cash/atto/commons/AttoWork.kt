@@ -75,7 +75,7 @@ data class AttoWork(
     companion object {
         const val SIZE = 8
 
-        fun parse(value: String): AttoWork = AttoWork(value.fromHexToByteArray())
+        fun parse(value: String): AttoWork = AttoWork(value.fromHexToByteArray(SIZE))
     }
 
     init {

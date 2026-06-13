@@ -46,5 +46,5 @@ object AttoChallengeSerializer : KSerializer<AttoChallenge> {
         encoder.encodeString(value.toString())
     }
 
-    override fun deserialize(decoder: Decoder): AttoChallenge = AttoChallenge(decoder.decodeString().fromHexToByteArray())
+    override fun deserialize(decoder: Decoder): AttoChallenge = AttoChallenge(decoder.decodeString().fromHexToByteArrayAtLeast(64))
 }

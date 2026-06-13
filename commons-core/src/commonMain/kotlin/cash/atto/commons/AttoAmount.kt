@@ -69,6 +69,15 @@ data class AttoAmount
 
             private fun scaleFactor(scale: UByte): ULong = 10UL.pow(scale.toInt())
 
+            private fun requireDecimalDigits(
+                value: String,
+                partName: String,
+            ): ULong {
+                require(value.isNotEmpty()) { "$partName is empty" }
+                require(value.all { it in '0'..'9' }) { "$partName contains non-decimal characters" }
+                return value.toULongOrNull() ?: throw IllegalArgumentException("$partName exceeds ULong.MAX_VALUE")
+            }
+
             @OptIn(ExperimentalJsStatic::class)
             @JsStatic
             @JvmStatic
@@ -77,16 +86,31 @@ data class AttoAmount
                 string: String,
             ): AttoAmount {
                 val parts = string.split('.')
-                val wholePart = parts[0].toULong()
+                require(parts.size <= 2) { "Amount contains multiple decimal separators" }
+
+                val wholePart = requireDecimalDigits(parts[0], "Whole part")
                 val factor = scaleFactor(unit.scale)
+                require(wholePart <= MAX_RAW / factor) { "$string exceeds the max amount of $MAX_RAW raw" }
 
-                var scaledValue = wholePart * factor
+                val wholeValue = wholePart * factor
 
-                if (parts.size > 1) {
-                    val fractionalPart = parts[1].toULong()
-                    scaledValue += fractionalPart * factor / scaleFactor(parts[1].length.toUByte())
-                }
-                return AttoAmount(scaledValue)
+                val fractionalValue =
+                    if (parts.size == 1) {
+                        0UL
+                    } else {
+                        val fractionalString = parts[1]
+                        require(unit.scale.toInt() > 0) { "${unit.prefix} does not support fractional values" }
+                        require(fractionalString.length <= unit.scale.toInt()) {
+                            "Fractional part exceeds ${unit.scale} decimal places"
+                        }
+                        val fractionalPart = requireDecimalDigits(fractionalString, "Fractional part")
+                        val remainingScale = unit.scale.toInt() - fractionalString.length
+                        fractionalPart * scaleFactor(remainingScale.toUByte())
+                    }
+
+                require(fractionalValue <= MAX_RAW - wholeValue) { "$string exceeds the max amount of $MAX_RAW raw" }
+
+                return AttoAmount(wholeValue + fractionalValue)
             }
         }
 

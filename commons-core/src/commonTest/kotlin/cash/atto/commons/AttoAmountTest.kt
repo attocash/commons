@@ -3,6 +3,7 @@ package cash.atto.commons
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 internal class AttoAmountTest {
     @Test
@@ -104,5 +105,29 @@ internal class AttoAmountTest {
 
         // then
         assertEquals(AttoAmount(1_000_000_000UL), amount)
+    }
+
+    @Test
+    fun `should reject malformed decimal strings`() {
+        listOf("", ".", ".1", "1.", "1.2.3", " 1", "+1", "-1", "1.0000000000").forEach { string ->
+            assertFailsWith<IllegalArgumentException>(string) {
+                AttoAmount.from(AttoUnit.ATTO, string)
+            }
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            AttoAmount.from(AttoUnit.RAW, "1.0")
+        }
+    }
+
+    @Test
+    fun `should reject overflow before constructing amount`() {
+        assertEquals(AttoAmount.MAX, AttoAmount.from(AttoUnit.ATTO, "18000000000"))
+
+        listOf("18000000000.000000001", "18000000001", "18446744074").forEach { string ->
+            assertFailsWith<IllegalArgumentException>(string) {
+                AttoAmount.from(AttoUnit.ATTO, string)
+            }
+        }
     }
 }

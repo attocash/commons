@@ -29,7 +29,7 @@ class AttoPrivateKey(
     companion object {
         private val coinType = 1869902945 // "atto".toByteArray().toUInt()
 
-        fun parse(value: String): AttoPrivateKey = AttoPrivateKey(value.fromHexToByteArray())
+        fun parse(value: String): AttoPrivateKey = AttoPrivateKey(value.fromHexToByteArray(32))
 
         fun generate(): AttoPrivateKey {
             val value = SecureRandom.randomByteArray(32U)
@@ -61,7 +61,11 @@ class AttoAlgorithmPrivateKey(
     companion object {
         fun parse(value: String): AttoAlgorithmPrivateKey {
             val byteArray = value.fromHexToByteArray()
+            require(byteArray.isNotEmpty()) { "Hex string is empty" }
             val algorithm = AttoAlgorithm.from(byteArray[0].toUByte())
+            require(byteArray.size == 1 + algorithm.privateKeySize) {
+                "Hex string contains ${value.length} characters but should contain ${(1 + algorithm.privateKeySize) * 2}"
+            }
             val privateKey = AttoPrivateKey(byteArray.sliceArray(1 until byteArray.size))
             return AttoAlgorithmPrivateKey(algorithm, privateKey)
         }

@@ -74,5 +74,6 @@ object AttoWorkTargetAsStringSerializer : KSerializer<AttoWorkTarget> {
         encoder.encodeString(value.toString())
     }
 
-    override fun deserialize(decoder: Decoder): AttoWorkTarget = AttoWorkTarget(decoder.decodeString().fromHexToByteArray())
+    override fun deserialize(decoder: Decoder): AttoWorkTarget =
+        AttoWorkTarget(decoder.decodeString().fromHexToByteArray(AttoWorkTarget.SIZE))
 }

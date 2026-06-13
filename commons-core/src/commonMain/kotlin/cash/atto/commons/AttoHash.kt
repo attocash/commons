@@ -15,7 +15,7 @@ data class AttoHash(
     val value: ByteArray,
 ) {
     companion object {
-        fun parse(value: String): AttoHash = AttoHash(value.fromHexToByteArray())
+        fun parse(value: String): AttoHash = AttoHash(value.fromHexToByteArray(AttoAlgorithm.V1.hashSize))
 
         fun hash(
             size: Int,
