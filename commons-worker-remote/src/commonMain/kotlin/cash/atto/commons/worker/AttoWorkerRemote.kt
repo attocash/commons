@@ -2,6 +2,8 @@ package cash.atto.commons.worker
 
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
+import cash.atto.commons.fromHexToByteArray
+import cash.atto.commons.isValid
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
@@ -52,18 +54,25 @@ private class WorkerRemote(
 
         val uri = "$url/works"
 
-        return httpClient
-            .post(uri) {
-                contentType(ContentType.Application.Json)
-                accept(ContentType.Application.Json)
-                setBody(request)
-                headers {
-                    headers.forEach { (key, value) -> append(key, value) }
-                }
-                timeout {
-                    socketTimeoutMillis = timeout.toTimeoutMillis()
-                }
-            }.body<AttoWorkerOperations.Response>()
+        val response =
+            httpClient
+                .post(uri) {
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                    setBody(request)
+                    headers {
+                        headers.forEach { (key, value) -> append(key, value) }
+                    }
+                    timeout {
+                        socketTimeoutMillis = timeout.toTimeoutMillis()
+                    }
+                }.body<AttoWorkerOperations.Response>()
+
+        val target = AttoWorkTarget(request.target.fromHexToByteArray())
+        require(AttoWork.isValid(request.network, request.timestamp, target, response.work.value)) {
+            "Remote worker returned invalid work for network=${request.network} timestamp=${request.timestamp} target=${request.target}"
+        }
+        return response
     }
 
     override fun close() {

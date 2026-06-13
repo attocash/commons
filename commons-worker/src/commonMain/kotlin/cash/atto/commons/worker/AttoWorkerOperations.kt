@@ -4,6 +4,7 @@ import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
+import cash.atto.commons.isValid
 import cash.atto.commons.toHex
 import kotlinx.serialization.Serializable
 
@@ -17,7 +18,11 @@ interface AttoWorkerOperations : AttoWorker {
     ): AttoWork {
         val request = Request(network, timestamp, target.value.toHex())
         val response = work(request)
-        return response.work
+        val work = response.work
+        require(AttoWork.isValid(network, timestamp, target, work.value)) {
+            "Worker returned invalid work for network=$network timestamp=$timestamp target=${target.value.toHex()}"
+        }
+        return work
     }
 
     @Serializable
