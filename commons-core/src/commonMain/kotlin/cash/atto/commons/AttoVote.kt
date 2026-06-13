@@ -68,7 +68,7 @@ data class AttoSignedVote(
         }
 }
 
-fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote =
+internal fun AttoVote.Companion.readFromBuffer(buffer: Buffer): AttoVote =
     AttoVote(
         version = buffer.readAttoVersion(),
         algorithm = buffer.readAttoAlgorithm(),
@@ -78,12 +78,21 @@ fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote =
         timestamp = buffer.readInstant(),
     )
 
+fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote {
+    val vote = readFromBuffer(buffer)
+    buffer.requireNoRemainingBytes("AttoVote")
+    return vote
+}
+
 fun AttoSignedVote.Companion.fromBuffer(buffer: Buffer): AttoSignedVote {
-    val vote = AttoVote.fromBuffer(buffer)
-    return AttoSignedVote(
-        vote = vote,
-        signature = buffer.readAttoSignature(),
-    )
+    val vote = AttoVote.readFromBuffer(buffer)
+    val signedVote =
+        AttoSignedVote(
+            vote = vote,
+            signature = buffer.readAttoSignature(),
+        )
+    buffer.requireNoRemainingBytes("AttoSignedVote")
+    return signedVote
 }
 
 object AttoSignedVoteAsByteArraySerializer : KSerializer<AttoSignedVote> {

@@ -37,11 +37,17 @@ data class AttoTransaction(
 
         @JsExport.Ignore
         fun fromBuffer(buffer: Buffer): AttoTransaction? {
+            val transaction = readFromBuffer(buffer) ?: return null
+            buffer.requireNoRemainingBytes("AttoTransaction")
+            return transaction
+        }
+
+        internal fun readFromBuffer(buffer: Buffer): AttoTransaction? {
             if (SIZE > buffer.size) {
                 return null
             }
 
-            val block = AttoBlock.fromBuffer(buffer) ?: return null
+            val block = AttoBlock.readFromBuffer(buffer) ?: return null
 
             val transaction =
                 AttoTransaction(

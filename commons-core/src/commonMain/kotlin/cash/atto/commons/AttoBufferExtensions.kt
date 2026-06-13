@@ -106,6 +106,10 @@ fun Buffer.writeAttoNetwork(network: AttoNetwork): Buffer {
 
 fun Buffer.readAttoNetwork(): AttoNetwork = AttoNetwork.from(this.readUByte())
 
+internal fun Buffer.requireNoRemainingBytes(typeName: String) {
+    require(size == 0L) { "$typeName contains $size trailing bytes" }
+}
+
 fun ByteArray.toBuffer(): Buffer {
     val buffer = Buffer()
     buffer.write(this)

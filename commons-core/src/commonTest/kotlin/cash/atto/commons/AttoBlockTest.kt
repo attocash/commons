@@ -7,6 +7,7 @@ import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.days
@@ -62,6 +63,18 @@ class AttoBlockTest {
 
             // then
             assertEquals(expectedBlock, block)
+        }
+    }
+
+    @Test
+    fun `should reject trailing bytes`() {
+        validBlocks.forEach { block ->
+            val bytes = block.toBuffer()
+            bytes.write(byteArrayOf(0))
+
+            assertFailsWith<IllegalArgumentException> {
+                AttoBlock.fromBuffer(bytes)
+            }
         }
     }
 

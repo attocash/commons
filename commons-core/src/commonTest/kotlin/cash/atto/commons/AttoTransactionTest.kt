@@ -13,6 +13,7 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -122,6 +123,23 @@ class AttoTransactionTest {
 
             // then
             assertEquals(expectedTransaction, transaction)
+        }
+
+    @Test
+    fun `should reject trailing bytes`() =
+        runTest {
+            val transaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = privateKey.sign(receiveBlock.hash),
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
+            val buffer = transaction.toBuffer()
+            buffer.write(byteArrayOf(0))
+
+            assertFailsWith<IllegalArgumentException> {
+                AttoTransaction.fromBuffer(buffer)
+            }
         }
 
     @Test

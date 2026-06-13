@@ -75,6 +75,12 @@ sealed interface AttoBlock :
     companion object {
         @JsExport.Ignore
         fun fromBuffer(serializedBlock: Buffer): AttoBlock? {
+            val block = readFromBuffer(serializedBlock) ?: return null
+            serializedBlock.requireNoRemainingBytes("AttoBlock")
+            return block
+        }
+
+        internal fun readFromBuffer(serializedBlock: Buffer): AttoBlock? {
             val type =
                 Buffer().let {
                     serializedBlock.copyTo(it, 0, 1)
