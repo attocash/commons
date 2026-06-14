@@ -134,7 +134,7 @@ class AttoSpringDocOpenApiAutoConfiguration {
                     .mapping(
                         mapOf(
                             "SEND" to "#/components/schemas/${AttoSendBlock::class.simpleName}",
-                            "RECEIVE" to "#/components/schemas/${AttoReceivable::class.simpleName}",
+                            "RECEIVE" to "#/components/schemas/${AttoReceiveBlock::class.simpleName}",
                             "OPEN" to "#/components/schemas/${AttoOpenBlock::class.simpleName}",
                             "CHANGE" to "#/components/schemas/${AttoChangeBlock::class.simpleName}",
                         ),

@@ -52,6 +52,7 @@ dependencies {
         exclude(group = "org.mockito")
     }
     testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+    testImplementation(libs.springdoc.openapi.webflux)
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
