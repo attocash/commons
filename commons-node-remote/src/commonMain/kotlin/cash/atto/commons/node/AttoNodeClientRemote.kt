@@ -243,13 +243,16 @@ private class AttoNodeClientRemote(
     override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse = get("instants/$currentTime")
 
     override suspend fun publish(transaction: AttoTransaction) {
-        fetchStream<AttoTransaction, AttoTransaction>(
-            "transactions/stream",
-            transaction,
-            requestTimeout = 1.minutes,
-            socketTimeout = 1.minutes,
-            connectTimeout = 10.seconds,
-        ).first()
+        val accepted =
+            fetchStream<AttoTransaction, AttoTransaction>(
+                "transactions/stream",
+                transaction,
+                requestTimeout = 1.minutes,
+                socketTimeout = 1.minutes,
+                connectTimeout = 10.seconds,
+            ).first()
+
+        requireMatchingPublish(transaction, accepted)
     }
 
     override suspend fun voterWeight(address: AttoAddress): AttoVoterWeight = get("vote-weights/${address.path}")

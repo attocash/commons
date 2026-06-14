@@ -82,6 +82,20 @@ interface AttoNodeOperations {
     suspend fun voterWeight(address: AttoAddress): AttoVoterWeight
 }
 
+fun requireMatchingPublish(
+    submitted: AttoTransaction,
+    accepted: AttoTransaction,
+) {
+    if (accepted.hash != submitted.hash) {
+        throw AttoNodePublishMismatchException(submitted.hash, accepted.hash)
+    }
+}
+
+class AttoNodePublishMismatchException(
+    expected: AttoHash,
+    actual: AttoHash,
+) : IllegalStateException("Node acknowledged transaction $actual instead of submitted transaction $expected")
+
 @OptIn(ExperimentalJsExport::class)
 @Serializable
 @JsExportForJs
