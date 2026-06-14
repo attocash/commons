@@ -23,7 +23,11 @@ actual class AttoNodeMock actual constructor(
             .withDatabaseName(configuration.dbName)
             .withUsername(configuration.dbUser)
             .withPassword(configuration.dbPassword)
-            .withImagePullPolicy(PullPolicy.alwaysPull())
+            .apply {
+                if (configuration.pullImages) {
+                    withImagePullPolicy(PullPolicy.alwaysPull())
+                }
+            }
 
     private val node =
         GenericContainer(configuration.image)
@@ -41,10 +45,16 @@ actual class AttoNodeMock actual constructor(
             .withEnv("ATTO_PRIVATE_KEY", configuration.privateKey.value.toHex())
             .withEnv("ATTO_NODE_FORCE_API", "true")
             .withEnv("ATTO_NODE_FORCE_HISTORICAL", "true")
-            .withImagePullPolicy(PullPolicy.alwaysPull())
             .waitingFor(Wait.forLogMessage(".*started on port 8080 \\(http\\).*\\n", 1))
-            .withLogConsumer { frame: OutputFrame ->
-                print(frame.utf8String)
+            .apply {
+                if (configuration.pullImages) {
+                    withImagePullPolicy(PullPolicy.alwaysPull())
+                }
+                if (configuration.logOutput) {
+                    withLogConsumer { frame: OutputFrame ->
+                        print(frame.utf8String)
+                    }
+                }
             }
 
     actual val baseUrl: String

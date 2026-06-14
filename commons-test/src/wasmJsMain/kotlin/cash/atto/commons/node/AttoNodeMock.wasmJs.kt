@@ -62,7 +62,9 @@ actual class AttoNodeMock actual constructor(
             privateKeyHex,
         )
         withNodeWaitStrategy(nodeInstance, wait)
-        withNodeLogConsumer(nodeInstance)
+        if (configuration.logOutput) {
+            withNodeLogConsumer(nodeInstance)
+        }
         nodeContainer = startNodeContainer(nodeInstance).await<JsAny>()
 
         started = true

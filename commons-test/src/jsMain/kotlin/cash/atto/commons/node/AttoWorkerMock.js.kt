@@ -28,11 +28,13 @@ actual class AttoWorkerMock internal actual constructor(
             js("new testcontainers.GenericContainer(image)")
                 .withExposedPorts(js("8080"), js("8081"))
                 .withWaitStrategy(wait.forLogMessage(js("/.*started on port 8080 \\(http\\).*/"), js("1")))
-                .withLogConsumer(
-                    js(
-                        "function(stream) { stream.on('data', function(line) { console.log(line.toString()); }); stream.on('err', function(line) { console.error(line.toString()); }); }",
-                    ),
-                )
+        if (configuration.logOutput) {
+            containerInstance.withLogConsumer(
+                js(
+                    "function(stream) { stream.on('data', function(line) { console.log(line.toString()); }); stream.on('err', function(line) { console.error(line.toString()); }); }",
+                ),
+            )
+        }
 
         val containerPromise = containerInstance.start().unsafeCast<Promise<dynamic>>()
         container = containerPromise.await()

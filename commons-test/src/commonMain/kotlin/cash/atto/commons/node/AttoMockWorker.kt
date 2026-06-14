@@ -15,6 +15,8 @@ expect class AttoWorkerMock internal constructor(
 data class AttoWorkerMockConfiguration(
     val name: String = "worker-server",
     val image: String = "ghcr.io/attocash/work-server:cpu",
+    val pullImage: Boolean = false,
+    val logOutput: Boolean = false,
 )
 
 fun AttoWorkerMock.Companion.create(configuration: AttoWorkerMockConfiguration = AttoWorkerMockConfiguration()): AttoWorkerMock =

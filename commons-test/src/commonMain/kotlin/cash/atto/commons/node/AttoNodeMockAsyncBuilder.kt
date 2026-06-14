@@ -20,5 +20,9 @@ expect class AttoNodeMockAsyncBuilder(
 
     fun dbPassword(value: String): AttoNodeMockAsyncBuilder
 
+    fun pullImages(value: Boolean): AttoNodeMockAsyncBuilder
+
+    fun logOutput(value: Boolean): AttoNodeMockAsyncBuilder
+
     fun genesis(value: AttoTransaction?): AttoNodeMockAsyncBuilder
 }

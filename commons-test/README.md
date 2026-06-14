@@ -111,13 +111,20 @@ const nodeMock = await new AttoNodeMockAsyncBuilder(genesisPrivateKey)
   .dbName('node')
   .dbUser('root')
   .dbPassword('root')
+  .pullImages(false)
+  .logOutput(false)
   .build()
 
 const workerMock = await new AttoWorkerMockAsyncBuilder()
   .name('atto-worker-test')
   .image('ghcr.io/attocash/work-server:cpu')
+  .pullImage(false)
+  .logOutput(false)
   .build()
 ```
+
+For release gates, prefer immutable image digests in `.image(...)` and `.mysqlImage(...)`.
+Container logs are disabled by default so generated test keys are not copied into CI logs; enable `.logOutput(true)` only while debugging.
 
 ## Lifecycle
 

@@ -9,4 +9,8 @@ expect class AttoWorkerMockAsyncBuilder() {
     fun name(value: String): AttoWorkerMockAsyncBuilder
 
     fun image(value: String): AttoWorkerMockAsyncBuilder
+
+    fun pullImage(value: Boolean): AttoWorkerMockAsyncBuilder
+
+    fun logOutput(value: Boolean): AttoWorkerMockAsyncBuilder
 }

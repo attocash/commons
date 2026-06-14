@@ -26,7 +26,9 @@ actual class AttoWorkerMock internal actual constructor(
         val containerInstance = createGenericContainer(testcontainersModule, image)
         withExposedPorts(containerInstance, 8080, 8081)
         withWaitStrategy(containerInstance, wait)
-        withLogConsumer(containerInstance)
+        if (configuration.logOutput) {
+            withLogConsumer(containerInstance)
+        }
 
         container = startContainer(containerInstance).await<JsAny>()
         started = true

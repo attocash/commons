@@ -14,10 +14,16 @@ actual class AttoWorkerMock actual constructor(
         GenericContainer(configuration.image)
             .withNetworkAliases(configuration.name)
             .withExposedPorts(8080, 8081)
-            .withImagePullPolicy(PullPolicy.alwaysPull())
             .waitingFor(Wait.forLogMessage(".*started on port 8080 \\(http\\).*\\n", 1))
-            .withLogConsumer { frame: OutputFrame ->
-                print(frame.utf8String)
+            .apply {
+                if (configuration.pullImage) {
+                    withImagePullPolicy(PullPolicy.alwaysPull())
+                }
+                if (configuration.logOutput) {
+                    withLogConsumer { frame: OutputFrame ->
+                        print(frame.utf8String)
+                    }
+                }
             }
 
     actual val baseUrl: String

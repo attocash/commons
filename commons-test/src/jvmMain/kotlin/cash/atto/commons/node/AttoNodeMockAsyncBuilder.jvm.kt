@@ -19,6 +19,8 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
     private var dbName: String? = null
     private var dbUser: String? = null
     private var dbPassword: String? = null
+    private var pullImages: Boolean? = null
+    private var logOutput: Boolean? = null
     private var genesis: AttoTransaction? = null
 
     actual fun name(value: String): AttoNodeMockAsyncBuilder = apply { name = value }
@@ -32,6 +34,10 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
     actual fun dbUser(value: String): AttoNodeMockAsyncBuilder = apply { dbUser = value }
 
     actual fun dbPassword(value: String): AttoNodeMockAsyncBuilder = apply { dbPassword = value }
+
+    actual fun pullImages(value: Boolean): AttoNodeMockAsyncBuilder = apply { pullImages = value }
+
+    actual fun logOutput(value: Boolean): AttoNodeMockAsyncBuilder = apply { logOutput = value }
 
     actual fun genesis(value: AttoTransaction?): AttoNodeMockAsyncBuilder = apply { genesis = value }
 
@@ -50,6 +56,8 @@ actual class AttoNodeMockAsyncBuilder actual constructor(
                 dbName = dbName ?: defaultConfiguration.dbName,
                 dbUser = dbUser ?: defaultConfiguration.dbUser,
                 dbPassword = dbPassword ?: defaultConfiguration.dbPassword,
+                pullImages = pullImages ?: defaultConfiguration.pullImages,
+                logOutput = logOutput ?: defaultConfiguration.logOutput,
             )
         val mock = AttoNodeMock(configuration)
         return AttoNodeMockAsync(mock, dispatcher)

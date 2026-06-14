@@ -75,11 +75,13 @@ actual class AttoNodeMock actual constructor(
                 .withExposedPorts(js("8080"), js("8081"), js("8082"))
                 .withEnvironment(env)
                 .withWaitStrategy(wait.forLogMessage(js("/.*started on port 8080 \\(http\\).*/"), js("1")))
-                .withLogConsumer(
-                    js(
-                        "function(stream) { stream.on('data', function(line) { console.log(line.toString()); }); stream.on('err', function(line) { console.error(line.toString()); }); }",
-                    ),
-                )
+        if (configuration.logOutput) {
+            nodeInstance.withLogConsumer(
+                js(
+                    "function(stream) { stream.on('data', function(line) { console.log(line.toString()); }); stream.on('err', function(line) { console.error(line.toString()); }); }",
+                ),
+            )
+        }
         val nodeContainerPromise = nodeInstance.start().unsafeCast<Promise<dynamic>>()
         nodeContainer = nodeContainerPromise.await()
 

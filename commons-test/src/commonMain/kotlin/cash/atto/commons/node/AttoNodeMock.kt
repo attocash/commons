@@ -35,6 +35,8 @@ data class AttoNodeMockConfiguration(
     val dbName: String = "node",
     val dbUser: String = "root",
     val dbPassword: String = "root",
+    val pullImages: Boolean = false,
+    val logOutput: Boolean = false,
 )
 
 fun AttoNodeMock.Companion.create(configuration: AttoNodeMockConfiguration): AttoNodeMock = AttoNodeMock(configuration)
@@ -44,7 +46,7 @@ suspend fun AttoTransaction.Companion.createGenesis(privateKey: AttoPrivateKey):
     val block = AttoOpenBlock.createGenesis(AttoNetwork.LOCAL, signer.address)
     return AttoTransaction(
         block,
-        signer.sign(block.hash),
+        signer.sign(block),
         AttoWorker.cpu().use { it.work(block) },
     )
 }
