@@ -7,6 +7,7 @@ import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
@@ -32,5 +33,6 @@ actual class AttoAccountEntryMonitorAsync actual constructor(
         )
 
     actual override fun close() {
+        scope.cancel()
     }
 }

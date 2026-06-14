@@ -97,6 +97,12 @@ kotlin {
                 implementation(libs.ktor.client.content.negotiation)
             }
         }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.test)
+            }
+        }
     }
 }
 

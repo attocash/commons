@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -66,7 +67,7 @@ abstract class AttoHeightMonitor<T> internal constructor(
             while (true) {
                 val search = searchFor(addresses)
                 try {
-                    emitAll(stream(search))
+                    emitAll(stream(search).filter { it.address in addresses })
                     return@flow
                 } catch (e: CancellationException) {
                     throw e

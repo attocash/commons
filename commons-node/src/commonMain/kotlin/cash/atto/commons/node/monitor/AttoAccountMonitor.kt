@@ -58,7 +58,14 @@ class AttoAccountMonitor internal constructor(
                 if (addresses.isEmpty()) {
                     return@flatMapLatest emptyFlow()
                 }
-                return@flatMapLatest client.accountStream(addresses).retryWhen { e, _ ->
+                val ownedAccounts =
+                    client
+                        .accountStream(addresses)
+                        .filter {
+                            it.address in addresses
+                        }
+
+                return@flatMapLatest ownedAccounts.retryWhen { e, _ ->
                     logger.warn(e) { "Failed to stream accounts. Retrying in $RETRY_DELAY..." }
                     delay(RETRY_DELAY)
                     true
