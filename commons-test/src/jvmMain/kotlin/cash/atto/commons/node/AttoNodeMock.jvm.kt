@@ -2,24 +2,22 @@ package cash.atto.commons.node
 
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.toHex
+import org.testcontainers.Testcontainers
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MySQLContainer
-import org.testcontainers.containers.Network
 import org.testcontainers.containers.output.OutputFrame
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.images.PullPolicy
+
+private const val MYSQL_PORT = 3306
 
 actual class AttoNodeMock actual constructor(
     private val configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
     actual companion object {}
 
-    private val network = Network.newNetwork()
-
     private val mysql =
         MySQLContainer(configuration.mysqlImage)
-            .withNetwork(network)
-            .withNetworkAliases("mysql")
             .withDatabaseName(configuration.dbName)
             .withUsername(configuration.dbUser)
             .withPassword(configuration.dbPassword)
@@ -31,12 +29,8 @@ actual class AttoNodeMock actual constructor(
 
     private val node =
         GenericContainer(configuration.image)
-            .withNetwork(network)
-            .withNetworkAliases(configuration.name)
             .withExposedPorts(8080, 8081, 8082)
             .withEnv("SPRING_PROFILES_ACTIVE", "local")
-            .withEnv("ATTO_DB_HOST", "mysql")
-            .withEnv("ATTO_DB_PORT", "3306")
             .withEnv("ATTO_DB_NAME", configuration.dbName)
             .withEnv("ATTO_DB_USER", configuration.dbUser)
             .withEnv("ATTO_DB_PASSWORD", configuration.dbPassword)
@@ -68,12 +62,16 @@ actual class AttoNodeMock actual constructor(
 
     actual suspend fun start() {
         mysql.start()
-        node.start()
+        val mysqlPort = mysql.getMappedPort(MYSQL_PORT)
+        Testcontainers.exposeHostPorts(mysqlPort)
+        node
+            .withEnv("ATTO_DB_HOST", GenericContainer.INTERNAL_HOST_HOSTNAME)
+            .withEnv("ATTO_DB_PORT", mysqlPort.toString())
+            .start()
     }
 
     actual override fun close() {
         node.close()
         mysql.close()
-        network.close()
     }
 }

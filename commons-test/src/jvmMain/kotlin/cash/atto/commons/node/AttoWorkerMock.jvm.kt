@@ -12,7 +12,6 @@ actual class AttoWorkerMock actual constructor(
 
     private val worker =
         GenericContainer(configuration.image)
-            .withNetworkAliases(configuration.name)
             .withExposedPorts(8080, 8081)
             .waitingFor(Wait.forLogMessage(".*started on port 8080 \\(http\\).*\\n", 1))
             .apply {
