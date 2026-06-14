@@ -5,11 +5,12 @@ import cash.atto.commons.toHex
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 
+private const val MYSQL_PORT = 3306
+
 @OptIn(ExperimentalWasmJsInterop::class)
 actual class AttoNodeMock actual constructor(
     private val configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
-    private var network: JsAny? = null
     private var mysqlContainer: JsAny? = null
     private var nodeContainer: JsAny? = null
     private var started = false
@@ -30,18 +31,14 @@ actual class AttoNodeMock actual constructor(
         val mysqlModule = importMySql().await<JsAny>()
         val wait = getWait(testcontainersModule)
 
-        // Create network
-        val networkInstance = createNetwork(testcontainersModule)
-        network = startNetwork(networkInstance).await<JsAny>()
-
         // Start MySQL container
         val mysqlImage = configuration.mysqlImage
         val mysqlInstance = createMySqlContainer(mysqlModule, mysqlImage)
-        withMySqlNetwork(mysqlInstance, network!!)
-        withMySqlNetworkAliases(mysqlInstance)
         withMySqlDatabase(mysqlInstance, configuration.dbName)
         withMySqlRootPassword(mysqlInstance, configuration.dbPassword)
         mysqlContainer = startMySqlContainer(mysqlInstance).await<JsAny>()
+        val mysqlPort = getMappedPort(mysqlContainer!!, MYSQL_PORT)
+        exposeHostPorts(testcontainersModule, mysqlPort).await<JsAny?>()
 
         // Start node container
         val genesisHex = configuration.genesisTransaction.toHex()
@@ -49,8 +46,6 @@ actual class AttoNodeMock actual constructor(
 
         val nodeImage = configuration.image
         val nodeInstance = createGenericContainer(testcontainersModule, nodeImage)
-        withNodeNetwork(nodeInstance, network!!)
-        withNodeNetworkAliases(nodeInstance, configuration.name)
         withNodeExposedPorts(nodeInstance)
         withNodeEnvironment(
             nodeInstance,
@@ -58,6 +53,7 @@ actual class AttoNodeMock actual constructor(
             configuration.dbUser,
             configuration.dbPassword,
             configuration.name,
+            mysqlPort,
             genesisHex,
             privateKeyHex,
         )
@@ -74,7 +70,6 @@ actual class AttoNodeMock actual constructor(
         if (started) {
             nodeContainer?.let { stopContainer(it) }
             mysqlContainer?.let { stopContainer(it) }
-            network?.let { stopNetwork(it) }
             started = false
         }
     }
@@ -92,30 +87,16 @@ private fun importMySql(): Promise<JsAny> = js("import('@testcontainers/mysql')"
 private fun getWait(testcontainers: JsAny): JsAny = js("testcontainers.Wait")
 
 @OptIn(ExperimentalWasmJsInterop::class)
-private fun createNetwork(testcontainers: JsAny): JsAny = js("new testcontainers.Network()")
-
-@OptIn(ExperimentalWasmJsInterop::class)
-private fun startNetwork(network: JsAny): Promise<JsAny> = js("network.start()")
-
-@OptIn(ExperimentalWasmJsInterop::class)
-private fun stopNetwork(network: JsAny) {
-    js("network.stop()")
-}
+private fun exposeHostPorts(
+    testcontainers: JsAny,
+    port: Int,
+): Promise<JsAny?> = js("testcontainers.TestContainers.exposeHostPorts(port)")
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun createMySqlContainer(
     mysqlModule: JsAny,
     image: String,
 ): JsAny = js("new mysqlModule.MySqlContainer(image)")
-
-@OptIn(ExperimentalWasmJsInterop::class)
-private fun withMySqlNetwork(
-    container: JsAny,
-    network: JsAny,
-): JsAny = js("container.withNetwork(network)")
-
-@OptIn(ExperimentalWasmJsInterop::class)
-private fun withMySqlNetworkAliases(container: JsAny): JsAny = js("container.withNetworkAliases('mysql')")
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun withMySqlDatabase(
@@ -139,18 +120,6 @@ private fun createGenericContainer(
 ): JsAny = js("new testcontainers.GenericContainer(image)")
 
 @OptIn(ExperimentalWasmJsInterop::class)
-private fun withNodeNetwork(
-    container: JsAny,
-    network: JsAny,
-): JsAny = js("container.withNetwork(network)")
-
-@OptIn(ExperimentalWasmJsInterop::class)
-private fun withNodeNetworkAliases(
-    container: JsAny,
-    name: String,
-): JsAny = js("container.withNetworkAliases(name)")
-
-@OptIn(ExperimentalWasmJsInterop::class)
 private fun withNodeExposedPorts(container: JsAny): JsAny = js("container.withExposedPorts(8080, 8081, 8082)")
 
 @OptIn(ExperimentalWasmJsInterop::class)
@@ -160,6 +129,7 @@ private fun withNodeEnvironment(
     dbUser: String,
     dbPassword: String,
     nodeName: String,
+    mysqlPort: Int,
     genesisHex: String,
     privateKeyHex: String,
 ): JsAny =
@@ -168,8 +138,8 @@ private fun withNodeEnvironment(
     (function() {
         var env = {};
         env['SPRING_PROFILES_ACTIVE'] = 'local';
-        env['ATTO_DB_HOST'] = 'mysql';
-        env['ATTO_DB_PORT'] = '3306';
+        env['ATTO_DB_HOST'] = 'host.testcontainers.internal';
+        env['ATTO_DB_PORT'] = String(mysqlPort);
         env['ATTO_DB_NAME'] = dbName;
         env['ATTO_DB_USER'] = dbUser;
         env['ATTO_DB_PASSWORD'] = dbPassword;
