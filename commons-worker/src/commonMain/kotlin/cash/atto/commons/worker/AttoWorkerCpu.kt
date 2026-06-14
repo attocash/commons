@@ -12,7 +12,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 fun AttoWorker.Companion.cpu(parallelism: UShort): AttoWorker = AttoWorkerCpu(parallelism)
 
@@ -28,8 +30,20 @@ internal class AttoWorkerCpu(
         threshold: ULong,
         target: AttoWorkTarget,
     ): AttoWork {
-        val controller = WorkerController(dispatcher + supervisorJob + Job(), parallelism, threshold, target.value)
-        return controller.calculate()
+        val workJob = Job(supervisorJob)
+        val callerCancellation =
+            coroutineContext[Job]?.invokeOnCompletion { cause ->
+                if (cause != null) {
+                    workJob.cancel()
+                }
+            }
+        try {
+            val controller = WorkerController(dispatcher + workJob, parallelism, threshold, target.value)
+            return controller.calculate()
+        } finally {
+            callerCancellation?.dispose()
+            workJob.cancel()
+        }
     }
 
     override fun close() {
@@ -68,14 +82,24 @@ private class WorkerController(
                 val end = start + rangeSize
                 val work = start.toByteArray()
                 var current = start
+                var iterationsUntilYield = 4_096
                 while (current != end && isActive) {
                     if (tryComplete(work)) return@launch
                     incrementByteArray(work)
                     current++
+                    iterationsUntilYield--
+                    if (iterationsUntilYield == 0) {
+                        iterationsUntilYield = 4_096
+                        yield()
+                    }
                 }
             }
         }
-        return result.await()
+        try {
+            return result.await()
+        } finally {
+            scope.cancel()
+        }
     }
 
     private fun incrementByteArray(byteArray: ByteArray) {
