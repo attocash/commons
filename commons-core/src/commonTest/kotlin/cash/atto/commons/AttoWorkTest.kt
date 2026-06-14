@@ -11,6 +11,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
@@ -98,5 +99,15 @@ internal class AttoWorkTest {
         val work = AttoWork("a7e077e02e3e759f".fromHexToByteArray())
         val timestamp = AttoNetwork.INITIAL_INSTANT.minus(1.seconds)
         assertFalse(AttoWork.isValid(AttoNetwork.LIVE, timestamp, AttoWorkTarget(hash.value), work.value))
+    }
+
+    @Test
+    fun `should reject unknown network threshold and validation`() {
+        val work = AttoWork("576887B000000000".fromHexToByteArray())
+
+        assertFailsWith<IllegalArgumentException> {
+            AttoWork.getThreshold(AttoNetwork.UNKNOWN, AttoNetwork.INITIAL_INSTANT)
+        }
+        assertFalse(AttoWork.isValid(AttoNetwork.UNKNOWN, AttoNetwork.INITIAL_INSTANT, AttoWorkTarget(hash.value), work.value))
     }
 }

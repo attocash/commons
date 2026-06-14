@@ -73,6 +73,10 @@ class AttoMnemonic {
 
     @JsName("fromEntropy")
     constructor(entropy: ByteArray) {
+        if (entropy.size != ENTROPY_SIZE) {
+            throw AttoMnemonicException("Entropy should have $ENTROPY_SIZE bytes")
+        }
+
         val words = ArrayList<String>(24)
 
         val copy = entropy.copyOf()
@@ -93,16 +97,18 @@ class AttoMnemonic {
     }
 
     companion object {
+        const val ENTROPY_SIZE = 33
+
         @OptIn(ExperimentalJsStatic::class)
         @JvmStatic
         @JsStatic
         fun generate(): AttoMnemonic {
-            val entropy = SecureRandom.randomByteArray(33U)
+            val entropy = SecureRandom.randomByteArray(ENTROPY_SIZE.toUInt())
             return AttoMnemonic(entropy)
         }
     }
 
-    fun toEntropy(): ByteArray = toEntropyWithChecksum(words).sliceArray(0 until 33)
+    fun toEntropy(): ByteArray = toEntropyWithChecksum(words).sliceArray(0 until ENTROPY_SIZE)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

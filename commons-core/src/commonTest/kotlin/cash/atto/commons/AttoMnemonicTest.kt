@@ -65,6 +65,14 @@ internal class AttoMnemonicTest {
     }
 
     @Test
+    fun `should reject invalid entropy sizes`() {
+        listOf(32, 34, 35).forEach { size ->
+            val exception = assertFails { AttoMnemonic(ByteArray(size)) }
+            assertTrue(exception is AttoMnemonicException)
+        }
+    }
+
+    @Test
     fun `should return dictionary`() {
         assertEquals(2048, AttoMnemonicDictionary.list.size)
     }

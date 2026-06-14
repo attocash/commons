@@ -20,6 +20,7 @@ import kotlin.test.assertTrue
 class AttoTransactionTest {
     val privateKey = AttoPrivateKey.generate()
     val publicKey = privateKey.toPublicKey()
+    val signer = privateKey.toSigner()
 
     val receiveBlock =
         AttoReceiveBlock(
@@ -42,7 +43,7 @@ class AttoTransactionTest {
             val transaction =
                 AttoTransaction(
                     block = receiveBlock,
-                    signature = privateKey.sign(receiveBlock.hash),
+                    signature = signer.sign(receiveBlock),
                     work = AttoWorker.cpu().work(receiveBlock),
                 )
 
@@ -53,10 +54,11 @@ class AttoTransactionTest {
     fun `should return error when block is invalid`() =
         runTest {
             // given
+            val block = receiveBlock.copy(version = UShort.MAX_VALUE.toAttoVersion())
             val transaction =
                 AttoTransaction(
-                    block = receiveBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()),
-                    signature = privateKey.sign(receiveBlock.hash),
+                    block = block,
+                    signature = signer.sign(block),
                     work = AttoWorker.cpu().work(receiveBlock),
                 )
 
@@ -80,7 +82,7 @@ class AttoTransactionTest {
             val transaction =
                 AttoTransaction(
                     block = receiveBlock,
-                    signature = privateKey.sign(receiveBlock.hash),
+                    signature = signer.sign(receiveBlock),
                     work = invalidWork,
                 )
 
@@ -113,7 +115,7 @@ class AttoTransactionTest {
             val expectedTransaction =
                 AttoTransaction(
                     block = receiveBlock,
-                    signature = privateKey.sign(receiveBlock.hash),
+                    signature = signer.sign(receiveBlock),
                     work = AttoWorker.cpu().work(receiveBlock),
                 )
 
@@ -131,7 +133,7 @@ class AttoTransactionTest {
             val transaction =
                 AttoTransaction(
                     block = receiveBlock,
-                    signature = privateKey.sign(receiveBlock.hash),
+                    signature = signer.sign(receiveBlock),
                     work = AttoWorker.cpu().work(receiveBlock),
                 )
             val buffer = transaction.toBuffer()
@@ -149,7 +151,7 @@ class AttoTransactionTest {
             val expectedTransaction =
                 AttoTransaction(
                     block = receiveBlock,
-                    signature = privateKey.sign(receiveBlock.hash),
+                    signature = signer.sign(receiveBlock),
                     work = AttoWorker.cpu().work(receiveBlock),
                 )
 
@@ -169,7 +171,7 @@ class AttoTransactionTest {
             val expectedTransaction =
                 AttoTransaction(
                     block = receiveBlock,
-                    signature = privateKey.sign(receiveBlock.hash),
+                    signature = signer.sign(receiveBlock),
                     work = AttoWorker.cpu().work(receiveBlock),
                 )
             val expectedWrapper = ProtobufWrapper(expectedTransaction)

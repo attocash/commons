@@ -58,6 +58,9 @@ fun AttoWork.Companion.isValid(
     target: AttoWorkTarget,
     work: ByteArray,
 ): Boolean {
+    if (network == AttoNetwork.UNKNOWN) {
+        return false
+    }
     if (timestamp < INITIAL_INSTANT) {
         return false
     }

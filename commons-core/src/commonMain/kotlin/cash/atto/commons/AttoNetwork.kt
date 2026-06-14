@@ -36,9 +36,12 @@ enum class AttoNetwork(
         @JsExport.Ignore
         val DOUBLING_PERIOD = 2.0
 
-        private val map = entries.associateBy { it.code }
+        @JsExport.Ignore
+        val validEntries = entries.filter { it != UNKNOWN }
+
+        private val map = validEntries.associateBy { it.code }
 
         @JsExport.Ignore
-        fun from(code: UByte): AttoNetwork = map[code] ?: UNKNOWN
+        fun from(code: UByte): AttoNetwork = map[code] ?: throw IllegalArgumentException("Unsupported network $code code")
     }
 }

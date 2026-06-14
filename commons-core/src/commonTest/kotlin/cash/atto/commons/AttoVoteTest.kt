@@ -9,6 +9,7 @@ import kotlin.test.assertFailsWith
 class AttoVoteTest {
     private val privateKey = AttoPrivateKey.generate()
     private val publicKey = privateKey.toPublicKey()
+    private val signer = privateKey.toSigner()
 
     private val vote =
         AttoVote(
@@ -23,7 +24,7 @@ class AttoVoteTest {
     @Test
     fun `should serialize and deserialize signed vote bytes`() =
         runTest {
-            val signedVote = AttoSignedVote(vote, privateKey.sign(vote.hash))
+            val signedVote = AttoSignedVote(vote, signer.sign(vote))
 
             assertEquals(signedVote, AttoSignedVote.fromBuffer(signedVote.toBuffer()))
         }
@@ -31,7 +32,7 @@ class AttoVoteTest {
     @Test
     fun `should reject trailing signed vote bytes`() =
         runTest {
-            val signedVote = AttoSignedVote(vote, privateKey.sign(vote.hash))
+            val signedVote = AttoSignedVote(vote, signer.sign(vote))
             val buffer = signedVote.toBuffer()
             buffer.write(byteArrayOf(0))
 

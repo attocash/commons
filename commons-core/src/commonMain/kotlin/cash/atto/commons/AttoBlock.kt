@@ -111,6 +111,10 @@ sealed interface AttoBlock :
     }
 
     fun validate(): AttoValidation {
+        if (network == AttoNetwork.UNKNOWN) {
+            return AttoValidation.Error("Invalid network: network=$network")
+        }
+
         if (version > maxVersion) {
             return AttoValidation.Error("Invalid version: version=$version > max=$maxVersion")
         }

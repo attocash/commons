@@ -152,6 +152,11 @@ class AttoBlockTest {
                 receiveBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock to "Invalid version: version=65535 > max=0",
                 changeBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock to "Invalid version: version=65535 > max=0",
                 openBlock.copy(version = UShort.MAX_VALUE.toAttoVersion()) as AttoBlock to "Invalid version: version=65535 > max=0",
+                // unknown network
+                sendBlock.copy(network = AttoNetwork.UNKNOWN) as AttoBlock to "Invalid network: network=UNKNOWN",
+                receiveBlock.copy(network = AttoNetwork.UNKNOWN) as AttoBlock to "Invalid network: network=UNKNOWN",
+                changeBlock.copy(network = AttoNetwork.UNKNOWN) as AttoBlock to "Invalid network: network=UNKNOWN",
+                openBlock.copy(network = AttoNetwork.UNKNOWN) as AttoBlock to "Invalid network: network=UNKNOWN",
                 // future timestamp
                 sendBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock to "Timestamp too far in the future",
                 receiveBlock.copy(timestamp = AttoInstant.now() + 1.days) as AttoBlock to "Timestamp too far in the future",

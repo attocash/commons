@@ -1,9 +1,11 @@
 package cash.atto.commons
 
 import kotlinx.io.Buffer
+import kotlinx.io.writeUByte
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 internal class AttoBufferExtensionsTest {
     @Test
@@ -63,5 +65,15 @@ internal class AttoBufferExtensionsTest {
         assertEquals(expectedSocketAddress, buffer.readAttoSocketAddress())
         assertEquals(expectedNetwork, buffer.readAttoNetwork())
         assertEquals(expectedAlgorithm, buffer.readAttoAlgorithm())
+    }
+
+    @Test
+    fun `should reject unknown network code`() {
+        val buffer = Buffer()
+        buffer.writeUByte(AttoNetwork.UNKNOWN.code)
+
+        assertFailsWith<IllegalArgumentException> {
+            buffer.readAttoNetwork()
+        }
     }
 }

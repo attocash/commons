@@ -23,7 +23,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
     val cache = mutableMapOf<AttoNetwork, Map<Int, ULong>>()
-    for (network in AttoNetwork.entries) {
+    for (network in AttoNetwork.validEntries) {
         val yearMap = mutableMapOf<Int, ULong>()
         for (year in INITIAL_DATE.year..(
             Clock
@@ -49,6 +49,7 @@ fun AttoWork.Companion.getThreshold(
     network: AttoNetwork,
     timestamp: AttoInstant,
 ): ULong {
+    require(network != AttoNetwork.UNKNOWN) { "Atto network can't be UNKNOWN." }
     if (timestamp < INITIAL_INSTANT) {
         throw IllegalArgumentException("Timestamp($timestamp) lower than initialInstant(${AttoNetwork.INITIAL_INSTANT})")
     }
