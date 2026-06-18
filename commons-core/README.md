@@ -37,6 +37,15 @@ val publicKey = privateKey.toPublicKey()
 val address = AttoAddress(AttoAlgorithm.V1, publicKey)
 ```
 
+### Sign and verify a message
+
+```kotlin
+val message = "atto message".encodeToByteArray()
+val signature = privateKey.signMessage(message)
+
+check(signature.isValidMessage(publicKey, message))
+```
+
 ### Build and validate a transaction
 
 ```kotlin

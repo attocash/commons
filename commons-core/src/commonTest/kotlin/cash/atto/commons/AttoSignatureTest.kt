@@ -68,6 +68,47 @@ internal class AttoSignatureTest {
         }
 
     @Test
+    fun `should sign message with atto domain separated hash`() =
+        runTest {
+            val message = "atto message".encodeToByteArray()
+            val signature = privateKey.toSigner().signMessage(message)
+            val signedMessageHash = attoSignedMessageHashForTest(publicKey, message)
+
+            assertTrue(signature.isValid(publicKey, signedMessageHash))
+            assertTrue(signature.isValidMessage(publicKey, message))
+            assertFalse(signature.isValid(publicKey, AttoHash(message)))
+        }
+
+    @Test
+    fun `should reject message signature with wrong framing inputs`() =
+        runTest {
+            val message = "atto message".encodeToByteArray()
+            val signature = privateKey.toSigner().signMessage(message)
+            val bigEndianLengthHash =
+                AttoHash.hash(
+                    64,
+                    signedMessageDomainForTest,
+                    publicKey.value,
+                    message.size.toULong().toBigEndianByteArrayForTest(),
+                    message,
+                )
+
+            assertFalse(signature.isValidMessage(publicKey, "other message".encodeToByteArray()))
+            assertFalse(signature.isValidMessage(AttoPrivateKey.generate().toPublicKey(), message))
+            assertFalse(signature.isValid(publicKey, bigEndianLengthHash))
+        }
+
+    @Test
+    fun `should sign equivalent message bytes the same way`() =
+        runTest {
+            val signer = privateKey.toSigner()
+            val utf8Signature = signer.signMessage("hello".encodeToByteArray())
+            val hexSignature = signer.signMessage("68656c6c6f".fromHexToByteArray())
+
+            assertEquals(utf8Signature, hexSignature)
+        }
+
+    @Test
     @Suppress("ktlint:standard:max-line-length")
     fun `should serialize json`() {
         // given
@@ -80,5 +121,26 @@ internal class AttoSignatureTest {
 
         // then
         assertEquals(expectedJson, json)
+    }
+
+    private fun attoSignedMessageHashForTest(
+        publicKey: AttoPublicKey,
+        message: ByteArray,
+    ): AttoHash =
+        AttoHash.hash(
+            64,
+            signedMessageDomainForTest,
+            publicKey.value,
+            message.size.toULong().toByteArray(),
+            message,
+        )
+
+    private fun ULong.toBigEndianByteArrayForTest(): ByteArray =
+        ByteArray(8) { index ->
+            ((this shr ((7 - index) * 8)) and 0xFFU).toByte()
+        }
+
+    private companion object {
+        val signedMessageDomainForTest = "ATTO Signed Message v1".encodeToByteArray()
     }
 }

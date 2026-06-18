@@ -52,6 +52,25 @@ fun AttoSignature.isValid(
     return isValid(publicKey, hash)
 }
 
+fun AttoSignature.isValidMessage(
+    publicKey: AttoPublicKey,
+    message: ByteArray,
+): Boolean = isValid(publicKey, attoSignedMessageHash(publicKey, message))
+
+private val ATTO_SIGNED_MESSAGE_DOMAIN = "ATTO Signed Message v1".encodeToByteArray()
+
+internal fun attoSignedMessageHash(
+    publicKey: AttoPublicKey,
+    message: ByteArray,
+): AttoHash =
+    AttoHash.hash(
+        64,
+        ATTO_SIGNED_MESSAGE_DOMAIN,
+        publicKey.value,
+        message.size.toULong().toByteArray(),
+        message,
+    )
+
 object AttoSignatureAsStringSerializer : KSerializer<AttoSignature> {
     override val descriptor = PrimitiveSerialDescriptor("AttoSignatureAsString", PrimitiveKind.STRING)
 
