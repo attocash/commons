@@ -5,24 +5,23 @@ on:
     branches:
       - main
 
-  pull_request:
-    branches:
-      - main
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   version:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     outputs:
-      has_release: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.semantic.outputs.new_release_version != '' }}
+      has_release: ${{ steps.semantic.outputs.new_release_version != '' }}
       version: ${{ steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0' }}
-      maven_snapshot_version: ${{ github.event_name == 'pull_request' && format('{0}-pr-{1}-sha{2}-SNAPSHOT', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.event.pull_request.number, github.sha) || format('{0}-SNAPSHOT', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0') }}
-      npm_snapshot_version: ${{ github.event_name == 'pull_request' && format('{0}-pr.{1}.sha{2}', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.event.pull_request.number, github.sha) || format('{0}-snapshot.sha{1}', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.sha) }}
+      maven_snapshot_version: ${{ format('{0}-SNAPSHOT', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0') }}
+      npm_snapshot_version: ${{ format('{0}-snapshot.sha{1}', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.sha) }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -34,13 +33,10 @@ jobs:
 
       - id: semantic
         name: Semantic Release Dry Run
-        if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]') }}
         uses: cycjimmy/semantic-release-action@v6
         with:
           semantic_version: 24.2.7
           dry_run: true
-          ci: ${{ github.event_name == 'pull_request' && 'false' || 'true' }}
-          unset_gha_env: ${{ github.event_name == 'pull_request' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -74,7 +70,6 @@ jobs:
     needs:
       - version
       - test
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]') }}
     permissions:
       contents: read
     steps:
@@ -106,7 +101,6 @@ jobs:
     needs:
       - version
       - test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -135,7 +129,7 @@ jobs:
       - test
       - npm-snapshot
       - maven-snapshot
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.version.outputs.has_release == 'true' }}
+    if: ${{ needs.version.outputs.has_release == 'true' }}
     permissions:
       contents: write
       issues: write

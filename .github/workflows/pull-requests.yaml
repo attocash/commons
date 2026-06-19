@@ -1,0 +1,39 @@
+name: Pull Requests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: opencl
+        run: |
+          sudo apt-get install -y ocl-icd-libopencl1 pocl-opencl-icd clinfo
+          clinfo
+
+      - uses: browser-actions/setup-chrome@v2
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: |
+          ./gradlew --info --no-daemon ktlintCheck allTests --stacktrace
