@@ -20,14 +20,21 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlin.random.Random
+import kotlin.time.Duration
 
 class MocktRemoteSigner(
     port: Int,
     private val statusByPath: Map<String, HttpStatusCode> = emptyMap(),
     private val invalidSignatures: Boolean = false,
+    private val voteDelay: Duration = Duration.ZERO,
 ) {
     val signer = AttoPrivateKey.generate().toSigner()
+    val voteRequestStarted = CompletableDeferred<Unit>()
+    var voteRequestCount = 0
+        private set
 
     val server =
         embeddedServer(CIO, port = port) {
@@ -67,10 +74,13 @@ class MocktRemoteSigner(
                 }
 
                 post("/votes") {
+                    voteRequestCount += 1
+                    voteRequestStarted.complete(Unit)
                     statusByPath["/votes"]?.let {
                         call.respond(it)
                         return@post
                     }
+                    delay(voteDelay)
                     val request = call.request.call.receive<VoteSignatureRequest>()
                     val signature =
                         if (invalidSignatures) {

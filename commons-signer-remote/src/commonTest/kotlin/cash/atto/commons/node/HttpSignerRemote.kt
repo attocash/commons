@@ -19,11 +19,16 @@ import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoVersion
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 expect fun randomPort(): Int
@@ -125,6 +130,32 @@ class SignerRemoteTest {
                 assertFailsWith<AttoRemoteSignerInvalidSignatureException> {
                     signer.sign(block)
                 }
+            } finally {
+                backend.stop()
+            }
+        }
+
+    @Test
+    fun `should not retry cancelled vote signing`(): Unit =
+        runBlocking {
+            val port = randomPort()
+            val backend = MocktRemoteSigner(port, voteDelay = 10.seconds)
+            backend.start()
+            try {
+                val signer =
+                    AttoSigner.remote(
+                        "http://localhost:$port",
+                        retryEvery = 100.milliseconds,
+                        headerProvider = { emptyMap() },
+                    )
+                val vote = AttoVote.sample(signer.publicKey)
+
+                val signing = async { signer.sign(vote) }
+                backend.voteRequestStarted.await()
+                signing.cancelAndJoin()
+                delay(250.milliseconds)
+
+                assertEquals(1, backend.voteRequestCount)
             } finally {
                 backend.stop()
             }

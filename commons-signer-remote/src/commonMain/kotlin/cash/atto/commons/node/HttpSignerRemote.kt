@@ -79,6 +79,8 @@ internal class HttpSignerRemote(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                e.cancellationCause()?.let { throw it }
+
                 val terminalStatus = e.terminalClientStatus()
                 if (terminalStatus != null) {
                     throw AttoRemoteSignerTerminalException(operation, terminalStatus, e)
@@ -94,6 +96,17 @@ internal class HttpSignerRemote(
             }
         }
         throw CancellationException("$operation cancelled.")
+    }
+
+    private fun Throwable.cancellationCause(): CancellationException? {
+        var cause = cause
+        while (cause != null) {
+            if (cause is CancellationException) {
+                return cause
+            }
+            cause = cause.cause
+        }
+        return null
     }
 
     private fun Exception.terminalClientStatus(): HttpStatusCode? {
