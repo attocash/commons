@@ -74,11 +74,11 @@ check(tx.isValid())
 ### Serialize/deserialize
 
 ```kotlin
-val buf = tx.toBuffer()
-val txFromBuf = AttoTransaction.fromBuffer(buf)
+val bytes = tx.toByteArray()
+val txFromBytes = AttoTransaction.fromByteArray(bytes)
 
-val json = Json.encodeToString(tx)
-val txFromJson = Json.decodeFromString<AttoTransaction>(json)
+val json = tx.toJson()
+val txFromJson = AttoTransaction.fromJson(json)
 ```
 
 ### CPU proof‑of‑work

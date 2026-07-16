@@ -2,6 +2,7 @@ package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
@@ -34,6 +35,9 @@ internal expect suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     keyLength: Int,
 ): ByteArray
 
+@OptIn(ExperimentalJsExport::class)
+@JsExportForJs
+@JsName("toSeedAsync")
 @JvmSynthetic
 suspend fun AttoMnemonic.toSeed(passphrase: String = ""): AttoSeed {
     val mnemonic = words.joinToString(" ")

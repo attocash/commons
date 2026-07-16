@@ -7,7 +7,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import kotlinx.serialization.protobuf.ProtoNumber
 import kotlin.random.Random
@@ -128,6 +127,25 @@ class AttoTransactionTest {
         }
 
     @Test
+    fun `should serialize and deserialize byte array`() =
+        runTest {
+            // given
+            val expectedTransaction =
+                AttoTransaction(
+                    block = receiveBlock,
+                    signature = signer.sign(receiveBlock),
+                    work = AttoWorker.cpu().work(receiveBlock),
+                )
+
+            // when
+            val bytes = expectedTransaction.toByteArray()
+            val transaction = AttoTransaction.fromByteArray(bytes)
+
+            // then
+            assertEquals(expectedTransaction, transaction)
+        }
+
+    @Test
     fun `should reject trailing bytes`() =
         runTest {
             val transaction =
@@ -145,7 +163,7 @@ class AttoTransactionTest {
         }
 
     @Test
-    fun `should serialize json`() =
+    fun `should serialize and deserialize json`() =
         runTest {
             // given
             val expectedTransaction =
@@ -156,8 +174,8 @@ class AttoTransactionTest {
                 )
 
             // when
-            val json = Json.encodeToString(expectedTransaction)
-            val transaction = Json.decodeFromString<AttoTransaction>(json)
+            val json = expectedTransaction.toJson()
+            val transaction = AttoTransaction.fromJson(json)
 
             // then
             assertEquals(expectedTransaction, transaction)

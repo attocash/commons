@@ -31,13 +31,19 @@ external interface SubtleCrypto {
 fun getSubtleCryptoInstance(): SubtleCrypto {
     js(
         """
-            var isNodeJs = typeof process !== 'undefined' && process.versions != null && process.versions.node != null
-            if (isNodeJs) {
-                return (eval('require')('node:crypto').webcrypto).subtle;
-            } else {
-                return (window ? (window.crypto ? window.crypto : window.msCrypto) : self.crypto).subtle;
+            if (typeof crypto !== "undefined" && crypto.subtle) {
+                return crypto.subtle;
             }
-            """,
+
+            if (typeof require === "function") {
+                var nodeCrypto = require("node:crypto").webcrypto;
+                if (nodeCrypto && nodeCrypto.subtle) {
+                    return nodeCrypto.subtle;
+                }
+            }
+
+            throw new Error("WebCrypto SubtleCrypto API not available");
+        """,
     )
 }
 

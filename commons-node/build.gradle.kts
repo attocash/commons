@@ -90,17 +90,22 @@ kotlin {
                 api(libs.kotlinx.coroutines.core)
 
                 implementation(libs.kotlin.logging)
-
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.serialization)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.ktor.client.content.negotiation)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
+            }
+        }
+        val jvmMain by getting {
+            dependencies {
+                implementation(libs.slf4j.api)
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                runtimeOnly(libs.slf4j.simple)
             }
         }
     }

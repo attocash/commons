@@ -1,16 +1,19 @@
-@file:OptIn(ExperimentalSerializationApi::class, ExperimentalJsExport::class)
+@file:OptIn(ExperimentalSerializationApi::class, ExperimentalJsExport::class, ExperimentalJsStatic::class)
 
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
+import kotlin.js.JsStatic
 import kotlin.time.Duration.Companion.minutes
 
 val maxVersion = AttoVersion(0U)
@@ -73,6 +76,12 @@ sealed interface AttoBlock :
     override fun toBuffer(): Buffer
 
     companion object {
+        @JsStatic
+        fun fromJson(value: String): AttoBlock = attoJson.decodeFromString<AttoBlock>(value)
+
+        @JsStatic
+        fun fromByteArray(value: ByteArray): AttoBlock = fromBuffer(value.toBuffer()) ?: throw IllegalArgumentException("Invalid block")
+
         @JsExport.Ignore
         fun fromBuffer(serializedBlock: Buffer): AttoBlock? {
             val block = readFromBuffer(serializedBlock) ?: return null
@@ -171,6 +180,10 @@ sealed interface AttoBlock :
     }
 
     fun isValid(): Boolean = validate().isValid
+
+    fun toJson(): String = attoJson.encodeToString(this)
+
+    override fun toByteArray(): ByteArray = toBuffer().readByteArray()
 }
 
 @JsExportForJs

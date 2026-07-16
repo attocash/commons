@@ -1,6 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,11 +22,11 @@ class AttoReceivableTest {
             )
 
         // when
-        val json = Json.encodeToString(expectedReceivable)
-        val account = Json.decodeFromString<AttoReceivable>(json)
+        val json = expectedReceivable.toJson()
+        val receivable = AttoReceivable.fromJson(json)
 
         // then
-        assertEquals(expectedReceivable, account)
+        assertEquals(expectedReceivable, receivable)
     }
 
     @Test
@@ -49,8 +48,8 @@ class AttoReceivableTest {
             """
 
         // when
-        val receivable = Json.decodeFromString<AttoReceivable>(expectedJson)
-        val json = Json.encodeToString(receivable)
+        val receivable = AttoReceivable.fromJson(expectedJson)
+        val json = receivable.toJson()
 
         // then
         assertEquals(expectedJson.compactJson(), json)

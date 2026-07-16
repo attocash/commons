@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalJsExport::class)
+@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class)
 
 package cash.atto.commons
 
@@ -13,7 +13,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
+import kotlin.js.JsStatic
 
 @JsExportForJs
 @Serializable
@@ -34,6 +36,13 @@ data class AttoTransaction(
 
     companion object {
         const val SIZE = 72
+
+        @JsStatic
+        fun fromJson(value: String): AttoTransaction = attoJson.decodeFromString<AttoTransaction>(value)
+
+        @JsStatic
+        fun fromByteArray(value: ByteArray): AttoTransaction =
+            fromBuffer(value.toBuffer()) ?: throw IllegalArgumentException("Invalid transaction")
 
         @JsExport.Ignore
         fun fromBuffer(buffer: Buffer): AttoTransaction? {
@@ -104,6 +113,10 @@ data class AttoTransaction(
             this.writeAttoWork(work)
         }
     }
+
+    fun toJson(): String = attoJson.encodeToString(this)
+
+    override fun toByteArray(): ByteArray = toBuffer().readByteArray()
 
     override fun toString(): String = "AttoTransaction(hash=$hash, block=$block, signature=$signature, work=$work, hash=$hash)"
 }

@@ -1,9 +1,5 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package cash.atto.commons
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,8 +30,8 @@ class AttoBlockTest {
     fun `should serialize and deserialize json`() {
         validBlocks.forEach { expectedBlock ->
             // when
-            val json = Json.encodeToString(AttoBlock.serializer(), expectedBlock)
-            val block = Json.decodeFromString<AttoBlock>(json)
+            val json = expectedBlock.toJson()
+            val block = AttoBlock.fromJson(json)
 
             // then
             assertEquals(expectedBlock, block)
@@ -46,8 +42,8 @@ class AttoBlockTest {
     fun `should deserialize json`() {
         validJsonBlocks.forEach { expectedJson ->
             // when
-            val block = Json.decodeFromString<AttoBlock>(expectedJson)
-            val json = Json.encodeToString(AttoBlock.serializer(), block)
+            val block = AttoBlock.fromJson(expectedJson)
+            val json = block.toJson()
 
             // then
             assertEquals(expectedJson.compactJson(), json)
@@ -60,6 +56,18 @@ class AttoBlockTest {
             // when
             val bytes = expectedBlock.toBuffer()
             val block = AttoBlock.fromBuffer(bytes)
+
+            // then
+            assertEquals(expectedBlock, block)
+        }
+    }
+
+    @Test
+    fun `should serialize and deserialize byte arrays`() {
+        validBlocks.forEach { expectedBlock ->
+            // when
+            val bytes = expectedBlock.toByteArray()
+            val block = AttoBlock.fromByteArray(bytes)
 
             // then
             assertEquals(expectedBlock, block)

@@ -46,19 +46,17 @@ actual class AttoNodeClientAsync
             crossinline onEach: suspend (T) -> Unit,
             noinline onCancel: (Exception?) -> Unit,
         ): AttoJob =
-            AttoJob(
-                launch {
-                    try {
-                        stream.collect { onEach(it) }
-                        onCancel(null)
-                    } catch (e: CancellationException) {
-                        onCancel(null)
-                        throw e
-                    } catch (e: Exception) {
-                        onCancel(e)
-                    }
-                },
-            )
+            launch {
+                try {
+                    stream.collect { onEach(it) }
+                    onCancel(null)
+                } catch (e: CancellationException) {
+                    onCancel(null)
+                    throw e
+                } catch (e: Exception) {
+                    onCancel(e)
+                }
+            }.toAttoJob()
 
         @JsName("onAccountAll")
         fun onAccount(

@@ -8,90 +8,104 @@ import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoJob
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
-import cash.atto.commons.toBuffer
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsName
 
-private val json =
-    Json {
-        ignoreUnknownKeys = true
-    }
+private const val CORE_JSON_DEPRECATION = "Moved to commons-core; will be removed in 8.0.0"
 
 @JsExportForJs
 @JsName("accountToJson")
-fun AttoAccount.toJson(): String = json.encodeToString(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("this.toJson()"))
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoAccount.toJson(): String = this.toJson()
 
 @JsExportForJs
 @JsName("accountFromJson")
-fun String.toAccount(): AttoAccount = json.decodeFromString<AttoAccount>(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("AttoAccount.fromJson(this)", "cash.atto.commons.AttoAccount"))
+fun String.toAccount(): AttoAccount = AttoAccount.fromJson(this)
 
 @JsExportForJs
 @JsName("receivableToJson")
-fun AttoReceivable.toJson(): String = json.encodeToString(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("this.toJson()"))
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoReceivable.toJson(): String = this.toJson()
 
 @JsExportForJs
 @JsName("receivableFromJson")
-fun String.toReceivable(): AttoReceivable = json.decodeFromString<AttoReceivable>(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("AttoReceivable.fromJson(this)", "cash.atto.commons.AttoReceivable"))
+fun String.toReceivable(): AttoReceivable = AttoReceivable.fromJson(this)
 
 @JsExportForJs
 @JsName("transactionToJson")
-fun AttoTransaction.toJson(): String = json.encodeToString(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("this.toJson()"))
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoTransaction.toJson(): String = this.toJson()
 
 @JsExportForJs
 @JsName("transactionFromJson")
-fun String.toTransaction(): AttoTransaction = json.decodeFromString<AttoTransaction>(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("AttoTransaction.fromJson(this)", "cash.atto.commons.AttoTransaction"))
+fun String.toTransaction(): AttoTransaction = AttoTransaction.fromJson(this)
 
 @JsExportForJs
 @JsName("blockToJson")
-fun AttoBlock.toJson(): String = json.encodeToString(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("this.toJson()"))
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoBlock.toJson(): String = this.toJson()
 
 @JsExportForJs
 @JsName("blockFromJson")
-fun String.toBlock(): AttoBlock = json.decodeFromString<AttoBlock>(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("AttoBlock.fromJson(this)", "cash.atto.commons.AttoBlock"))
+fun String.toBlock(): AttoBlock = AttoBlock.fromJson(this)
 
 @JsExportForJs
 @JsName("accountEntryToJson")
-fun AttoAccountEntry.toJson(): String = json.encodeToString(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("this.toJson()"))
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoAccountEntry.toJson(): String = this.toJson()
 
 @JsExportForJs
 @JsName("accountEntryFromJson")
-fun String.toAccountEntry(): AttoAccountEntry = json.decodeFromString<AttoAccountEntry>(this)
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("AttoAccountEntry.fromJson(this)", "cash.atto.commons.AttoAccountEntry"))
+fun String.toAccountEntry(): AttoAccountEntry = AttoAccountEntry.fromJson(this)
 
 @JsExportForJs
 @JsName("fromByteArrayToTransactionJson")
-fun ByteArray.toTransactionJson(): String {
-    val transaction = AttoTransaction.fromBuffer(this.toBuffer()) ?: throw IllegalArgumentException("Invalid transaction")
-    return json.encodeToString<AttoTransaction>(transaction)
-}
+@Deprecated(
+    CORE_JSON_DEPRECATION,
+    ReplaceWith("AttoTransaction.fromByteArray(this).toJson()", "cash.atto.commons.AttoTransaction"),
+)
+fun ByteArray.toTransactionJson(): String = AttoTransaction.fromByteArray(this).toJson()
 
 @JsExportForJs
 @JsName("fromByteArrayToBlockJson")
-fun ByteArray.toBlockJson(): String {
-    val block = AttoBlock.fromBuffer(this.toBuffer()) ?: throw IllegalArgumentException("Invalid block")
-    return json.encodeToString<AttoBlock>(block)
-}
+@Deprecated(CORE_JSON_DEPRECATION, ReplaceWith("AttoBlock.fromByteArray(this).toJson()", "cash.atto.commons.AttoBlock"))
+fun ByteArray.toBlockJson(): String = AttoBlock.fromByteArray(this).toJson()
 
 internal inline fun <T> CoroutineScope.consumeStream(
     stream: Flow<T>,
     crossinline onEach: suspend (T) -> Unit,
     noinline onCancel: suspend (Exception?) -> Unit,
 ): AttoJob =
-    AttoJob(
-        launch {
-            try {
-                stream.collect { onEach(it) }
-                onCancel(null)
-            } catch (e: CancellationException) {
-                onCancel(null)
-                throw e
-            } catch (e: Exception) {
-                onCancel(e)
-            }
-        },
+    launch {
+        try {
+            stream.collect { onEach(it) }
+            onCancel(null)
+        } catch (e: CancellationException) {
+            onCancel(null)
+            throw e
+        } catch (e: Exception) {
+            onCancel(e)
+        }
+    }.toAttoJob()
+
+internal fun Job.toAttoJob(): AttoJob =
+    AttoJob.create(
+        activeProvider = { isActive },
+        cancellation = { cancel() },
     )

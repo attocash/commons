@@ -1,6 +1,5 @@
 package cash.atto.commons
 
-import kotlinx.serialization.json.Json
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -9,7 +8,7 @@ class AttoAccountEntryTest {
     @Test
     fun `should serialize json`() {
         // given
-        val expectedReceivable =
+        val expectedAccountEntry =
             AttoAccountEntry(
                 hash = AttoHash(Random.Default.nextBytes(32)),
                 algorithm = AttoAlgorithm.V1,
@@ -24,11 +23,11 @@ class AttoAccountEntryTest {
             )
 
         // when
-        val json = Json.encodeToString(expectedReceivable)
-        val account = Json.decodeFromString<AttoAccountEntry>(json)
+        val json = expectedAccountEntry.toJson()
+        val accountEntry = AttoAccountEntry.fromJson(json)
 
         // then
-        assertEquals(expectedReceivable, account)
+        assertEquals(expectedAccountEntry, accountEntry)
     }
 
     @Test
@@ -51,8 +50,8 @@ class AttoAccountEntryTest {
             """
 
         // when
-        val receivable = Json.decodeFromString<AttoAccountEntry>(expectedJson)
-        val json = Json.encodeToString(receivable)
+        val accountEntry = AttoAccountEntry.fromJson(expectedJson)
+        val json = accountEntry.toJson()
 
         // then
         assertEquals(expectedJson.compactJson(), json)

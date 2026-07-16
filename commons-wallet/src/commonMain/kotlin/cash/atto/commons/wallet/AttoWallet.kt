@@ -491,5 +491,8 @@ fun AttoWallet.startAutoReceiver(
 ): AttoJob {
     val scope = CoroutineScope(dispatcher)
     val job = startAutoReceiver(scope, monitor, minAmount, retryAfter, defaultRepresentativeAddressProvider)
-    return AttoJob(job)
+    return AttoJob.create(
+        activeProvider = { job.isActive },
+        cancellation = { job.cancel() },
+    )
 }

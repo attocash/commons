@@ -1,12 +1,15 @@
+@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class)
+
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.Serializable
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
+import kotlin.js.JsStatic
 
 @Serializable
-@OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 data class AttoAccount(
     val publicKey: AttoPublicKey,
@@ -25,6 +28,9 @@ data class AttoAccount(
     val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
 
     companion object {
+        @JsStatic
+        fun fromJson(value: String): AttoAccount = attoJson.decodeFromString<AttoAccount>(value)
+
         @JsExport.Ignore
         fun open(
             representativeAlgorithm: AttoAlgorithm,
@@ -162,4 +168,6 @@ data class AttoAccount(
             )
         return Pair(block, updatedAccount)
     }
+
+    fun toJson(): String = attoJson.encodeToString(this)
 }

@@ -104,10 +104,10 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(libs.kotlinx.coroutines.core)
                 api(libs.kotlinx.datetime)
                 api(libs.kotlinx.io.core)
                 api(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
         val commonTest by getting {
@@ -122,6 +122,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(libs.bouncycastle)
+                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.swagger.annotations)
             }
         }
