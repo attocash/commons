@@ -3,6 +3,7 @@ plugins {
 }
 rootProject.name = "commons"
 include("commons-core")
+include("commons-transport")
 include("commons-node")
 include("commons-node-remote")
 include("commons-test")

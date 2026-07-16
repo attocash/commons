@@ -87,13 +87,6 @@ kotlin {
                 api(libs.kotlinx.coroutines.test)
 
                 implementation(libs.kotlin.logging)
-
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.serialization)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.ktor.client.content.negotiation)
-
-                implementation(libs.ktor.server.content.negotiation)
             }
         }
 

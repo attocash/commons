@@ -11,137 +11,69 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVoterWeight
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.timeout
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.get
-import io.ktor.client.request.headers
-import io.ktor.client.request.post
-import io.ktor.client.request.prepareGet
-import io.ktor.client.request.preparePost
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.readLineStrict
+import cash.atto.commons.transport.AttoHttpTimeouts
+import cash.atto.commons.transport.AttoHttpTransport
+import cash.atto.commons.transport.httpStatusCodeOrNull
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.serialization.json.Json
 import kotlin.jvm.JvmSynthetic
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-private val json =
-    Json {
-        ignoreUnknownKeys = true
-    }
-
-private val httpClient =
-    HttpClient {
-        install(ContentNegotiation) {
-            json(json)
-        }
-        install(HttpTimeout)
-
-        expectSuccess = true
-    }
-
 private val STREAM_SOCKET_IDLE_TIMEOUT: Duration = 1.hours
-private const val NDJSON_MAX_LINE_CHARS: Long = 2_000L
-
-private fun Duration.toTimeoutMillis(): Long = if (this == Duration.INFINITE) Long.MAX_VALUE else this.inWholeMilliseconds
+private const val HTTP_NOT_FOUND = 404
 
 private class AttoNodeClientRemote(
-    private val baseUrl: String,
-    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
+    baseUrl: String,
+    headerProvider: suspend () -> Map<String, String> = { emptyMap() },
 ) : AttoNodeClient {
-    private fun HttpRequestBuilder.configure(
-        headersMap: Map<String, String>,
-        accept: String = "application/json",
-        requestTimeout: Duration = 10.seconds,
-        socketTimeout: Duration = requestTimeout,
-        connectTimeout: Duration = requestTimeout,
-    ) {
-        contentType(ContentType.Application.Json)
-        headers {
-            headersMap.forEach { (key, value) -> append(key, value) }
-            append("Accept", accept)
-        }
-        timeout {
-            connectTimeoutMillis = connectTimeout.toTimeoutMillis()
-            requestTimeoutMillis = requestTimeout.toTimeoutMillis()
-            socketTimeoutMillis = socketTimeout.toTimeoutMillis()
-        }
-    }
+    private val transport = AttoHttpTransport(baseUrl, headerProvider)
 
     private suspend inline fun <reified T> get(
         urlPath: String,
         timeout: Duration = 10.seconds,
-    ): T {
-        val headers = headerProvider.invoke()
-
-        return httpClient
-            .get("$baseUrl/$urlPath") {
-                configure(
-                    headers,
-                    requestTimeout = timeout,
-                    socketTimeout = timeout,
-                    connectTimeout = timeout,
-                )
-            }.body()
-    }
+    ): T =
+        transport.get(
+            urlPath,
+            AttoHttpTimeouts(
+                request = timeout,
+                socket = timeout,
+                connect = timeout,
+            ),
+        )
 
     private suspend inline fun <reified T, reified B : Any> post(
         urlPath: String,
         body: B,
         timeout: Duration = 10.seconds,
-    ): T {
-        val headers = headerProvider.invoke()
-
-        return httpClient
-            .post("$baseUrl/$urlPath") {
-                configure(
-                    headers,
-                    requestTimeout = timeout,
-                    socketTimeout = timeout,
-                    connectTimeout = timeout,
-                )
-                setBody(body)
-            }.body()
-    }
+    ): T =
+        transport.post(
+            urlPath,
+            body,
+            AttoHttpTimeouts(
+                request = timeout,
+                socket = timeout,
+                connect = timeout,
+            ),
+        )
 
     private inline fun <reified T> fetchStream(urlPath: String): Flow<T> =
-        channelFlow {
-            val headers = headerProvider.invoke()
-
-            httpClient
-                .prepareGet("$baseUrl/$urlPath") {
-                    configure(
-                        headers,
-                        accept = "application/x-ndjson",
-                        requestTimeout = Duration.INFINITE,
-                        socketTimeout = STREAM_SOCKET_IDLE_TIMEOUT,
-                        connectTimeout = 10.seconds,
-                    )
-                }.execute { response ->
-                    response.body<ByteReadChannel>().readStream<T> { send(it) }
-                }
-        }
+        transport.getNdjson(
+            urlPath,
+            AttoHttpTimeouts(
+                request = Duration.INFINITE,
+                socket = STREAM_SOCKET_IDLE_TIMEOUT,
+                connect = 10.seconds,
+            ),
+        )
 
     override suspend fun account(publicKey: AttoPublicKey): AttoAccount? =
         try {
             get<AttoAccount>("accounts/$publicKey", timeout = 1.seconds)
-        } catch (e: ClientRequestException) {
-            if (e.response.status == HttpStatusCode.NotFound) {
+        } catch (e: Exception) {
+            if (e.httpStatusCodeOrNull() == HTTP_NOT_FOUND) {
                 null
             } else {
                 throw e
@@ -158,23 +90,15 @@ private class AttoNodeClientRemote(
         socketTimeout: Duration = STREAM_SOCKET_IDLE_TIMEOUT,
         connectTimeout: Duration = 10.seconds,
     ): Flow<T> =
-        channelFlow {
-            val headers = headerProvider.invoke()
-
-            httpClient
-                .preparePost("$baseUrl/$urlPath") {
-                    configure(
-                        headers,
-                        accept = "application/x-ndjson",
-                        requestTimeout = requestTimeout,
-                        socketTimeout = socketTimeout,
-                        connectTimeout = connectTimeout,
-                    )
-                    setBody(body)
-                }.execute { response ->
-                    response.body<ByteReadChannel>().readStream<T> { send(it) }
-                }
-        }
+        transport.postNdjson(
+            urlPath,
+            body,
+            AttoHttpTimeouts(
+                request = requestTimeout,
+                socket = socketTimeout,
+                connect = connectTimeout,
+            ),
+        )
 
     override fun accountStream(): Flow<AttoAccount> = fetchStream("accounts/stream")
 
@@ -256,16 +180,6 @@ private class AttoNodeClientRemote(
     }
 
     override suspend fun voterWeight(address: AttoAddress): AttoVoterWeight = get("vote-weights/${address.path}")
-}
-
-private suspend inline fun <reified T> ByteReadChannel.readStream(crossinline emit: suspend (T) -> Unit) {
-    while (!isClosedForRead) {
-        val value = readLineStrict(NDJSON_MAX_LINE_CHARS)
-        if (value != null) {
-            val item = json.decodeFromString<T>(value)
-            emit(item)
-        }
-    }
 }
 
 @JvmSynthetic

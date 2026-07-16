@@ -5,12 +5,10 @@ import cash.atto.commons.toHex
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 
-private const val MYSQL_PORT = 3306
-private const val TESTCONTAINERS_INTERNAL_HOST = "host.testcontainers.internal"
-
 actual class AttoNodeMock actual constructor(
     private val configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
+    private var network: dynamic = null
     private var mysqlContainer: dynamic = null
     private var nodeContainer: dynamic = null
     private var started = false
@@ -27,6 +25,8 @@ actual class AttoNodeMock actual constructor(
         get() = configuration.genesisTransaction
 
     actual suspend fun start() {
+        configureTestcontainersRuntime()
+
         val testcontainersPromise: dynamic = js("import('testcontainers')")
         val testcontainers = testcontainersPromise.unsafeCast<Promise<dynamic>>().await()
 
@@ -35,17 +35,20 @@ actual class AttoNodeMock actual constructor(
 
         val wait = testcontainers.Wait
 
+        val networkInstance = js("new testcontainers.Network()")
+        val networkPromise = networkInstance.start().unsafeCast<Promise<dynamic>>()
+        network = networkPromise.await()
+
         // Start MySQL container
         val mysqlImage = configuration.mysqlImage
         val mysqlInstance =
             js("new mysqlModule.MySqlContainer(mysqlImage)")
+                .withNetwork(network)
+                .withNetworkAliases(js("'mysql'"))
                 .withDatabase(configuration.dbName)
                 .withRootPassword(configuration.dbPassword)
         val mysqlContainerPromise = mysqlInstance.start().unsafeCast<Promise<dynamic>>()
         mysqlContainer = mysqlContainerPromise.await()
-        val mysqlPort = mysqlContainer.getMappedPort(MYSQL_PORT) as Int
-        val exposeHostPortsPromise: dynamic = testcontainers.TestContainers.exposeHostPorts(mysqlPort)
-        exposeHostPortsPromise.unsafeCast<Promise<dynamic>>().await()
 
         // Start node container
         val genesisHex = configuration.genesisTransaction.toHex()
@@ -54,8 +57,8 @@ actual class AttoNodeMock actual constructor(
         // Build environment object dynamically
         val env = js("({})")
         env["SPRING_PROFILES_ACTIVE"] = "local"
-        env["ATTO_DB_HOST"] = TESTCONTAINERS_INTERNAL_HOST
-        env["ATTO_DB_PORT"] = mysqlPort.toString()
+        env["ATTO_DB_HOST"] = "mysql"
+        env["ATTO_DB_PORT"] = "3306"
         env["ATTO_DB_NAME"] = configuration.dbName
         env["ATTO_DB_USER"] = configuration.dbUser
         env["ATTO_DB_PASSWORD"] = configuration.dbPassword
@@ -68,6 +71,8 @@ actual class AttoNodeMock actual constructor(
         val nodeImage = configuration.image
         val nodeInstance =
             js("new testcontainers.GenericContainer(nodeImage)")
+                .withNetwork(network)
+                .withNetworkAliases(configuration.name)
                 .withExposedPorts(js("8080"), js("8081"), js("8082"))
                 .withEnvironment(env)
                 .withWaitStrategy(wait.forLogMessage(js("/.*started on port 8080 \\(http\\).*/"), js("1")))
@@ -88,8 +93,10 @@ actual class AttoNodeMock actual constructor(
         if (started) {
             val node = nodeContainer
             val mysql = mysqlContainer
+            val nodeNetwork = network
             nodeContainer = null
             mysqlContainer = null
+            network = null
             started = false
             js(
                 """
@@ -100,6 +107,9 @@ actual class AttoNodeMock actual constructor(
                             return (node == null ? Promise.resolve() : node.stop())
                                 .then(function() {
                                     return mysql == null ? undefined : mysql.stop();
+                                })
+                                .then(function() {
+                                    return nodeNetwork == null ? undefined : nodeNetwork.stop();
                                 });
                         })
                         .catch(function(error) {

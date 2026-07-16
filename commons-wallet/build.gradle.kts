@@ -102,11 +102,6 @@ kotlin {
                 api(libs.kotlinx.coroutines.core)
 
                 implementation(libs.kotlin.logging)
-
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.serialization)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.ktor.client.content.negotiation)
             }
         }
         val commonTest by getting {
@@ -114,14 +109,9 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation(project(":commons-test"))
                 implementation(libs.kotlinx.coroutines.test)
-                implementation(libs.ktor.server.content.negotiation)
             }
         }
-        val jvmMain by getting {
-            dependencies {
-                implementation(libs.ktor.client.cio)
-            }
-        }
+        val jvmMain by getting
 
         val jvmTest by getting {
             dependencies {
@@ -131,11 +121,7 @@ kotlin {
             }
         }
 
-        val jsMain by getting {
-            dependencies {
-                implementation(libs.ktor.client.js)
-            }
-        }
+        val jsMain by getting
 
         val jsTest by getting {
             dependencies {
@@ -143,11 +129,7 @@ kotlin {
             }
         }
 
-        val wasmJsMain by getting {
-            dependencies {
-                implementation(libs.ktor.client.js)
-            }
-        }
+        val wasmJsMain by getting
     }
 }
 

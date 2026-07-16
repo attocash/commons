@@ -34,6 +34,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":commons-core"))
+                api(project(":commons-transport"))
                 api(project(":commons-node"))
                 api(project(":commons-node-remote"))
                 api(project(":commons-test"))

@@ -63,11 +63,23 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
                 .get()
                 .filterTo(mutableSetOf()) { it != currentProjectName && it in publishedProjects }
 
-        replaceWithCanonicalGeneratedFiles(stagingDirectory)
+        val runtimeModuleFilesByOwner = runtimeModuleFilesByOwner()
+        replaceWithCanonicalGeneratedFiles(stagingDirectory, currentProjectName, runtimeModuleFilesByOwner)
 
-        if (currentProjectName != COMMONS_CORE_PROJECT_NAME) {
-            externalizeSharedRuntimeModuleImports(stagingDirectory)
-            internalDependencyProjectNames.add(COMMONS_CORE_PROJECT_NAME)
+        runtimeModuleFilesByOwner.forEach { (ownerProjectName, moduleFileNames) ->
+            if (currentProjectName == ownerProjectName) {
+                return@forEach
+            }
+
+            val importsExternalized =
+                externalizeRuntimeModuleImports(
+                    stagingDirectory,
+                    ownerProjectName,
+                    moduleFileNames,
+                )
+            if (importsExternalized || ownerProjectName == COMMONS_CORE_PROJECT_NAME) {
+                internalDependencyProjectNames.add(ownerProjectName)
+            }
         }
 
         stagingDirectory
@@ -101,10 +113,12 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
             Files.deleteIfExists(packagePath.resolve(moduleFileName))
             Files.deleteIfExists(packagePath.resolve("$moduleFileName.map"))
         }
-        if (currentProjectName != COMMONS_CORE_PROJECT_NAME) {
-            sharedRuntimeModuleFileNames.forEach { moduleFileName ->
-                Files.deleteIfExists(packagePath.resolve(moduleFileName))
-                Files.deleteIfExists(packagePath.resolve("$moduleFileName.map"))
+        runtimeModuleFilesByOwner.forEach { (ownerProjectName, moduleFileNames) ->
+            if (currentProjectName != ownerProjectName) {
+                moduleFileNames.forEach { moduleFileName ->
+                    Files.deleteIfExists(packagePath.resolve(moduleFileName))
+                    Files.deleteIfExists(packagePath.resolve("$moduleFileName.map"))
+                }
             }
         }
 
@@ -124,22 +138,24 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
             "Generated npm package still has relative internal Commons imports: " +
                 unresolvedInternalImports.joinToString()
         }
-        if (currentProjectName != COMMONS_CORE_PROJECT_NAME) {
-            val unresolvedSharedRuntimeImports =
-                stagingDirectory
-                    .walkTopDown()
-                    .filter { it.isFile && it.extension == "mjs" }
-                    .flatMap { moduleFile ->
-                        val moduleText = moduleFile.readText()
-                        sharedRuntimeModuleFileNames
-                            .filter { moduleFileName ->
-                                moduleText.contains("'./$moduleFileName'") ||
-                                    moduleText.contains("\"./$moduleFileName\"")
-                            }.map { moduleFileName -> "${moduleFile.name} imports ./$moduleFileName" }
-                    }.toList()
-            check(unresolvedSharedRuntimeImports.isEmpty()) {
-                "Generated npm package still has relative shared Kotlin runtime imports: " +
-                    unresolvedSharedRuntimeImports.joinToString()
+        runtimeModuleFilesByOwner.forEach { (ownerProjectName, moduleFileNames) ->
+            if (currentProjectName != ownerProjectName) {
+                val unresolvedRuntimeImports =
+                    stagingDirectory
+                        .walkTopDown()
+                        .filter { it.isFile && it.extension == "mjs" }
+                        .flatMap { moduleFile ->
+                            val moduleText = moduleFile.readText()
+                            moduleFileNames
+                                .filter { moduleFileName ->
+                                    moduleText.contains("'./$moduleFileName'") ||
+                                        moduleText.contains("\"./$moduleFileName\"")
+                                }.map { moduleFileName -> "${moduleFile.name} imports ./$moduleFileName" }
+                        }.toList()
+                check(unresolvedRuntimeImports.isEmpty()) {
+                    "Generated npm package still has relative runtime imports owned by $ownerProjectName: " +
+                        unresolvedRuntimeImports.joinToString()
+                }
             }
         }
 
@@ -149,22 +165,56 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
         }
     }
 
-    private fun replaceWithCanonicalGeneratedFiles(stagingDirectory: File) {
+    private fun runtimeModuleFilesByOwner(): Map<String, Set<String>> {
+        val canonicalRuntimeFiles =
+            canonicalPackageDirectory.asFile.orNull
+                ?.takeIf(File::isDirectory)
+                ?.listFiles()
+                .orEmpty()
+                .asSequence()
+                .filter { it.isFile && it.extension == "mjs" }
+                .map(File::getName)
+                .toSet()
+
+        return mapOf(
+            COMMONS_CORE_PROJECT_NAME to coreRuntimeModuleFileNames,
+            COMMONS_TRANSPORT_PROJECT_NAME to
+                canonicalRuntimeFiles.filterTo(transportRuntimeModuleFileNames.toMutableSet()) {
+                    it.startsWith(KTOR_RUNTIME_MODULE_PREFIX)
+                },
+        )
+    }
+
+    private fun replaceWithCanonicalGeneratedFiles(
+        stagingDirectory: File,
+        currentProjectName: String,
+        runtimeModuleFilesByOwner: Map<String, Set<String>>,
+    ) {
         val canonicalDirectory = canonicalPackageDirectory.asFile.orNull ?: return
         if (!canonicalDirectory.isDirectory) {
             return
         }
 
+        val ownedRuntimeModuleFileNames = runtimeModuleFilesByOwner[currentProjectName].orEmpty()
         canonicalDirectory
             .walkTopDown()
             .filter { it.isFile && (it.extension == "mjs" || it.name.endsWith(".mjs.map")) }
-            .filter { canonicalFile -> stagingDirectory.resolve(canonicalFile.name).isFile }
+            .filter { canonicalFile ->
+                val moduleFileName = canonicalFile.name.removeSuffix(".map")
+                stagingDirectory.resolve(canonicalFile.name).isFile ||
+                    moduleFileName in ownedRuntimeModuleFileNames
+            }
             .forEach { canonicalFile ->
                 canonicalFile.copyTo(stagingDirectory.resolve(canonicalFile.name), overwrite = true)
             }
     }
 
-    private fun externalizeSharedRuntimeModuleImports(stagingDirectory: File) {
+    private fun externalizeRuntimeModuleImports(
+        stagingDirectory: File,
+        ownerProjectName: String,
+        moduleFileNames: Set<String>,
+    ): Boolean {
+        var importsExternalized = false
         stagingDirectory
             .walkTopDown()
             .filter { it.isFile && it.extension == "mjs" }
@@ -172,9 +222,9 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
                 var moduleText = moduleFile.readText()
                 var changed = false
 
-                sharedRuntimeModuleFileNames.forEach { moduleFileName ->
+                moduleFileNames.forEach { moduleFileName ->
                     val localSpecifier = "./$moduleFileName"
-                    val packageSpecifier = "${packageName(COMMONS_CORE_PROJECT_NAME)}/$moduleFileName"
+                    val packageSpecifier = "${packageName(ownerProjectName)}/$moduleFileName"
                     val updatedModuleText =
                         moduleText
                             .replace("'$localSpecifier'", "'$packageSpecifier'")
@@ -182,6 +232,7 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
 
                     if (updatedModuleText != moduleText) {
                         changed = true
+                        importsExternalized = true
                         moduleText = updatedModuleText
                     }
                 }
@@ -190,6 +241,7 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
                     moduleFile.writeText(moduleText)
                 }
             }
+        return importsExternalized
     }
 
     private fun addInternalDependencies(
@@ -376,7 +428,9 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
 
     private companion object {
         const val COMMONS_CORE_PROJECT_NAME = "commons-core"
+        const val COMMONS_TRANSPORT_PROJECT_NAME = "commons-transport"
         const val COMMONS_JS_PROJECT_NAME = "commons-js"
+        const val KTOR_RUNTIME_MODULE_PREFIX = "ktor-"
 
         val declarationExportRegex =
             Regex(
@@ -389,6 +443,7 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
         val publicationProjectPriorities =
             mapOf(
                 "commons-core" to 0,
+                "commons-transport" to 5,
                 "commons-node" to 10,
                 "commons-node-remote" to 20,
                 "commons-worker" to 30,
@@ -399,16 +454,20 @@ abstract class ExternalizeCommonsNpmPackageDependencies : DefaultTask() {
                 "commons-js" to 80,
             )
 
-        val sharedRuntimeModuleFileNames =
+        val coreRuntimeModuleFileNames =
             setOf(
                 "Kotlin-DateTime-library-kotlinx-datetime.mjs",
                 "kotlin-kotlin-stdlib.mjs",
                 "kotlin_org_jetbrains_kotlin_kotlin_dom_api_compat.mjs",
-                "kotlinx-atomicfu.mjs",
-                "kotlinx-coroutines-core.mjs",
                 "kotlinx-io-kotlinx-io-bytestring.mjs",
                 "kotlinx-io-kotlinx-io-core.mjs",
                 "kotlinx-serialization-kotlinx-serialization-core.mjs",
+            )
+
+        val transportRuntimeModuleFileNames =
+            setOf(
+                "kotlinx-atomicfu.mjs",
+                "kotlinx-coroutines-core.mjs",
             )
     }
 }
@@ -495,6 +554,10 @@ fun Project.configureCommonsNpmPackageExternalization() {
                 task.dependsOn(externalizeCommonsJsPackageDependencies)
                 if (task.name == "packJsPackage") {
                     task.outputs.upToDateWhen { false }
+                    task.doFirst {
+                        project.delete(task.temporaryDir)
+                        task.temporaryDir.mkdirs()
+                    }
                 }
             },
         )

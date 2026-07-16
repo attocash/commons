@@ -9,6 +9,7 @@ NOTE: The API is evolving and may include breaking changes between releases.
 ## Modules
 
 - commons-core — primitives: mnemonic/seed, keys, addresses, blocks/transactions, serialization, utilities.
+- commons-transport — shared HTTP transport used by remote Commons clients.
 - commons-node — node operations and monitors (account membership, transactions, account entries).
 - commons-node-remote — remote HTTP client for talking to a node.
 - commons-signer-remote — remote signer client for external key management.
@@ -31,6 +32,8 @@ Gradle coordinates vary per module, for example:
 dependencies {
   // Core primitives
   implementation("cash.atto:commons-core:<version>")
+  // Shared HTTP transport for custom remote adapters
+  implementation("cash.atto:commons-transport:<version>")
   // Node client (remote over HTTP)
   implementation("cash.atto:commons-node-remote:<version>")
   // Wallet utilities
@@ -47,7 +50,7 @@ dependencies {
 On JS/Node, install the package for each module you use:
 
 ```sh
-npm i @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
+npm i @attocash/commons-core @attocash/commons-transport @attocash/commons-node @attocash/commons-node-remote
 npm i @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
 npm i -D @attocash/commons-test
 ```
@@ -116,6 +119,7 @@ For full examples and advanced flows (auto-receive, account-entry monitor, OpenC
 ## Module READMEs
 
 - commons-core/README.md — primitives and serialization examples
+- commons-transport/README.md — shared HTTP transport
 - commons-wallet/README.md — wallet setup, send/receive, auto-receiver, monitors
 - commons-node/README.md — node client and monitors
 - commons-node-remote/README.md — remote node client

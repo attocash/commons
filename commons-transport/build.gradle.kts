@@ -3,14 +3,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlinx.benchmark)
 
     id("maven-publish")
     signing
 }
 
 group = "cash.atto"
-description = "Remote HTTP Atto node client for JavaScript and TypeScript applications."
+description = "Shared HTTP transport for Atto Commons remote clients."
 apply(plugin = "org.jetbrains.kotlin.npm-publish")
 
 repositories {
@@ -19,14 +18,6 @@ repositories {
 }
 
 kotlin {
-    targets.configureEach {
-        compilations.configureEach {
-            compileTaskProvider.get().compilerOptions {
-                freeCompilerArgs.add("-Xexpect-actual-classes")
-            }
-        }
-    }
-
     jvmToolchain(17)
 
     jvm {
@@ -37,9 +28,7 @@ kotlin {
 
     js(IR) {
         binaries.library()
-
         useEsModules()
-
         browser {
             testTask {
                 useKarma {
@@ -47,13 +36,11 @@ kotlin {
                 }
             }
         }
-
         nodejs()
-
         generateTypeScriptDefinitions()
 
         compilations["main"].packageJson {
-            customField("name", "@attocash/commons-node-remote")
+            customField("name", "@attocash/commons-transport")
         }
 
         compilerOptions {
@@ -62,8 +49,8 @@ kotlin {
             sourceMap = true
             sourceMapEmbedSources = org.jetbrains.kotlin.gradle.dsl.JsSourceMapEmbedMode.SOURCE_MAP_SOURCE_CONTENT_ALWAYS
             freeCompilerArgs.addAll(
-                // https://kotlinlang.org/docs/whatsnew20.html#per-file-compilation-for-kotlin-js-projects
                 "-Xes-long-as-bigint",
+                "-Xenable-suspend-function-exporting",
             )
         }
     }
@@ -86,40 +73,37 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":commons-core"))
-                api(project(":commons-node"))
-                implementation(project(":commons-transport"))
+
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
             }
         }
-
-        val jvmMain by getting
-
-        val jvmTest by getting {
+        val commonTest by getting {
             dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.ktor.client.mock)
             }
         }
-
-        val jsMain by getting
-
-        val jsTest by getting {
+        val jvmMain by getting {
             dependencies {
+                implementation(libs.ktor.client.cio)
             }
         }
-
-        val wasmJsMain by getting
+        val jsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
+        }
     }
 }
-
-// benchmark {
-//    targets {
-//        register("jvm")
-//    }
-// }
-
-// benchmark {
-//    targets {
-//        register("benchmarks")
-//    }
-// }
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
@@ -131,28 +115,14 @@ publishing {
         artifact(javadocJar)
 
         pom {
-            name.set("Atto Commons Node Remote")
-            description.set(
-                "Atto Commons Remote provide client for the node.",
-            )
+            name.set("Atto Commons Transport")
+            description.set(project.description)
             url.set("https://github.com/attocash/commons")
-
-            organization {
-                name.set("Atto")
-                url.set("https://atto.cash")
-            }
 
             licenses {
                 license {
                     name.set("BSD 3-Clause License")
                     url.set("https://github.com/attocash/commons/blob/main/LICENSE")
-                }
-            }
-
-            developers {
-                developer {
-                    id.set("atto")
-                    name.set("Atto Team")
                 }
             }
 

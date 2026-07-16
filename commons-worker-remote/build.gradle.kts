@@ -86,11 +86,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":commons-worker"))
-
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.serialization)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.ktor.client.content.negotiation)
+                implementation(project(":commons-transport"))
             }
         }
         val commonTest by getting {
@@ -98,25 +94,13 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val jvmMain by getting {
-            dependencies {
-                implementation(libs.ktor.client.cio)
-            }
-        }
+        val jvmMain by getting
         val jvmTest by getting
 
-        val jsMain by getting {
-            dependencies {
-                implementation(libs.ktor.client.js)
-            }
-        }
+        val jsMain by getting
         val jsTest by getting
 
-        val wasmJsMain by getting {
-            dependencies {
-                implementation(libs.ktor.client.js)
-            }
-        }
+        val wasmJsMain by getting
     }
 }
 

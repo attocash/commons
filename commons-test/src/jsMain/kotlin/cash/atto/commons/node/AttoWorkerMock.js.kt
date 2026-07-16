@@ -18,6 +18,8 @@ actual class AttoWorkerMock internal actual constructor(
         }
 
     actual suspend fun start() {
+        configureTestcontainersRuntime()
+
         val testcontainersPromise: dynamic = js("import('testcontainers')")
         val testcontainers = testcontainersPromise.unsafeCast<Promise<dynamic>>().await()
 

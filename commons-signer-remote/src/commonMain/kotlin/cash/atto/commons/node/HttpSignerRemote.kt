@@ -11,54 +11,28 @@ import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoVote
 import cash.atto.commons.isValid
+import cash.atto.commons.transport.AttoHttpTimeouts
+import cash.atto.commons.transport.AttoHttpTransport
+import cash.atto.commons.transport.httpStatusCodeOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.timeout
-import io.ktor.client.request.accept
-import io.ktor.client.request.get
-import io.ktor.client.request.headers
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private val json =
-    Json {
-        ignoreUnknownKeys = true
-    }
-
-private val httpClient =
-    HttpClient {
-        install(ContentNegotiation) {
-            json(json)
-        }
-        install(HttpTimeout)
-
-        expectSuccess = true
-    }
-
 internal class HttpSignerRemote(
-    private val url: String,
+    url: String,
     private val retryEvery: Duration = 1.seconds,
-    private val headerProvider: suspend () -> Map<String, String> = { emptyMap() },
+    headerProvider: suspend () -> Map<String, String> = { emptyMap() },
     private val maxAttempts: UInt? = null,
 ) : AttoSigner {
     private val logger = KotlinLogging.logger {}
+    private val transport = AttoHttpTransport(url, headerProvider)
 
     override val algorithm: AttoAlgorithm = AttoAlgorithm.V1
     override val publicKey: AttoPublicKey by lazy {
@@ -110,29 +84,18 @@ internal class HttpSignerRemote(
     }
 
     private fun Exception.terminalClientStatus(): HttpStatusCode? {
-        if (this !is ClientRequestException) return null
-
-        val status = response.status
+        val status = httpStatusCodeOrNull()?.let(HttpStatusCode::fromValue) ?: return null
         if (status == HttpStatusCode.RequestTimeout || status == HttpStatusCode.TooManyRequests) return null
         return status
     }
 
     private suspend fun getPublicKey(): AttoPublicKey =
         retrying("get publicKey") {
-            val headers = headerProvider.invoke()
-
-            httpClient
-                .get("$url/public-keys") {
-                    contentType(ContentType.Application.Json)
-                    accept(ContentType.Application.Json)
-                    headers {
-                        headers.forEach { (key, value) -> append(key, value) }
-                    }
-                    timeout {
-                        socketTimeoutMillis = 5.seconds.inWholeMilliseconds
-                    }
-                }.body<PublicKeyResponse>()
-                .publicKey
+            transport
+                .get<PublicKeyResponse>(
+                    path = "public-keys",
+                    timeouts = AttoHttpTimeouts(socket = 5.seconds),
+                ).publicKey
         }
 
     override suspend fun sign(hash: AttoHash): AttoSignature = throw NotImplementedError("Remote signer doesn't accept direct hash signing")
@@ -141,8 +104,6 @@ internal class HttpSignerRemote(
         challenge: AttoChallenge,
         timestamp: AttoInstant,
     ): AttoSignature {
-        val uri = "$url/challenges"
-
         val request =
             ChallengeSignatureRequest(
                 target = challenge,
@@ -151,21 +112,12 @@ internal class HttpSignerRemote(
 
         val signature =
             retrying("sign $challenge") {
-                val headers = headerProvider.invoke()
-
-                httpClient
-                    .post(uri) {
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        setBody(request)
-                        headers {
-                            headers.forEach { (key, value) -> append(key, value) }
-                        }
-                        timeout {
-                            socketTimeoutMillis = 1.seconds.inWholeMilliseconds
-                        }
-                    }.body<SignatureResponse>()
-                    .signature
+                transport
+                    .post<ChallengeSignatureRequest, SignatureResponse>(
+                        path = "challenges",
+                        body = request,
+                        timeouts = AttoHttpTimeouts(socket = 1.seconds),
+                    ).signature
             }
 
         if (!signature.isValid(publicKey, challenge, timestamp)) {
@@ -177,8 +129,6 @@ internal class HttpSignerRemote(
     override suspend fun sign(block: AttoBlock): AttoSignature {
         checkPublicKey(block.publicKey)
 
-        val uri = "$url/blocks"
-
         val request =
             BlockSignatureRequest(
                 target = block,
@@ -186,21 +136,12 @@ internal class HttpSignerRemote(
 
         val signature =
             retrying("sign $block") {
-                val headers = headerProvider.invoke()
-
-                httpClient
-                    .post(uri) {
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        setBody(request)
-                        headers {
-                            headers.forEach { (key, value) -> append(key, value) }
-                        }
-                        timeout {
-                            socketTimeoutMillis = 1.seconds.inWholeMilliseconds
-                        }
-                    }.body<SignatureResponse>()
-                    .signature
+                transport
+                    .post<BlockSignatureRequest, SignatureResponse>(
+                        path = "blocks",
+                        body = request,
+                        timeouts = AttoHttpTimeouts(socket = 1.seconds),
+                    ).signature
             }
 
         if (!signature.isValid(block.publicKey, block.hash)) {
@@ -212,8 +153,6 @@ internal class HttpSignerRemote(
     override suspend fun sign(vote: AttoVote): AttoSignature {
         checkPublicKey(vote.publicKey)
 
-        val uri = "$url/votes"
-
         val request =
             VoteSignatureRequest(
                 target = vote,
@@ -221,21 +160,12 @@ internal class HttpSignerRemote(
 
         val signature =
             retrying("sign $vote") {
-                val headers = headerProvider.invoke()
-
-                httpClient
-                    .post(uri) {
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        setBody(request)
-                        headers {
-                            headers.forEach { (key, value) -> append(key, value) }
-                        }
-                        timeout {
-                            socketTimeoutMillis = 1.seconds.inWholeMilliseconds
-                        }
-                    }.body<SignatureResponse>()
-                    .signature
+                transport
+                    .post<VoteSignatureRequest, SignatureResponse>(
+                        path = "votes",
+                        body = request,
+                        timeouts = AttoHttpTimeouts(socket = 1.seconds),
+                    ).signature
             }
 
         if (!signature.isValid(vote.publicKey, vote.hash)) {
