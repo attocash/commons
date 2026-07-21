@@ -15,7 +15,6 @@ import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.PreviousSupport
-import cash.atto.commons.isValid
 import cash.atto.commons.node.AttoNodeOperations
 import cash.atto.commons.toHex
 import cash.atto.commons.worker.AttoWorker

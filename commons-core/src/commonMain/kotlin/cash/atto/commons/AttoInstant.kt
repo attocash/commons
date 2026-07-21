@@ -3,6 +3,8 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
+import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
@@ -50,6 +52,13 @@ data class AttoInstant
         override fun compareTo(other: AttoInstant): Int = value.compareTo(other.value)
 
         fun toEpochMilliseconds(): Long = value.toEpochMilliseconds()
+
+        @JsExport.Ignore
+        fun toByteArray(): ByteArray {
+            val buffer = Buffer()
+            buffer.writeInstant(this)
+            return buffer.readByteArray()
+        }
 
         override fun toString(): String = value.toString()
     }

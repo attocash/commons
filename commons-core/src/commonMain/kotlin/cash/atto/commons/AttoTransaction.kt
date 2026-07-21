@@ -16,6 +16,7 @@ import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
 import kotlin.js.JsStatic
+import kotlin.jvm.JvmSynthetic
 
 @JsExportForJs
 @Serializable
@@ -65,15 +66,12 @@ data class AttoTransaction(
                     work = buffer.readAttoWork(),
                 )
 
-            if (!transaction.isValid()) {
-                return null
-            }
-
             return transaction
         }
     }
 
-    fun validate(): AttoValidation {
+    @JvmSynthetic
+    suspend fun validate(): AttoValidation {
         when (val blockValidation = block.validate()) {
             is AttoValidation.Ok -> Unit
             is AttoValidation.Error -> return blockValidation
@@ -95,9 +93,10 @@ data class AttoTransaction(
     }
 
     /**
-     * Minimal block validation. This method doesn't check this transaction against the ledger so further validations are required.
+     * Minimal transaction validation. This method doesn't check this transaction against the ledger so further validations are required.
      */
-    fun isValid(): Boolean = validate().isValid
+    @JvmSynthetic
+    suspend fun isValid(): Boolean = validate().isValid
 
     /**
      * Return the transaction and block size

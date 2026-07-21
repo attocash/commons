@@ -8,13 +8,21 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+import kotlin.jvm.JvmStatic
 
 @JsExportForJs
 @Serializable(with = AttoChallengeSerializer::class)
 data class AttoChallenge(
     val value: ByteArray,
 ) {
-    companion object {}
+    companion object {
+        @OptIn(ExperimentalJsExport::class)
+        @JsExport.Ignore
+        @JvmStatic
+        fun generate(size: UInt = 64U): AttoChallenge = AttoChallenge(SecureRandom.randomByteArray(size))
+    }
 
     init {
         require(value.size >= 64) { "Challenge should have at least 64 bytes" }
@@ -34,7 +42,13 @@ data class AttoChallenge(
     override fun toString(): String = value.toHex()
 }
 
-fun AttoChallenge.Companion.generate(size: UInt = 64U): AttoChallenge = AttoChallenge(SecureRandom.randomByteArray(size))
+@Deprecated(
+    "Moved to AttoChallenge.generate(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoChallenge.generate(size)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoChallenge.Companion.generate(size: UInt = 64U): AttoChallenge = AttoChallenge.generate(size)
 
 object AttoChallengeSerializer : KSerializer<AttoChallenge> {
     override val descriptor = PrimitiveSerialDescriptor("AttoChallenge", PrimitiveKind.STRING)

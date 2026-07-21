@@ -5,7 +5,6 @@ import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.fromHexToByteArray
-import cash.atto.commons.isValid
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue

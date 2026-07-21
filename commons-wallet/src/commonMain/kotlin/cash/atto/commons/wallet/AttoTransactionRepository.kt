@@ -13,7 +13,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 interface AttoTransactionRepository : AutoCloseable {
-    companion object {}
+    companion object {
+        fun inMemory(): AttoTransactionRepository = AttoInMemoryTransactionRepository()
+    }
 
     suspend fun save(transaction: AttoTransaction)
 
@@ -56,4 +58,10 @@ private class AttoInMemoryTransactionRepository : AttoTransactionRepository {
     override suspend fun last(publicKey: AttoPublicKey): AttoTransaction? = transactionMap[publicKey]?.lastOrNull()
 }
 
-fun AttoTransactionRepository.Companion.inMemory(): AttoTransactionRepository = AttoInMemoryTransactionRepository()
+@Deprecated(
+    "Moved to AttoTransactionRepository.inMemory(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoTransactionRepository.inMemory()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoTransactionRepository.Companion.inMemory(): AttoTransactionRepository = AttoTransactionRepository.inMemory()

@@ -14,6 +14,7 @@ import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
 import kotlin.js.JsStatic
+import kotlin.jvm.JvmStatic
 import kotlin.time.Duration.Companion.minutes
 
 val maxVersion = AttoVersion(0U)
@@ -71,6 +72,13 @@ sealed interface AttoBlock :
     override val height: AttoHeight
     val balance: AttoAmount
     val timestamp: AttoInstant
+
+    @JsExport.Ignore
+    fun getTarget(): AttoWorkTarget =
+        when (this) {
+            is AttoOpenBlock -> AttoWorkTarget(publicKey.value)
+            is PreviousSupport -> AttoWorkTarget(previous.value)
+        }
 
     @JsExport.Ignore
     override fun toBuffer(): Buffer
@@ -231,6 +239,20 @@ data class AttoSendBlock(
 
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val receiverAddress = AttoAddress(receiverAlgorithm, receiverPublicKey)
+
+    @JsExport.Ignore
+    fun toReceivable(): AttoReceivable =
+        AttoReceivable(
+            network = network,
+            hash = hash,
+            version = version,
+            algorithm = algorithm,
+            publicKey = publicKey,
+            timestamp = timestamp,
+            receiverAlgorithm = receiverAlgorithm,
+            receiverPublicKey = receiverPublicKey,
+            amount = amount,
+        )
 
     companion object {
         internal fun fromBuffer(serializedBlock: Buffer): AttoSendBlock? {
@@ -406,6 +428,25 @@ data class AttoOpenBlock(
 
     companion object {
         @JsExport.Ignore
+        @JvmStatic
+        fun createGenesis(
+            network: AttoNetwork,
+            address: AttoAddress,
+        ): AttoOpenBlock =
+            AttoOpenBlock(
+                version = 0U.toAttoVersion(),
+                network = network,
+                algorithm = address.algorithm,
+                publicKey = address.publicKey,
+                balance = AttoAmount.MAX,
+                timestamp = AttoInstant.now(),
+                sendHashAlgorithm = address.algorithm,
+                sendHash = AttoHash(ByteArray(32)),
+                representativeAlgorithm = address.algorithm,
+                representativePublicKey = address.publicKey,
+            )
+
+        @JsExport.Ignore
         internal fun fromBuffer(serializedBlock: Buffer): AttoOpenBlock? {
             if (AttoBlockType.OPEN.size > serializedBlock.size) {
                 return null
@@ -520,19 +561,13 @@ data class AttoChangeBlock(
         }
 }
 
+@Deprecated(
+    "Moved to AttoOpenBlock.createGenesis(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoOpenBlock.createGenesis(network, address)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun AttoOpenBlock.Companion.createGenesis(
     network: AttoNetwork,
     address: AttoAddress,
-): AttoOpenBlock =
-    AttoOpenBlock(
-        version = 0U.toAttoVersion(),
-        network = network,
-        algorithm = address.algorithm,
-        publicKey = address.publicKey,
-        balance = AttoAmount.MAX,
-        timestamp = AttoInstant.now(),
-        sendHashAlgorithm = address.algorithm,
-        sendHash = AttoHash(ByteArray(32)),
-        representativeAlgorithm = address.algorithm,
-        representativePublicKey = address.publicKey,
-    )
+): AttoOpenBlock = AttoOpenBlock.createGenesis(network, address)

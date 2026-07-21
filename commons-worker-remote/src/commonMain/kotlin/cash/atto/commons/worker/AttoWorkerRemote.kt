@@ -3,7 +3,6 @@ package cash.atto.commons.worker
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
 import cash.atto.commons.fromHexToByteArray
-import cash.atto.commons.isValid
 import cash.atto.commons.transport.AttoHttpTimeouts
 import cash.atto.commons.transport.AttoHttpTransport
 import kotlin.time.Duration

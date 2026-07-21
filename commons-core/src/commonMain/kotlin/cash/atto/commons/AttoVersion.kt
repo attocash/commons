@@ -19,16 +19,24 @@ data class AttoVersion
     ) : Comparable<AttoVersion> {
         override operator fun compareTo(other: AttoVersion): Int = value.compareTo(other.value)
 
+        @JsExport.Ignore
+        fun max(anotherVersion: AttoVersion): AttoVersion =
+            if (value > anotherVersion.value) {
+                this
+            } else {
+                anotherVersion
+            }
+
         override fun toString(): String = value.toString()
     }
 
-fun AttoVersion.max(anotherVersion: AttoVersion): AttoVersion {
-    return if (value > anotherVersion.value) {
-        return this
-    } else {
-        anotherVersion
-    }
-}
+@Deprecated(
+    "Moved to AttoVersion.max(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.max(anotherVersion)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoVersion.max(anotherVersion: AttoVersion): AttoVersion = this.max(anotherVersion)
 
 fun UShort.toAttoVersion(): AttoVersion = AttoVersion(this)
 

@@ -11,7 +11,6 @@ import kotlin.time.Duration.Companion.seconds
 
 internal class AttoSignatureTest {
     private val privateKey = AttoPrivateKey("00".repeat(32).fromHexToByteArray())
-    private val publicKey = privateKey.toPublicKey()
     private val hash = AttoHash("0000000000000000000000000000000000000000000000000000000000000000".fromHexToByteArray())
 
     @Suppress("ktlint:standard:max-line-length")
@@ -24,6 +23,8 @@ internal class AttoSignatureTest {
     @Test
     fun `should sign`() =
         runTest {
+            val publicKey = privateKey.toPublicKey()
+
             // when
             val signature = privateKey.sign(hash)
 
@@ -33,18 +34,21 @@ internal class AttoSignatureTest {
         }
 
     @Test
-    fun `should not validate wrong signature`() {
-        // given
-        val randomSignature = AttoSignature(Random.nextBytes(ByteArray(64)))
+    fun `should not validate wrong signature`() =
+        runTest {
+            // given
+            val publicKey = privateKey.toPublicKey()
+            val randomSignature = AttoSignature(Random.nextBytes(ByteArray(64)))
 
-        // then
-        assertFalse(randomSignature.isValid(publicKey, hash))
-    }
+            // then
+            assertFalse(randomSignature.isValid(publicKey, hash))
+        }
 
     @Test
     fun `should sign 16 bytes`() =
         runTest {
             // given
+            val publicKey = privateKey.toPublicKey()
             val hash16 = AttoHash(Random.nextBytes(ByteArray(16)))
 
             // when
@@ -57,6 +61,7 @@ internal class AttoSignatureTest {
     @Test
     fun `should validate timestamped challenge signature`() =
         runTest {
+            val publicKey = privateKey.toPublicKey()
             val challenge = AttoChallenge.generate()
             val timestamp = AttoInstant.now()
             val signature = privateKey.toSigner().sign(challenge, timestamp)
@@ -70,6 +75,7 @@ internal class AttoSignatureTest {
     @Test
     fun `should sign message with atto domain separated hash`() =
         runTest {
+            val publicKey = privateKey.toPublicKey()
             val message = "atto message".encodeToByteArray()
             val signature = privateKey.toSigner().signMessage(message)
             val signedMessageHash = attoSignedMessageHashForTest(publicKey, message)
@@ -82,6 +88,7 @@ internal class AttoSignatureTest {
     @Test
     fun `should reject message signature with wrong framing inputs`() =
         runTest {
+            val publicKey = privateKey.toPublicKey()
             val message = "atto message".encodeToByteArray()
             val signature = privateKey.toSigner().signMessage(message)
             val bigEndianLengthHash =

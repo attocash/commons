@@ -20,7 +20,6 @@ import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVoterWeight
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
-import cash.atto.commons.isValid
 import cash.atto.commons.node.AttoNodeClient
 import cash.atto.commons.node.AttoNodePublishMismatchException
 import cash.atto.commons.node.HeightSearch
@@ -31,9 +30,7 @@ import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoIndex
 import cash.atto.commons.toAttoVersion
-import cash.atto.commons.toSigner
 import cash.atto.commons.worker.AttoWorker
-import cash.atto.commons.worker.cpu
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -51,13 +48,13 @@ import kotlin.time.Duration.Companion.seconds
 
 class AttoWalletValidationTest {
     private val privateKey = AttoPrivateKey.generate()
-    private val signer = privateKey.toSigner()
 
     @Test
     fun `should not publish invalid worker output`() =
         runTest {
+            val signer = privateKey.toSigner()
             val client = RecordingClient()
-            val block = sampleBlock()
+            val block = sampleBlock(signer.publicKey)
             val invalidWork =
                 generateSequence { AttoWork(Random.nextBytes(8)) }
                     .first { !it.isValid(block) }
@@ -72,8 +69,9 @@ class AttoWalletValidationTest {
     @Test
     fun `should not publish invalid signer output`() =
         runTest {
+            val signer = privateKey.toSigner()
             val client = RecordingClient()
-            val block = sampleBlock()
+            val block = sampleBlock(signer.publicKey)
             val wallet = AttoWallet(client, CpuWorker()) { InvalidSigner(signer) }
 
             assertFailsWith<IllegalStateException> {
@@ -85,6 +83,7 @@ class AttoWalletValidationTest {
     @Test
     fun `auto receiver should skip foreign receivable and process wallet receivable`() =
         runTest {
+            val signer = privateKey.toSigner()
             val foreignReceivable = receivable(AttoPublicKey(Random.nextBytes(32)))
             val walletReceivable = receivable(signer.publicKey)
             val client = RecordingClient(receivables = listOf(foreignReceivable, walletReceivable))
@@ -116,8 +115,9 @@ class AttoWalletValidationTest {
     @Test
     fun `should not advance account when publish acknowledgement mismatches`() =
         runTest {
+            val signer = privateKey.toSigner()
             val account = account(signer.publicKey)
-            val mismatchBlock = sampleBlock()
+            val mismatchBlock = sampleBlock(signer.publicKey)
             val client =
                 RecordingClient(
                     accounts = listOf(account),
@@ -137,12 +137,12 @@ class AttoWalletValidationTest {
             assertEquals(account, wallet.getAccount(0U.toAttoIndex()))
         }
 
-    private fun sampleBlock(): AttoReceiveBlock =
+    private fun sampleBlock(publicKey: AttoPublicKey): AttoReceiveBlock =
         AttoReceiveBlock(
             version = 0U.toAttoVersion(),
             network = AttoNetwork.LOCAL,
             algorithm = AttoAlgorithm.V1,
-            publicKey = signer.publicKey,
+            publicKey = publicKey,
             height = 2U.toAttoHeight(),
             balance = AttoAmount.MAX,
             timestamp = AttoInstant.now(),

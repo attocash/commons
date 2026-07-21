@@ -5,6 +5,11 @@ import org.khronos.webgl.Uint8Array
 import kotlin.js.Promise
 
 external interface SubtleCrypto {
+    fun digest(
+        algorithm: String,
+        data: Uint8Array,
+    ): Promise<ArrayBuffer>
+
     fun importKey(
         format: String,
         keyData: Uint8Array,
@@ -12,6 +17,11 @@ external interface SubtleCrypto {
         extractable: Boolean,
         keyUsages: Array<String>,
     ): Promise<CryptoKey>
+
+    fun exportKey(
+        format: String,
+        key: CryptoKey,
+    ): Promise<JsonWebKey>
 
     fun deriveBits(
         algorithm: dynamic,
@@ -24,6 +34,13 @@ external interface SubtleCrypto {
         key: CryptoKey,
         data: Uint8Array,
     ): Promise<ArrayBuffer>
+
+    fun verify(
+        algorithm: dynamic,
+        key: CryptoKey,
+        signature: Uint8Array,
+        data: Uint8Array,
+    ): Promise<Boolean>
 }
 
 @Suppress("UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
@@ -46,3 +63,7 @@ fun getSubtleCryptoInstance(): SubtleCrypto =
     ).unsafeCast<SubtleCrypto>()
 
 external interface CryptoKey
+
+external interface JsonWebKey {
+    val x: String
+}

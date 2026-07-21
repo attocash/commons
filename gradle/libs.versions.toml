@@ -46,7 +46,7 @@ foojay-resolver = "1.0.0"
 npm-publish = "3.7.0"
 
 # NPM
-stablelib = "1.0.1"
+noble-hashes = "2.2.0"
 
 # Node.js
 nodejs = "24.6.0"

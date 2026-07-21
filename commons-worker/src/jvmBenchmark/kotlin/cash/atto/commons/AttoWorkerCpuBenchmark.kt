@@ -2,7 +2,6 @@ package cash.atto.commons
 
 import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import cash.atto.commons.worker.AttoWorker
-import cash.atto.commons.worker.cpu
 import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Scope

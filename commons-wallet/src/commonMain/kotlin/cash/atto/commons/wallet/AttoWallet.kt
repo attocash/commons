@@ -12,12 +12,10 @@ import cash.atto.commons.AttoSeed
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoValidation
-import cash.atto.commons.compareTo
 import cash.atto.commons.node.AttoNodeClient
 import cash.atto.commons.node.monitor.AttoAccountMonitor
 import cash.atto.commons.toAttoAmount
 import cash.atto.commons.toAttoIndex
-import cash.atto.commons.toSigner
 import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.worker.AttoWorker
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -51,7 +49,35 @@ class AttoWallet(
     private val worker: AttoWorker,
     private val signerProvider: suspend (AttoKeyIndex) -> AttoSigner,
 ) {
-    companion object {}
+    companion object {
+        fun create(
+            client: AttoNodeClient,
+            worker: AttoWorker,
+            signerProvider: suspend (AttoKeyIndex) -> AttoSigner,
+        ): AttoWallet = AttoWallet(client, worker, signerProvider)
+
+        fun create(
+            client: AttoNodeClient,
+            worker: AttoWorker,
+            signerProvider: (AttoKeyIndex) -> AttoSigner,
+        ): AttoWallet = AttoWallet(client, worker, signerProvider)
+
+        fun create(
+            client: AttoNodeClient,
+            worker: AttoWorker,
+            seed: AttoSeed,
+        ): AttoWallet = AttoWallet(client, worker, seed::toSigner)
+
+        fun create(
+            client: AttoNodeClient,
+            worker: AttoWorker,
+            signer: AttoSigner,
+        ): AttoWallet =
+            AttoWallet(client, worker) {
+                require(it == 0U.toAttoIndex()) { "Wallet created from a signer or private key can only have one account" }
+                signer
+            }
+    }
 
     private val mutex = Mutex()
     private val accounts = WalletAccounts()
@@ -334,33 +360,53 @@ class AttoWalletAccount(
         }
 }
 
+@Deprecated(
+    "Moved to AttoWallet.create(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWallet.create(client, worker, signerProvider)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun AttoWallet.Companion.create(
     client: AttoNodeClient,
     worker: AttoWorker,
     signerProvider: suspend (AttoKeyIndex) -> AttoSigner,
-): AttoWallet = AttoWallet(client, worker, signerProvider)
+): AttoWallet = AttoWallet.create(client, worker, signerProvider)
 
+@Deprecated(
+    "Moved to AttoWallet.create(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWallet.create(client, worker, signerProvider)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun AttoWallet.Companion.create(
     client: AttoNodeClient,
     worker: AttoWorker,
     signerProvider: (AttoKeyIndex) -> AttoSigner,
-): AttoWallet = AttoWallet(client, worker, signerProvider)
+): AttoWallet = AttoWallet.create(client, worker, signerProvider)
 
+@Deprecated(
+    "Moved to AttoWallet.create(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWallet.create(client, worker, seed)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun AttoWallet.Companion.create(
     client: AttoNodeClient,
     worker: AttoWorker,
     seed: AttoSeed,
-): AttoWallet = AttoWallet(client, worker, seed::toSigner)
+): AttoWallet = AttoWallet.create(client, worker, seed)
 
+@Deprecated(
+    "Moved to AttoWallet.create(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWallet.create(client, worker, signer)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun AttoWallet.Companion.create(
     client: AttoNodeClient,
     worker: AttoWorker,
     signer: AttoSigner,
-): AttoWallet =
-    AttoWallet(client, worker) {
-        require(it == 0U.toAttoIndex()) { "Wallet created from a signer or private key can only have one account" }
-        signer
-    }
+): AttoWallet = AttoWallet.create(client, worker, signer)
 
 /**
  * Keeps the accountMonitor’s membership aligned with this wallet’s addresses.

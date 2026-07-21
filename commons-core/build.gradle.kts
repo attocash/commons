@@ -131,15 +131,13 @@ kotlin {
             }
         }
 
-        val stablelibVersion = libs.versions.stablelib.get()
+        val nobleHashesVersion =
+            libs.versions.noble.hashes
+                .get()
 
         val jsMain by getting {
             dependencies {
-                implementation(npm("@stablelib/sha256", stablelibVersion))
-                implementation(npm("@stablelib/sha512", stablelibVersion))
-                implementation(npm("@stablelib/blake2b", stablelibVersion))
-                implementation(npm("@stablelib/hmac", stablelibVersion))
-                implementation(npm("@stablelib/ed25519", stablelibVersion))
+                implementation(npm("@noble/hashes", nobleHashesVersion))
             }
         }
 
@@ -152,11 +150,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.browser)
 
-                implementation(npm("@stablelib/sha256", stablelibVersion))
-                implementation(npm("@stablelib/sha512", stablelibVersion))
-                implementation(npm("@stablelib/blake2b", stablelibVersion))
-                implementation(npm("@stablelib/hmac", stablelibVersion))
-                implementation(npm("@stablelib/ed25519", stablelibVersion))
+                implementation(npm("@noble/hashes", nobleHashesVersion))
             }
         }
 

@@ -3,6 +3,7 @@
 package cash.atto.commons
 
 import cash.atto.commons.utils.getSubtleCryptoInstance
+import cash.atto.commons.utils.mapKeyUsages
 import org.khronos.webgl.Uint8Array
 
 internal fun pbkdf2Algorithm(): JsAny = js("""({ "name": "pbkdf2" })""")
@@ -29,7 +30,7 @@ internal actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
                 keyData = passwordString.encodeToByteArray().toUint8Array(),
                 algorithm = pbkdf2Algorithm(),
                 extractable = false,
-                keyUsages = mapKeyUsages(arrayOf("deriveBits")),
+                keyUsages = mapKeyUsages("deriveBits"),
             ).await()
 
     val algorithm = pbkdf2AndSha512Algorithm(salt.toUint8Array(), iterations)
@@ -45,10 +46,3 @@ internal actual suspend fun generateSecretWithPBKDF2WithHmacSHA512(
     val derivedArray = Uint8Array(derivedBits)
     return derivedArray.toByteArray()
 }
-
-private fun mapKeyUsages(keyUsages: Array<String>): JsArray<JsString> =
-    JsArray<JsString>().also {
-        keyUsages.forEachIndexed { index, value ->
-            it[index] = value.toJsString()
-        }
-    }

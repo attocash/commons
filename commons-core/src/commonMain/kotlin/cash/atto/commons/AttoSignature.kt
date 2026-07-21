@@ -9,6 +9,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+import kotlin.jvm.JvmSynthetic
 
 @Serializable(with = AttoSignatureAsStringSerializer::class)
 @OptIn(ExperimentalJsExport::class)
@@ -35,27 +37,76 @@ data class AttoSignature(
 
     override fun hashCode(): Int = value.contentHashCode()
 
+    @JsExport.Ignore
+    @JvmSynthetic
+    suspend fun isValid(
+        publicKey: AttoPublicKey,
+        hash: AttoHash,
+    ): Boolean = verifyEd25519(this, publicKey, hash)
+
+    @JsExport.Ignore
+    @JvmSynthetic
+    suspend fun isValid(
+        publicKey: AttoPublicKey,
+        challenge: AttoChallenge,
+        timestamp: AttoInstant,
+    ): Boolean {
+        val hash = AttoHash.hash(64, publicKey.value, challenge.value, timestamp.toByteArray())
+        return isValid(publicKey, hash)
+    }
+
+    @JsExport.Ignore
+    @JvmSynthetic
+    suspend fun isValidMessage(
+        publicKey: AttoPublicKey,
+        message: ByteArray,
+    ): Boolean = isValid(publicKey, attoSignedMessageHash(publicKey, message))
+
     override fun toString(): String = value.toHex()
 }
 
-expect fun AttoSignature.isValid(
+internal expect suspend fun verifyEd25519(
+    signature: AttoSignature,
     publicKey: AttoPublicKey,
     hash: AttoHash,
 ): Boolean
 
-fun AttoSignature.isValid(
+@JvmSynthetic
+@Deprecated(
+    "Moved to AttoSignature.isValid(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.isValid(publicKey, hash)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoSignature.isValid(
+    publicKey: AttoPublicKey,
+    hash: AttoHash,
+): Boolean = this.isValid(publicKey, hash)
+
+@JvmSynthetic
+@Deprecated(
+    "Moved to AttoSignature.isValid(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.isValid(publicKey, challenge, timestamp)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoSignature.isValid(
     publicKey: AttoPublicKey,
     challenge: AttoChallenge,
     timestamp: AttoInstant,
-): Boolean {
-    val hash = AttoHash.hash(64, publicKey.value, challenge.value, timestamp.toByteArray())
-    return isValid(publicKey, hash)
-}
+): Boolean = this.isValid(publicKey, challenge, timestamp)
 
-fun AttoSignature.isValidMessage(
+@JvmSynthetic
+@Deprecated(
+    "Moved to AttoSignature.isValidMessage(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.isValidMessage(publicKey, message)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoSignature.isValidMessage(
     publicKey: AttoPublicKey,
     message: ByteArray,
-): Boolean = isValid(publicKey, attoSignedMessageHash(publicKey, message))
+): Boolean = this.isValidMessage(publicKey, message)
 
 private val ATTO_SIGNED_MESSAGE_DOMAIN = "ATTO Signed Message v1".encodeToByteArray()
 

@@ -1,76 +1,71 @@
 package cash.atto.commons
 
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
 
 internal class AttoMnemonicTest {
     @Test
     @Suppress("ktlint:standard:max-line-length")
-    fun `should create mnemonic`() {
-        // given
-        val expectedMnemonic =
-            AttoMnemonic(
-                "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly occur",
-            )
+    fun `should create mnemonic`() =
+        runTest {
+            // given
+            val expectedMnemonic =
+                AttoMnemonic.fromPhrase(
+                    "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly occur",
+                )
 
-        // when
-        val entropy = expectedMnemonic.toEntropy()
-        val mnemonic = AttoMnemonic(entropy)
+            // when
+            val entropy = expectedMnemonic.toEntropy()
+            val mnemonic = AttoMnemonic.fromEntropy(entropy)
 
-        // then
-        assertEquals(expectedMnemonic.words.joinToString(" "), mnemonic.words.joinToString(" "))
-    }
-
-    @Test
-    fun `should generate mnemonic`() {
-        AttoMnemonic.generate()
-    }
+            // then
+            assertEquals(expectedMnemonic.words.joinToString(" "), mnemonic.words.joinToString(" "))
+        }
 
     @Test
-    fun `should throw exception when mnemonic has invalid size`() {
-        // when
-        val exception = assertFails { AttoMnemonic("edge") }
-
-        // then
-        assertTrue(exception is AttoMnemonicException)
-    }
+    fun `should generate mnemonic`() =
+        runTest {
+            AttoMnemonic.generate()
+        }
 
     @Test
-    fun `should throw exception when mnemonic has invalid word`() {
-        // given
-        val words = AttoMnemonic.generate().words.toMutableList()
-        words[0] = "atto"
+    fun `should throw exception when mnemonic has invalid size`() =
+        runTest {
+            assertFailsWith<AttoMnemonicException> { AttoMnemonic.fromPhrase("edge") }
+        }
 
-        // when
-        val exception = assertFails { AttoMnemonic(words) }
+    @Test
+    fun `should throw exception when mnemonic has invalid word`() =
+        runTest {
+            // given
+            val words = AttoMnemonic.generate().words.toMutableList()
+            words[0] = "atto"
 
-        // then
-        assertTrue(exception is AttoMnemonicException)
-    }
+            // when / then
+            assertFailsWith<AttoMnemonicException> { AttoMnemonic.fromWords(words) }
+        }
 
     @Test
     @Suppress("ktlint:standard:max-line-length")
-    fun `should throw exception when mnemonic has invalid checksum`() {
-        // given
-        val words =
-            "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly truly"
+    fun `should throw exception when mnemonic has invalid checksum`() =
+        runTest {
+            // given
+            val words =
+                "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly truly"
 
-        // when
-        val exception = assertFails { AttoMnemonic(words) }
-
-        // then
-        assertTrue(exception is AttoMnemonicException)
-    }
+            // when / then
+            assertFailsWith<AttoMnemonicException> { AttoMnemonic.fromPhrase(words) }
+        }
 
     @Test
-    fun `should reject invalid entropy sizes`() {
-        listOf(32, 34, 35).forEach { size ->
-            val exception = assertFails { AttoMnemonic(ByteArray(size)) }
-            assertTrue(exception is AttoMnemonicException)
+    fun `should reject invalid entropy sizes`() =
+        runTest {
+            listOf(32, 34, 35).forEach { size ->
+                assertFailsWith<AttoMnemonicException> { AttoMnemonic.fromEntropy(ByteArray(size)) }
+            }
         }
-    }
 
     @Test
     fun `should return dictionary`() {

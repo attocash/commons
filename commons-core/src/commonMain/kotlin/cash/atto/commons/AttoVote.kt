@@ -12,6 +12,8 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -29,6 +31,24 @@ data class AttoVote(
 
     companion object {
         val finalTimestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE)
+
+        internal fun readFromBuffer(buffer: Buffer): AttoVote =
+            AttoVote(
+                version = buffer.readAttoVersion(),
+                algorithm = buffer.readAttoAlgorithm(),
+                publicKey = buffer.readAttoPublicKey(),
+                blockAlgorithm = buffer.readAttoAlgorithm(),
+                blockHash = buffer.readAttoHash(),
+                timestamp = buffer.readInstant(),
+            )
+
+        @JsExport.Ignore
+        @JvmStatic
+        fun fromBuffer(buffer: Buffer): AttoVote {
+            val vote = readFromBuffer(buffer)
+            buffer.requireNoRemainingBytes("AttoVote")
+            return vote
+        }
     }
 
     fun isFinal(): Boolean = timestamp == finalTimestamp
@@ -54,11 +74,24 @@ data class AttoSignedVote(
     AttoSerializable {
     override val hash by lazy { vote.hash }
 
-    companion object {}
+    companion object {
+        @JvmStatic
+        fun fromBuffer(buffer: Buffer): AttoSignedVote {
+            val vote = AttoVote.readFromBuffer(buffer)
+            val signedVote =
+                AttoSignedVote(
+                    vote = vote,
+                    signature = buffer.readAttoSignature(),
+                )
+            buffer.requireNoRemainingBytes("AttoSignedVote")
+            return signedVote
+        }
+    }
 
     fun isFinal() = vote.isFinal()
 
-    fun isValid(): Boolean = vote.isValid() && signature.isValid(vote.publicKey, hash)
+    @JvmSynthetic
+    suspend fun isValid(): Boolean = vote.isValid() && signature.isValid(vote.publicKey, hash)
 
     override fun toBuffer(): Buffer =
         Buffer().apply {
@@ -68,32 +101,21 @@ data class AttoSignedVote(
         }
 }
 
-internal fun AttoVote.Companion.readFromBuffer(buffer: Buffer): AttoVote =
-    AttoVote(
-        version = buffer.readAttoVersion(),
-        algorithm = buffer.readAttoAlgorithm(),
-        publicKey = buffer.readAttoPublicKey(),
-        blockAlgorithm = buffer.readAttoAlgorithm(),
-        blockHash = buffer.readAttoHash(),
-        timestamp = buffer.readInstant(),
-    )
+@Deprecated(
+    "Moved to AttoVote.fromBuffer(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoVote.fromBuffer(buffer)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote = AttoVote.fromBuffer(buffer)
 
-fun AttoVote.Companion.fromBuffer(buffer: Buffer): AttoVote {
-    val vote = readFromBuffer(buffer)
-    buffer.requireNoRemainingBytes("AttoVote")
-    return vote
-}
-
-fun AttoSignedVote.Companion.fromBuffer(buffer: Buffer): AttoSignedVote {
-    val vote = AttoVote.readFromBuffer(buffer)
-    val signedVote =
-        AttoSignedVote(
-            vote = vote,
-            signature = buffer.readAttoSignature(),
-        )
-    buffer.requireNoRemainingBytes("AttoSignedVote")
-    return signedVote
-}
+@Deprecated(
+    "Moved to AttoSignedVote.fromBuffer(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoSignedVote.fromBuffer(buffer)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoSignedVote.Companion.fromBuffer(buffer: Buffer): AttoSignedVote = AttoSignedVote.fromBuffer(buffer)
 
 object AttoSignedVoteAsByteArraySerializer : KSerializer<AttoSignedVote> {
     override val descriptor = PrimitiveSerialDescriptor("AttoSignedVoteAsByteArray", PrimitiveKind.BYTE)

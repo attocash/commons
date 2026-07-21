@@ -5,11 +5,13 @@ import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
-import cash.atto.commons.getTarget
-import cash.atto.commons.getThreshold
 
 interface AttoWorker : AutoCloseable {
-    companion object {}
+    companion object {
+        fun cpu(parallelism: UShort): AttoWorker = AttoWorkerCpu(parallelism)
+
+        fun cpu(): AttoWorker = defaultCpuWorker()
+    }
 
     suspend fun work(
         threshold: ULong,
@@ -30,3 +32,5 @@ interface AttoWorker : AutoCloseable {
         return work(block.network, block.timestamp, target)
     }
 }
+
+internal expect fun defaultCpuWorker(): AttoWorker

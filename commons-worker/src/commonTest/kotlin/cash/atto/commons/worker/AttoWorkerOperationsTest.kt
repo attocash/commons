@@ -4,7 +4,6 @@ import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
-import cash.atto.commons.isValid
 import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
 import kotlin.test.Test

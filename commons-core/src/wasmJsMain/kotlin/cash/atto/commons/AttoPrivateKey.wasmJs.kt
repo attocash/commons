@@ -1,34 +1,38 @@
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package cash.atto.commons
 
-import cash.atto.commons.utils.HMAC
-import cash.atto.commons.utils.SHA512Algorithm
-import org.khronos.webgl.get
+import cash.atto.commons.utils.getSubtleCryptoInstance
+import cash.atto.commons.utils.mapKeyUsages
+import org.khronos.webgl.Uint8Array
 
 internal object AttoPrivateKeyHolder
 
-internal actual class HmacSha512 actual constructor(
+internal actual suspend fun hmacSha512(
     secretKey: ByteArray,
-) {
-    @OptIn(ExperimentalWasmJsInterop::class)
-    private val hmac = HMAC(SHA512Algorithm, secretKey.toUint8Array())
+    data: ByteArray,
+): ByteArray {
+    val crypto = getSubtleCryptoInstance()
+    val key =
+        crypto
+            .importKey(
+                format = "raw",
+                keyData = secretKey.toUint8Array(),
+                algorithm = hmacSha512Algorithm(),
+                extractable = false,
+                keyUsages = mapKeyUsages("sign"),
+            ).await()
+    val digest =
+        crypto
+            .sign(
+                algorithm = hmacAlgorithm(),
+                key = key,
+                data = data.toUint8Array(),
+            ).await()
 
-    actual fun update(
-        data: ByteArray,
-        offset: Int,
-        len: Int,
-    ) {
-        val chunk = data.copyOfRange(offset, offset + len)
-        hmac.update(chunk.toUint8Array())
-    }
-
-    actual fun doFinal(
-        output: ByteArray,
-        offset: Int,
-    ) {
-        val digest = hmac.digest()
-
-        repeat(digest.length) { index ->
-            output[offset + index] = digest[index]
-        }
-    }
+    return Uint8Array(digest).toByteArray()
 }
+
+private fun hmacSha512Algorithm(): JsAny = js("""({ "name": "HMAC", "hash": "SHA-512" })""")
+
+private fun hmacAlgorithm(): JsAny = js("""({ "name": "HMAC" })""")
