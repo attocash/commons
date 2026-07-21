@@ -1,9 +1,11 @@
+@file:OptIn(ExperimentalJsExport::class)
+
 package cash.atto.commons.node
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.Dispatchers
+import kotlin.js.ExperimentalJsExport
 
-@OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 actual class AttoWorkerMockAsyncBuilder actual constructor() {
     private var name: String? = null

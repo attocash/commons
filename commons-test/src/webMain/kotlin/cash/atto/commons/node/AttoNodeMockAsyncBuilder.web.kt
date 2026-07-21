@@ -1,11 +1,13 @@
+@file:OptIn(ExperimentalJsExport::class)
+
 package cash.atto.commons.node
 
 import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.Dispatchers
+import kotlin.js.ExperimentalJsExport
 
-@OptIn(ExperimentalJsExport::class)
 @JsExportForJs
 actual class AttoNodeMockAsyncBuilder actual constructor(
     private val privateKey: AttoPrivateKey,

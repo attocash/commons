@@ -8,11 +8,17 @@ import org.testcontainers.containers.Network
 import org.testcontainers.containers.output.OutputFrame
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.images.PullPolicy
+import kotlin.jvm.JvmSynthetic
 
 actual class AttoNodeMock actual constructor(
     private val configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
-    actual companion object {}
+    actual companion object {
+        actual fun create(configuration: AttoNodeMockConfiguration): AttoNodeMock = newAttoNodeMock(configuration)
+
+        @JvmSynthetic
+        actual suspend fun create(privateKey: cash.atto.commons.AttoPrivateKey): AttoNodeMock = newAttoNodeMock(privateKey)
+    }
 
     private val network = Network.newNetwork()
 
@@ -66,9 +72,15 @@ actual class AttoNodeMock actual constructor(
     actual val genesisTransaction: AttoTransaction
         get() = configuration.genesisTransaction
 
+    @JvmSynthetic
     actual suspend fun start() {
         mysql.start()
         node.start()
+    }
+
+    @JvmSynthetic
+    actual suspend fun stop() {
+        close()
     }
 
     actual override fun close() {
