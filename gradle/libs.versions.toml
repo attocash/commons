@@ -39,7 +39,7 @@ springdoc-openapi = "3.0.3"
 swagger = "2.2.49"
 
 # Gradle plugins
-dokka = "2.1.0"
+dokka = "2.2.0"
 nexus-publish = "2.0.0"
 ktlint = "14.2.0"
 foojay-resolver = "1.0.0"
