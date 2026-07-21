@@ -4,11 +4,14 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.output.OutputFrame
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.images.PullPolicy
+import kotlin.jvm.JvmSynthetic
 
 actual class AttoWorkerMock actual constructor(
     configuration: AttoWorkerMockConfiguration,
 ) : AutoCloseable {
-    actual companion object {}
+    actual companion object {
+        actual fun create(configuration: AttoWorkerMockConfiguration): AttoWorkerMock = newAttoWorkerMock(configuration)
+    }
 
     private val worker =
         GenericContainer(configuration.image)
@@ -31,8 +34,14 @@ actual class AttoWorkerMock actual constructor(
             return "http://${worker.host}:${worker.getMappedPort(8080)}"
         }
 
+    @JvmSynthetic
     actual suspend fun start() {
         worker.start()
+    }
+
+    @JvmSynthetic
+    actual suspend fun stop() {
+        close()
     }
 
     actual override fun close() {

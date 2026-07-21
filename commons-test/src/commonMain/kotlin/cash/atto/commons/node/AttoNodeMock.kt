@@ -4,22 +4,29 @@ import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoOpenBlock
 import cash.atto.commons.AttoPrivateKey
 import cash.atto.commons.AttoTransaction
-import cash.atto.commons.createGenesis
-import cash.atto.commons.toSigner
 import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.worker.AttoWorker
-import cash.atto.commons.worker.cpu
 import kotlin.js.ExperimentalJsExport
+import kotlin.jvm.JvmSynthetic
 
 expect class AttoNodeMock internal constructor(
     configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
-    companion object
+    companion object {
+        fun create(configuration: AttoNodeMockConfiguration): AttoNodeMock
+
+        @JvmSynthetic
+        suspend fun create(privateKey: AttoPrivateKey): AttoNodeMock
+    }
 
     val baseUrl: String
     val genesisTransaction: AttoTransaction
 
+    @JvmSynthetic
     suspend fun start()
+
+    @JvmSynthetic
+    suspend fun stop()
 
     override fun close()
 }
@@ -39,7 +46,15 @@ data class AttoNodeMockConfiguration(
     val logOutput: Boolean = false,
 )
 
-fun AttoNodeMock.Companion.create(configuration: AttoNodeMockConfiguration): AttoNodeMock = AttoNodeMock(configuration)
+internal fun newAttoNodeMock(configuration: AttoNodeMockConfiguration): AttoNodeMock = AttoNodeMock(configuration)
+
+@Deprecated(
+    "Moved to AttoNodeMock.create(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoNodeMock.create(configuration)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoNodeMock.Companion.create(configuration: AttoNodeMockConfiguration): AttoNodeMock = AttoNodeMock.create(configuration)
 
 suspend fun AttoTransaction.Companion.createGenesis(privateKey: AttoPrivateKey): AttoTransaction {
     val signer = privateKey.toSigner()
@@ -51,7 +66,15 @@ suspend fun AttoTransaction.Companion.createGenesis(privateKey: AttoPrivateKey):
     )
 }
 
-suspend fun AttoNodeMock.Companion.create(privateKey: AttoPrivateKey): AttoNodeMock {
+internal suspend fun newAttoNodeMock(privateKey: AttoPrivateKey): AttoNodeMock {
     val transaction = AttoTransaction.createGenesis(privateKey)
-    return AttoNodeMock.create(AttoNodeMockConfiguration(transaction, privateKey))
+    return newAttoNodeMock(AttoNodeMockConfiguration(transaction, privateKey))
 }
+
+@Deprecated(
+    "Moved to AttoNodeMock.create(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoNodeMock.create(privateKey)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoNodeMock.Companion.create(privateKey: AttoPrivateKey): AttoNodeMock = AttoNodeMock.create(privateKey)

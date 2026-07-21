@@ -24,6 +24,8 @@ actual class AttoNodeMockAsync internal actual constructor(
 
     fun start(): CompletableFuture<Any> = scope.future { mock.start() }
 
+    fun stop(): CompletableFuture<Any> = scope.future { mock.stop() }
+
     actual override fun close() {
         try {
             mock.close()

@@ -64,9 +64,9 @@ import {
 
 globalThis.require = createRequire(import.meta.url)
 
-const mnemonic = AttoMnemonic.generate()
+const mnemonic = await AttoMnemonic.generate()
 const seed = await toSeedAsync(mnemonic)
-const genesisPrivateKey = toPrivateKey(seed, toAttoIndex(0))
+const genesisPrivateKey = await toPrivateKey(seed, toAttoIndex(0))
 
 const nodeMock = await new AttoNodeMockAsyncBuilder(genesisPrivateKey).build()
 const workerMock = await new AttoWorkerMockAsyncBuilder().build()
@@ -94,8 +94,8 @@ try {
 
   console.log(`Published ${transaction.hash}`)
 } finally {
-  nodeMock.close()
-  workerMock.close()
+  await workerMock.stop()
+  await nodeMock.stop()
 }
 ```
 
@@ -128,7 +128,7 @@ Container logs are disabled by default so generated test keys are not copied int
 
 ## Lifecycle
 
-Always close mocks in `finally` or your test framework's teardown hook.
+Always await `stop()` in `finally` or your test framework's teardown hook. Stop mocks in reverse acquisition order.
 
 ```js
 let nodeMock
@@ -142,13 +142,14 @@ beforeAll(async () => {
   await workerMock.start()
 })
 
-afterAll(() => {
-  nodeMock?.close()
-  workerMock?.close()
+afterAll(async () => {
+  await workerMock?.stop()
+  await nodeMock?.stop()
 })
 ```
 
 `baseUrl` is available only after `start()` has completed.
+`close()` remains available as a synchronous compatibility fallback, but it cannot guarantee teardown has completed before the next test starts.
 
 ## Full Example
 
@@ -162,9 +163,9 @@ Commons packages to start mock services, create a wallet, open accounts, send tr
 | Export                       | Purpose                                                                       |
 |------------------------------|-------------------------------------------------------------------------------|
 | `AttoNodeMockAsyncBuilder`   | Builds a node mock backed by an Atto node container and a MySQL container.    |
-| `AttoNodeMockAsync`          | Starts, closes, and exposes the node mock `baseUrl` and `genesisTransaction`. |
+| `AttoNodeMockAsync`          | Starts, stops, and exposes the node mock `baseUrl` and `genesisTransaction`.  |
 | `AttoWorkerMockAsyncBuilder` | Builds a Work Server mock container.                                          |
-| `AttoWorkerMockAsync`        | Starts, closes, and exposes the worker mock `baseUrl`.                        |
+| `AttoWorkerMockAsync`        | Starts, stops, and exposes the worker mock `baseUrl`.                         |
 | `AttoNodeMockConfiguration`  | Configuration object for lower-level Kotlin/JVM use.                          |
 
 ## Documentation
