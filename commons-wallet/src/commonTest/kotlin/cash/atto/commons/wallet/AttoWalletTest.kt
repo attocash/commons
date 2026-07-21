@@ -10,16 +10,12 @@ import cash.atto.commons.AttoUnit
 import cash.atto.commons.node.AttoNodeClient
 import cash.atto.commons.node.AttoNodeMock
 import cash.atto.commons.node.AttoWorkerMock
-import cash.atto.commons.node.create
 import cash.atto.commons.node.monitor.createAccountMonitor
 import cash.atto.commons.node.monitor.toAccountEntryMonitor
 import cash.atto.commons.node.monitor.toTransactionMonitor
 import cash.atto.commons.node.remote
 import cash.atto.commons.toAttoHeight
 import cash.atto.commons.toAttoIndex
-import cash.atto.commons.toPrivateKey
-import cash.atto.commons.toReceivable
-import cash.atto.commons.toSeed
 import cash.atto.commons.worker.AttoWorker
 import cash.atto.commons.worker.cached
 import cash.atto.commons.worker.remote
@@ -49,70 +45,74 @@ class AttoWalletTest {
             val node = AttoNodeMock.create(privateKey)
             val workServer = AttoWorkerMock.create()
 
-            node.use {
-                workServer.use {
-                    node.start()
-                    workServer.start()
+            try {
+                node.start()
+                workServer.start()
 
-                    val worker = AttoWorker.remote(workServer.baseUrl).retry(1.seconds).cached()
-                    val client = AttoNodeClient.remote(node.baseUrl)
-                    val accountMonitor = client.createAccountMonitor()
+                val worker = AttoWorker.remote(workServer.baseUrl).retry(1.seconds).cached()
+                val client = AttoNodeClient.remote(node.baseUrl)
+                val accountMonitor = client.createAccountMonitor()
 
-                    val initialHeights =
-                        mapOf(
-                            // skip genesis
-                            node.genesisTransaction.address to node.genesisTransaction.block.height + 1U,
-                        )
+                val initialHeights =
+                    mapOf(
+                        // skip genesis
+                        node.genesisTransaction.address to node.genesisTransaction.block.height + 1U,
+                    )
 
-                    val accountEntryMonitor =
-                        accountMonitor.toAccountEntryMonitor {
-                            initialHeights[it] ?: 1U.toAttoHeight()
-                        }
-                    val transactionMonitor =
-                        accountMonitor.toTransactionMonitor {
-                            initialHeights[it] ?: 1U.toAttoHeight()
-                        }
+                val accountEntryMonitor =
+                    accountMonitor.toAccountEntryMonitor {
+                        initialHeights[it] ?: 1U.toAttoHeight()
+                    }
+                val transactionMonitor =
+                    accountMonitor.toTransactionMonitor {
+                        initialHeights[it] ?: 1U.toAttoHeight()
+                    }
 
-                    val wallet = AttoWallet.create(client, worker, seed)
-                    val receiverJob =
-                        wallet.startAutoReceiver(accountMonitor) {
-                            AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32)))
-                        }
-                    wallet.openAccount(genesisAccountIndex)
-                    wallet.openAccount(accountIndex1, accountIndex3)
+                val wallet = AttoWallet.create(client, worker, seed)
+                val receiverJob =
+                    wallet.startAutoReceiver(accountMonitor) {
+                        AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32)))
+                    }
+                wallet.openAccount(genesisAccountIndex)
+                wallet.openAccount(accountIndex1, accountIndex3)
 
-                    assertEquals(AttoAmount.MAX, wallet.getAccount(genesisAccountIndex)!!.balance)
-                    assertTrue(wallet.isOpen(accountIndex2))
+                assertEquals(AttoAmount.MAX, wallet.getAccount(genesisAccountIndex)!!.balance)
+                assertTrue(wallet.isOpen(accountIndex2))
 
-                    val sendAmount = AttoAmount.from(AttoUnit.ATTO, "1")
-                    val sendTransaction1 = wallet.send(genesisAccountIndex, wallet.getAddress(accountIndex2), sendAmount)
-                    assertEquals(AttoAmount.MAX - sendAmount, wallet.getAccount(genesisAccountIndex)!!.balance)
+                val sendAmount = AttoAmount.from(AttoUnit.ATTO, "1")
+                val sendTransaction1 = wallet.send(genesisAccountIndex, wallet.getAddress(accountIndex2), sendAmount)
+                assertEquals(AttoAmount.MAX - sendAmount, wallet.getAccount(genesisAccountIndex)!!.balance)
 
-                    val transactionMessage = transactionMonitor.stream().first()
-                    transactionMessage.acknowledge()
-                    assertEquals(sendTransaction1, transactionMessage.value)
+                val transactionMessage = transactionMonitor.stream().first()
+                transactionMessage.acknowledge()
+                assertEquals(sendTransaction1, transactionMessage.value)
 
-                    val accountEntryMessage = accountEntryMonitor.stream().first()
-                    accountEntryMessage.acknowledge()
-                    assertEquals(sendTransaction1.hash, accountEntryMessage.value.hash)
+                val accountEntryMessage = accountEntryMonitor.stream().first()
+                accountEntryMessage.acknowledge()
+                assertEquals(sendTransaction1.hash, accountEntryMessage.value.hash)
 
-                    val balance =
-                        withContext(Dispatchers.Default) {
-                            withTimeoutOrNull(5.seconds) {
-                                while (wallet.getAccount(accountIndex2)?.balance == null) {
-                                    delay(1.seconds)
-                                }
-                                wallet.getAccount(accountIndex2)?.balance
+                val balance =
+                    withContext(Dispatchers.Default) {
+                        withTimeoutOrNull(5.seconds) {
+                            while (wallet.getAccount(accountIndex2)?.balance == null) {
+                                delay(1.seconds)
                             }
+                            wallet.getAccount(accountIndex2)?.balance
                         }
-                    assertEquals(sendAmount, balance)
+                    }
+                assertEquals(sendAmount, balance)
 
-                    receiverJob.cancel()
-                    val sendTransaction2 = wallet.send(genesisAccountIndex, wallet.getAddress(accountIndex2), sendAmount)
-                    assertEquals(AttoAmount.MAX - (sendAmount + sendAmount), wallet.getAccount(genesisAccountIndex)!!.balance)
+                receiverJob.cancel()
+                val sendTransaction2 = wallet.send(genesisAccountIndex, wallet.getAddress(accountIndex2), sendAmount)
+                assertEquals(AttoAmount.MAX - (sendAmount + sendAmount), wallet.getAccount(genesisAccountIndex)!!.balance)
 
-                    val receivable = accountMonitor.receivableStream(minAmount = sendAmount).first()
-                    assertEquals(receivable, (sendTransaction2.block as AttoSendBlock).toReceivable())
+                val receivable = accountMonitor.receivableStream(minAmount = sendAmount).first()
+                assertEquals(receivable, (sendTransaction2.block as AttoSendBlock).toReceivable())
+            } finally {
+                try {
+                    workServer.stop()
+                } finally {
+                    node.stop()
                 }
             }
         }

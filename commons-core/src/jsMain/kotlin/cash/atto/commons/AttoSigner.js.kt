@@ -1,25 +1,48 @@
 package cash.atto.commons
 
-import cash.atto.commons.utils.generateKeyPairFromSeed
+import cash.atto.commons.utils.CryptoKey
+import cash.atto.commons.utils.getSubtleCryptoInstance
+import org.khronos.webgl.Uint8Array
+import kotlin.js.json
 
 internal object InMemorySignerHolder
 
-actual class InMemorySigner actual constructor(
-    internal actual val privateKey: AttoPrivateKey,
-) : AttoSigner {
-    actual override val algorithm: AttoAlgorithm = AttoAlgorithm.V1
-    actual override val publicKey: AttoPublicKey = privateKey.toPublicKey()
-    actual override val address: AttoAddress = publicKey.toAddress(AttoAlgorithm.V1)
-
-    private val keyPair = generateKeyPairFromSeed(privateKey.value.toUint8Array())
-
-    actual override suspend fun sign(hash: AttoHash): AttoSignature {
+internal actual class Ed25519SigningKey(
+    private val cryptoKey: CryptoKey,
+    actual val publicKey: AttoPublicKey,
+) {
+    actual suspend fun sign(hash: AttoHash): AttoSignature {
         val signature =
-            cash.atto.commons.utils.sign(
-                secretKey = keyPair.secretKey,
-                message = hash.value.toUint8Array(),
-            )
+            getSubtleCryptoInstance()
+                .sign(
+                    algorithm = json("name" to "Ed25519"),
+                    key = cryptoKey,
+                    data = hash.value.toUint8Array(),
+                ).await()
 
-        return AttoSignature(signature.toByteArray())
+        return AttoSignature(Uint8Array(signature).toByteArray())
     }
+}
+
+internal actual suspend fun loadEd25519SigningKey(privateKey: AttoPrivateKey): Ed25519SigningKey {
+    val crypto = getSubtleCryptoInstance()
+    val cryptoKey =
+        crypto
+            .importKey(
+                format = "pkcs8",
+                keyData = privateKey.toEd25519Pkcs8().toUint8Array(),
+                algorithm = json("name" to "Ed25519"),
+                extractable = true,
+                keyUsages = arrayOf("sign"),
+            ).await()
+    val publicKey =
+        AttoPublicKey(
+            crypto
+                .exportKey("jwk", cryptoKey)
+                .await()
+                .x
+                .base64UrlToByteArray(),
+        )
+
+    return Ed25519SigningKey(cryptoKey, publicKey)
 }

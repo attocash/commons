@@ -13,7 +13,7 @@ internal class AttoSeedTest {
         runTest {
             // given
             val mnemonic =
-                AttoMnemonic(
+                AttoMnemonic.fromPhrase(
                     "edge defense waste choose enrich upon flee junk siren film clown finish luggage leader kid quick brick print evidence swap drill paddle truly occur",
                 )
 

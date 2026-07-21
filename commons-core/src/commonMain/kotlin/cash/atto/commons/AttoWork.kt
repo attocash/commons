@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalJsExport::class)
+
 package cash.atto.commons
 
 import cash.atto.commons.AttoNetwork.Companion.DOUBLING_PERIOD
@@ -16,6 +18,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.jvm.JvmStatic
 import kotlin.math.pow
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -44,30 +47,6 @@ private fun initializeThresholdCache(): Map<AttoNetwork, Map<Int, ULong>> {
 
 private val thresholdCache = initializeThresholdCache()
 
-@OptIn(ExperimentalTime::class)
-fun AttoWork.Companion.getThreshold(
-    network: AttoNetwork,
-    timestamp: AttoInstant,
-): ULong {
-    require(network != AttoNetwork.UNKNOWN) { "Atto network can't be UNKNOWN." }
-    if (timestamp < INITIAL_INSTANT) {
-        throw IllegalArgumentException("Timestamp($timestamp) lower than initialInstant(${AttoNetwork.INITIAL_INSTANT})")
-    }
-
-    return thresholdCache[network]!![timestamp.value.toLocalDateTime(TimeZone.UTC).year]!!
-}
-
-@OptIn(ExperimentalJsExport::class)
-@JsExport.Ignore
-fun AttoWork.Companion.isValid(
-    threshold: ULong,
-    target: ByteArray,
-    work: ByteArray,
-): Boolean {
-    val difficult = AttoHasher.hash(8, work, target).toULong()
-    return difficult <= threshold
-}
-
 @JsExportForJs
 @Serializable(with = AttoWorkAsStringSerializer::class)
 data class AttoWork(
@@ -77,6 +56,57 @@ data class AttoWork(
         const val SIZE = 8
 
         fun parse(value: String): AttoWork = AttoWork(value.fromHexToByteArray(SIZE))
+
+        @OptIn(ExperimentalTime::class)
+        @JsExport.Ignore
+        @JvmStatic
+        fun getThreshold(
+            network: AttoNetwork,
+            timestamp: AttoInstant,
+        ): ULong {
+            require(network != AttoNetwork.UNKNOWN) { "Atto network can't be UNKNOWN." }
+            if (timestamp < INITIAL_INSTANT) {
+                throw IllegalArgumentException("Timestamp($timestamp) lower than initialInstant(${AttoNetwork.INITIAL_INSTANT})")
+            }
+
+            return thresholdCache[network]!![timestamp.value.toLocalDateTime(TimeZone.UTC).year]!!
+        }
+
+        @JsExport.Ignore
+        @JvmStatic
+        fun isValid(
+            threshold: ULong,
+            target: ByteArray,
+            work: ByteArray,
+        ): Boolean {
+            val difficult = AttoHasher.hash(8, work, target).toULong()
+            return difficult <= threshold
+        }
+
+        @JsExport.Ignore
+        @JvmStatic
+        fun isValid(
+            threshold: ULong,
+            target: AttoWorkTarget,
+            work: ByteArray,
+        ): Boolean = isValid(threshold, target.value, work)
+
+        @JsExport.Ignore
+        @JvmStatic
+        fun isValid(
+            network: AttoNetwork,
+            timestamp: AttoInstant,
+            target: AttoWorkTarget,
+            work: ByteArray,
+        ): Boolean {
+            if (network == AttoNetwork.UNKNOWN) {
+                return false
+            }
+            if (timestamp < INITIAL_INSTANT) {
+                return false
+            }
+            return isValid(getThreshold(network, timestamp), target, work)
+        }
     }
 
     init {
@@ -96,6 +126,31 @@ data class AttoWork(
 
     override fun toString(): String = value.toHex()
 }
+
+@Deprecated(
+    "Moved to AttoWork.getThreshold(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWork.getThreshold(network, timestamp)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoWork.Companion.getThreshold(
+    network: AttoNetwork,
+    timestamp: AttoInstant,
+): ULong = AttoWork.getThreshold(network, timestamp)
+
+@OptIn(ExperimentalJsExport::class)
+@JsExport.Ignore
+@Deprecated(
+    "Moved to AttoWork.isValid(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWork.isValid(threshold, target, work)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoWork.Companion.isValid(
+    threshold: ULong,
+    target: ByteArray,
+    work: ByteArray,
+): Boolean = AttoWork.isValid(threshold, target, work)
 
 object AttoWorkAsStringSerializer : KSerializer<AttoWork> {
     override val descriptor = PrimitiveSerialDescriptor("AttoWorkAsString", PrimitiveKind.STRING)

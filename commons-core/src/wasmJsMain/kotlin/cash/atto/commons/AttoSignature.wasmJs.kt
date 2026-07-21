@@ -1,20 +1,34 @@
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package cash.atto.commons
 
-import cash.atto.commons.utils.verify
+import cash.atto.commons.utils.getSubtleCryptoInstance
+import cash.atto.commons.utils.mapKeyUsages
 
-actual fun AttoSignature.isValid(
+internal actual suspend fun verifyEd25519(
+    signature: AttoSignature,
     publicKey: AttoPublicKey,
     hash: AttoHash,
 ): Boolean {
-    val publicKeyUint8 = publicKey.value.toUint8Array()
+    val crypto = getSubtleCryptoInstance()
+    val cryptoKey =
+        crypto
+            .importKey(
+                format = "raw",
+                keyData = publicKey.value.toUint8Array(),
+                algorithm = ed25519Algorithm(),
+                extractable = false,
+                keyUsages = mapKeyUsages("verify"),
+            ).await()
 
-    val signatureUint8 = this.value.toUint8Array()
-
-    val hashUint8 = hash.value.toUint8Array()
-
-    return verify(
-        publicKey = publicKeyUint8,
-        message = hashUint8,
-        signature = signatureUint8,
-    )
+    return crypto
+        .verify(
+            algorithm = ed25519Algorithm(),
+            key = cryptoKey,
+            signature = signature.value.toUint8Array(),
+            data = hash.value.toUint8Array(),
+        ).await()
+        .toBoolean()
 }
+
+private fun ed25519Algorithm(): JsAny = js("""({ "name": "Ed25519" })""")

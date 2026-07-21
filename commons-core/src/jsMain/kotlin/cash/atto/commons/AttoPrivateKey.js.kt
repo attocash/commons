@@ -1,34 +1,32 @@
 package cash.atto.commons
 
-import cash.atto.commons.utils.HMAC
-import cash.atto.commons.utils.SHA512Algorithm
+import cash.atto.commons.utils.getSubtleCryptoInstance
 import org.khronos.webgl.Uint8Array
-import org.khronos.webgl.get
+import kotlin.js.json
 
 internal object AttoPrivateKeyHolder
 
-actual class HmacSha512 actual constructor(
+internal actual suspend fun hmacSha512(
     secretKey: ByteArray,
-) {
-    private val hmac = HMAC(SHA512Algorithm, Uint8Array(secretKey.toTypedArray()))
+    data: ByteArray,
+): ByteArray {
+    val crypto = getSubtleCryptoInstance()
+    val key =
+        crypto
+            .importKey(
+                format = "raw",
+                keyData = secretKey.toUint8Array(),
+                algorithm = json("name" to "HMAC", "hash" to "SHA-512"),
+                extractable = false,
+                keyUsages = arrayOf("sign"),
+            ).await()
+    val digest =
+        crypto
+            .sign(
+                algorithm = json("name" to "HMAC"),
+                key = key,
+                data = data.toUint8Array(),
+            ).await()
 
-    actual fun update(
-        data: ByteArray,
-        offset: Int,
-        len: Int,
-    ) {
-        val chunk = data.copyOfRange(offset, offset + len)
-        hmac.update(Uint8Array(chunk.toTypedArray()))
-    }
-
-    actual fun doFinal(
-        output: ByteArray,
-        offset: Int,
-    ) {
-        val digest = hmac.digest()
-
-        repeat(digest.length) { index ->
-            output[offset + index] = digest[index]
-        }
-    }
+    return Uint8Array(digest).toByteArray()
 }

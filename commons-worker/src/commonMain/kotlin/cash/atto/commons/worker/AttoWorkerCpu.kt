@@ -2,7 +2,6 @@ package cash.atto.commons.worker
 
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
-import cash.atto.commons.isValid
 import cash.atto.commons.toByteArray
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -16,9 +15,21 @@ import kotlinx.coroutines.yield
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-fun AttoWorker.Companion.cpu(parallelism: UShort): AttoWorker = AttoWorkerCpu(parallelism)
+@Deprecated(
+    "Moved to AttoWorker.cpu(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWorker.cpu(parallelism)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoWorker.Companion.cpu(parallelism: UShort): AttoWorker = AttoWorker.cpu(parallelism)
 
-expect fun AttoWorker.Companion.cpu(): AttoWorker
+@Deprecated(
+    "Moved to AttoWorker.cpu(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWorker.cpu()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoWorker.Companion.cpu(): AttoWorker = AttoWorker.cpu()
 
 internal class AttoWorkerCpu(
     val parallelism: UShort,

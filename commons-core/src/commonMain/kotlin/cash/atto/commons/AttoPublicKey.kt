@@ -9,6 +9,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
+import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @Serializable(with = AttoPublicKeyAsStringSerializer::class)
@@ -33,11 +34,20 @@ data class AttoPublicKey(
 
     override fun hashCode(): Int = value.contentHashCode()
 
+    fun toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)
+
     override fun toString(): String = value.toHex()
 }
 
 @JsExportForJs
-expect fun AttoPrivateKey.toPublicKey(): AttoPublicKey
+@JvmSynthetic
+@Deprecated(
+    "Moved to AttoPrivateKey.toPublicKey(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toPublicKey()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoPrivateKey.toPublicKey(): AttoPublicKey = this.toPublicKey()
 
 object AttoPublicKeyAsStringSerializer : KSerializer<AttoPublicKey> {
     override val descriptor = PrimitiveSerialDescriptor("AttoPublicKeyAsString", PrimitiveKind.STRING)

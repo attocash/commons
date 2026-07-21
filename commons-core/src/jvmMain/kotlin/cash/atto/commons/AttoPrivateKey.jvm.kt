@@ -1,30 +1,25 @@
+@file:JvmName("AttoPrivateKeys")
+
 package cash.atto.commons
 
+import kotlinx.coroutines.runBlocking
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import kotlin.jvm.JvmName
 
 internal object AttoPrivateKeyHolder
 
-internal actual class HmacSha512 actual constructor(
+internal actual suspend fun hmacSha512(
     secretKey: ByteArray,
-) {
-    private val mac: Mac =
-        Mac.getInstance("HmacSHA512").apply {
-            init(SecretKeySpec(secretKey, algorithm))
-        }
+    data: ByteArray,
+): ByteArray =
+    Mac
+        .getInstance("HmacSHA512")
+        .apply { init(SecretKeySpec(secretKey, "HmacSHA512")) }
+        .doFinal(data)
 
-    actual fun update(
-        data: ByteArray,
-        offset: Int,
-        len: Int,
-    ) {
-        mac.update(data, offset, len)
-    }
+fun AttoSeed.toPrivateKeyBlocking(index: AttoKeyIndex): AttoPrivateKey = runBlocking { toPrivateKey(index) }
 
-    actual fun doFinal(
-        output: ByteArray,
-        offset: Int,
-    ) {
-        mac.doFinal(output, offset)
-    }
-}
+fun AttoSeed.toPrivateKeyBlocking(index: UInt): AttoPrivateKey = runBlocking { toPrivateKey(index) }
+
+fun AttoSeed.toPrivateKeyBlocking(index: Int): AttoPrivateKey = runBlocking { toPrivateKey(index) }

@@ -31,15 +31,10 @@ data class AttoReceivable(
     fun toJson(): String = attoJson.encodeToString(this)
 }
 
-fun AttoSendBlock.toReceivable(): AttoReceivable =
-    AttoReceivable(
-        network = this.network,
-        hash = this.hash,
-        version = this.version,
-        algorithm = this.algorithm,
-        publicKey = this.publicKey,
-        timestamp = this.timestamp,
-        receiverAlgorithm = this.receiverAlgorithm,
-        receiverPublicKey = this.receiverPublicKey,
-        amount = this.amount,
-    )
+@Deprecated(
+    "Moved to AttoSendBlock.toReceivable(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toReceivable()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoSendBlock.toReceivable(): AttoReceivable = this.toReceivable()

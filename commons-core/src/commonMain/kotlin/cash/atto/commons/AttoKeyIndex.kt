@@ -20,15 +20,33 @@ data class AttoKeyIndex
     @JsExport.Ignore
     constructor(
         val value: UInt,
-    ) {
+    ) : Comparable<AttoKeyIndex> {
+        @JsExport.Ignore
+        override operator fun compareTo(other: AttoKeyIndex): Int = value.compareTo(other.value)
+
+        @JsExport.Ignore
+        operator fun inc(): AttoKeyIndex = AttoKeyIndex(value + 1U)
+
         fun toInt(): Int = value.toInt()
     }
 
 @JvmSynthetic
-operator fun AttoKeyIndex.compareTo(other: AttoKeyIndex) = value.compareTo(other.value)
+@Deprecated(
+    "Moved to AttoKeyIndex.compareTo(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.compareTo(other)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+operator fun AttoKeyIndex.compareTo(other: AttoKeyIndex): Int = this.compareTo(other)
 
 @JvmSynthetic
-operator fun AttoKeyIndex.inc() = AttoKeyIndex(value + 1U)
+@Deprecated(
+    "Moved to AttoKeyIndex.inc(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.inc()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+operator fun AttoKeyIndex.inc(): AttoKeyIndex = this.inc()
 
 @JvmSynthetic
 fun UInt.toAttoIndex(): AttoKeyIndex = AttoKeyIndex(this)

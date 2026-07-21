@@ -10,7 +10,6 @@ import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoSignature
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.AttoVote
-import cash.atto.commons.isValid
 import cash.atto.commons.transport.AttoHttpTimeouts
 import cash.atto.commons.transport.AttoHttpTransport
 import cash.atto.commons.transport.httpStatusCodeOrNull

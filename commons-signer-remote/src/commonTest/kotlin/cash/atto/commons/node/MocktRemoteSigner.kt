@@ -7,7 +7,6 @@ import cash.atto.commons.node.HttpSignerRemote.ChallengeSignatureRequest
 import cash.atto.commons.node.HttpSignerRemote.PublicKeyResponse
 import cash.atto.commons.node.HttpSignerRemote.SignatureResponse
 import cash.atto.commons.node.HttpSignerRemote.VoteSignatureRequest
-import cash.atto.commons.toSigner
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
@@ -22,6 +21,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 import kotlin.time.Duration
 
@@ -31,7 +31,7 @@ class MocktRemoteSigner(
     private val invalidSignatures: Boolean = false,
     private val voteDelay: Duration = Duration.ZERO,
 ) {
-    val signer = AttoPrivateKey.generate().toSigner()
+    val signer = runBlocking { AttoPrivateKey.generate().toSigner() }
     val voteRequestStarted = CompletableDeferred<Unit>()
     var voteRequestCount = 0
         private set

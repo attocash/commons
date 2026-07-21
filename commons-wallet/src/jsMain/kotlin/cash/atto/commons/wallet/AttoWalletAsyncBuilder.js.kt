@@ -7,7 +7,6 @@ import cash.atto.commons.AttoSeed
 import cash.atto.commons.AttoSigner
 import cash.atto.commons.node.AttoNodeClientAsync
 import cash.atto.commons.node.monitor.AttoAccountMonitorAsync
-import cash.atto.commons.toSigner
 import cash.atto.commons.utils.JsExportForJs
 import cash.atto.commons.worker.AttoWorkerAsync
 import kotlinx.coroutines.Dispatchers

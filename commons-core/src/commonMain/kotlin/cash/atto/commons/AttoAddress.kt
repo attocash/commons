@@ -130,7 +130,13 @@ data class AttoAddress(
 }
 
 @JsExportForJs
-fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = AttoAddress(algorithm, this)
+@Deprecated(
+    "Moved to AttoPublicKey.toAddress(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toAddress(algorithm)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoPublicKey.toAddress(algorithm: AttoAlgorithm): AttoAddress = this.toAddress(algorithm)
 
 object AttoAddressAsStringSerializer : KSerializer<AttoAddress> {
     override val descriptor = PrimitiveSerialDescriptor("AttoAddressAsString", PrimitiveKind.STRING)

@@ -1,6 +1,5 @@
 package cash.atto.commons
 
-import cash.atto.commons.AttoNetwork.Companion.INITIAL_INSTANT
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -38,34 +37,40 @@ data class AttoWorkTarget(
     override fun toString(): String = value.toHex()
 }
 
-fun AttoBlock.getTarget(): AttoWorkTarget =
-    when (this) {
-        is AttoOpenBlock -> AttoWorkTarget(this.publicKey.value)
-        is PreviousSupport -> AttoWorkTarget(this.previous.value)
-    }
+@Deprecated(
+    "Moved to AttoBlock.getTarget(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.getTarget()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoBlock.getTarget(): AttoWorkTarget = this.getTarget()
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport.Ignore
+@Deprecated(
+    "Moved to AttoWork.isValid(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWork.isValid(threshold, target, work)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun AttoWork.Companion.isValid(
     threshold: ULong,
     target: AttoWorkTarget,
     work: ByteArray,
-): Boolean = isValid(threshold, target.value, work)
+): Boolean = AttoWork.isValid(threshold, target, work)
 
+@Deprecated(
+    "Moved to AttoWork.isValid(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("AttoWork.isValid(network, timestamp, target, work)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun AttoWork.Companion.isValid(
     network: AttoNetwork,
     timestamp: AttoInstant,
     target: AttoWorkTarget,
     work: ByteArray,
-): Boolean {
-    if (network == AttoNetwork.UNKNOWN) {
-        return false
-    }
-    if (timestamp < INITIAL_INSTANT) {
-        return false
-    }
-    return isValid(AttoWork.getThreshold(network, timestamp), target, work)
-}
+): Boolean = AttoWork.isValid(network, timestamp, target, work)
 
 object AttoWorkTargetAsStringSerializer : KSerializer<AttoWorkTarget> {
     override val descriptor = PrimitiveSerialDescriptor("AttoWorkTargetAsString", PrimitiveKind.STRING)

@@ -13,7 +13,13 @@ fun ByteArray.toHex(): String = this.toHexString(HexFormat.UpperCase)
 
 fun Buffer.toHex(): String = this.copy().readByteArray().toHex()
 
-fun AttoSerializable.toHex(): String = toBuffer().toHex()
+@Deprecated(
+    "Moved to AttoSerializable.toHex(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toHex()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoSerializable.toHex(): String = this.toHex()
 
 @OptIn(ExperimentalJsExport::class, ExperimentalStdlibApi::class)
 @JsExportForJs
@@ -38,11 +44,13 @@ fun ByteArray.checkLength(size: Int) {
     require(this.size == size) { "Byte array contains ${this.size} characters but should contains $size" }
 }
 
-fun AttoInstant.toByteArray(): ByteArray {
-    val buffer = Buffer()
-    buffer.writeInstant(this)
-    return buffer.readByteArray()
-}
+@Deprecated(
+    "Moved to AttoInstant.toByteArray(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toByteArray()"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun AttoInstant.toByteArray(): ByteArray = this.toByteArray()
 
 fun ByteArray.toULong(): ULong {
     val buffer = Buffer()

@@ -1,5 +1,3 @@
-@file:JvmName("AttoPrivateKeys")
-
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
@@ -8,7 +6,6 @@ import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
-import kotlin.jvm.JvmName
 import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
@@ -20,15 +17,7 @@ class AttoPrivateKey(
         value.checkLength(32)
     }
 
-    @JsExport.Ignore
-    constructor(seed: AttoSeed, index: UInt) : this(ed25519BIP44(seed, "m/44'/$coinType'/$index'"))
-
-    @JsExport.Ignore
-    constructor(seed: AttoSeed, index: AttoKeyIndex) : this(seed, index.value)
-
     companion object {
-        private val coinType = 1869902945 // "atto".toByteArray().toUInt()
-
         fun parse(value: String): AttoPrivateKey = AttoPrivateKey(value.fromHexToByteArray(32))
 
         fun generate(): AttoPrivateKey {
@@ -37,16 +26,52 @@ class AttoPrivateKey(
         }
     }
 
+    @JvmSynthetic
+    suspend fun toPublicKey(): AttoPublicKey = loadEd25519SigningKey(this).publicKey
+
+    @JvmSynthetic
+    suspend fun toSigner(): AttoSigner = InMemorySigner(this, loadEd25519SigningKey(this))
+
+    @JsExport.Ignore
+    @JvmSynthetic
+    suspend fun sign(hash: AttoHash): AttoSignature = toSigner().sign(hash)
+
+    @JsExport.Ignore
+    @JvmSynthetic
+    suspend fun signMessage(message: ByteArray): AttoSignature = toSigner().signMessage(message)
+
+    internal fun toEd25519Pkcs8(): ByteArray = ED25519_PKCS8_PREFIX + value
+
     override fun toString(): String = "${value.size} bytes"
 }
 
 @JsExportForJs
-fun AttoSeed.toPrivateKey(index: AttoKeyIndex): AttoPrivateKey = AttoPrivateKey(this, index)
+@JvmSynthetic
+@Deprecated(
+    "Moved to AttoSeed.toPrivateKey(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toPrivateKey(index)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoSeed.toPrivateKey(index: AttoKeyIndex): AttoPrivateKey = this.toPrivateKey(index)
 
 @JvmSynthetic
-fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey = AttoPrivateKey(this, index)
+@Deprecated(
+    "Moved to AttoSeed.toPrivateKey(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toPrivateKey(index)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoSeed.toPrivateKey(index: UInt): AttoPrivateKey = this.toPrivateKey(index)
 
-fun AttoSeed.toPrivateKey(index: Int): AttoPrivateKey = AttoPrivateKey(this, index.toUInt())
+@JvmSynthetic
+@Deprecated(
+    "Moved to AttoSeed.toPrivateKey(); compatibility extension will be removed in 8.0.0",
+    ReplaceWith("this.toPrivateKey(index)"),
+    level = DeprecationLevel.WARNING,
+)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun AttoSeed.toPrivateKey(index: Int): AttoPrivateKey = this.toPrivateKey(index)
 
 class AttoAlgorithmPrivateKey(
     val algorithm: AttoAlgorithm,
@@ -74,55 +99,35 @@ class AttoAlgorithmPrivateKey(
     override fun toString(): String = "${value.size} bytes"
 }
 
-internal expect class HmacSha512(
+internal expect suspend fun hmacSha512(
     secretKey: ByteArray,
-) {
-    fun update(
-        data: ByteArray,
-        offset: Int = 0,
-        len: Int = data.size,
-    )
-
-    fun doFinal(
-        output: ByteArray,
-        offset: Int = 0,
-    )
-}
+    data: ByteArray,
+): ByteArray
 
 private class BIP44(
     val key: ByteArray,
-    val hmacHelper: HmacSha512,
+    val chainCode: ByteArray,
 ) {
     private constructor(derived: ByteArray) : this(
         derived.copyOfRange(0, 32),
-        HmacSha512(derived.copyOfRange(32, 64)),
+        derived.copyOfRange(32, 64),
     )
 
-    fun derive(value: Int): BIP44 {
-        hmacHelper.update(byteArrayOf(0))
-        hmacHelper.update(key, 0, 32)
-
+    suspend fun derive(value: Int): BIP44 {
         val buffer = Buffer()
         buffer.writeInt(value)
         val indexBytes = buffer.readByteArray()
         indexBytes[0] = (indexBytes[0].toInt() or 128.toByte().toInt()).toByte() // hardened
 
-        hmacHelper.update(indexBytes, 0, indexBytes.size)
-
-        val derived = ByteArray(64)
-        hmacHelper.doFinal(derived, 0)
-
+        val derived = hmacSha512(chainCode, byteArrayOf(0) + key + indexBytes)
         return BIP44(derived)
     }
 
     companion object {
-        fun ed25519(
+        suspend fun ed25519(
             seed: AttoSeed,
             path: String,
         ): ByteArray {
-            val hmacHelper = HmacSha512("ed25519 seed".encodeToByteArray())
-            hmacHelper.update(seed.value)
-
             val values =
                 path
                     .split("/")
@@ -132,7 +137,7 @@ private class BIP44(
                     .map { it.replace("'", "").toInt() }
                     .toList()
 
-            var bip44 = BIP44(ByteArray(64).also { hmacHelper.doFinal(it, 0) })
+            var bip44 = BIP44(hmacSha512("ed25519 seed".encodeToByteArray(), seed.value))
             for (v in values) {
                 bip44 = bip44.derive(v)
             }
@@ -142,7 +147,9 @@ private class BIP44(
     }
 }
 
-private fun ed25519BIP44(
+internal suspend fun derivePrivateKey(
     seed: AttoSeed,
-    path: String,
-): ByteArray = BIP44.ed25519(seed, path)
+    index: UInt,
+): AttoPrivateKey = AttoPrivateKey(BIP44.ed25519(seed, "m/44'/$COIN_TYPE'/$index'"))
+
+private const val COIN_TYPE = 1869902945 // "atto".toByteArray().toUInt()

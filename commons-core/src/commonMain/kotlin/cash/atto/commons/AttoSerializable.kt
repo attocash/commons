@@ -13,4 +13,8 @@ interface AttoSerializable {
     fun toBuffer(): Buffer
 
     fun toByteArray(): ByteArray = toBuffer().readByteArray()
+
+    @OptIn(ExperimentalJsExport::class)
+    @JsExport.Ignore
+    fun toHex(): String = toBuffer().toHex()
 }

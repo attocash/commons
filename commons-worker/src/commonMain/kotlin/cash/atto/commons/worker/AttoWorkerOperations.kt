@@ -4,7 +4,6 @@ import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
-import cash.atto.commons.isValid
 import cash.atto.commons.toHex
 import kotlinx.serialization.Serializable
 

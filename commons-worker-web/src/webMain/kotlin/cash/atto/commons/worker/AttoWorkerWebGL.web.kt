@@ -4,7 +4,6 @@ package cash.atto.commons.worker
 
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
-import cash.atto.commons.isValid
 import cash.atto.commons.toByteArray
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
