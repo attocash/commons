@@ -70,12 +70,12 @@ val mnemonic = AttoMnemonic.generate()
 val seed = mnemonic.toSeed()
 ```
 
-- Derive keys and address:
+- Derive keys and address (suspend):
 
 ```kotlin
 val privateKey = seed.toPrivateKey(0U)
 val publicKey = privateKey.toPublicKey()
-val address = AttoAddress(AttoAlgorithm.V1, publicKey)
+val address = publicKey.toAddress(AttoAlgorithm.V1)
 ```
 
 - Connect to a node and a worker (remote services):
