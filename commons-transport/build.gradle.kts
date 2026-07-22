@@ -126,6 +126,16 @@ publishing {
                 }
             }
 
+            developers {
+                developer {
+                    id.set("atto")
+                    name.set("Atto Team")
+                    email.set("felipe@rotilho.com")
+                    organization.set("Atto")
+                    organizationUrl.set("https://atto.cash")
+                }
+            }
+
             scm {
                 connection.set("scm:git:git://github.com/attocash/commons.git")
                 developerConnection.set("scm:git:ssh://github.com/attocash/commons.git")
