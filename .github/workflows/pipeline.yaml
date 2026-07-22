@@ -23,7 +23,7 @@ jobs:
       maven_snapshot_version: ${{ format('{0}-SNAPSHOT', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0') }}
       npm_snapshot_version: ${{ format('{0}-snapshot.sha{1}', steps.semantic.outputs.new_release_version || steps.semantic.outputs.last_release_version || '0.0.0', github.sha) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -47,7 +47,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: opencl
         run: |
@@ -74,7 +74,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
@@ -103,7 +103,7 @@ jobs:
       - version
       - test
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v5
         with:
@@ -137,7 +137,7 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
