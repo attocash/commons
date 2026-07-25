@@ -208,3 +208,5 @@ jobs:
 
       - name: Publish npm Packages
         run: ./gradlew publishJsPackageToNpmjsRegistry --stacktrace -Pversion="${{ needs.version.outputs.version }}"
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
