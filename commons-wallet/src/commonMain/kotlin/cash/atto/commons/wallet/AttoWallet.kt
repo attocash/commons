@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -479,8 +480,8 @@ fun AttoWallet.bindTo(
  * - On processing failure, logs and retries after [retryAfter] until cancelled.
  *
  * Scope & Lifecycle
- * - Controlled by [scope]. Cancel the returned Job to stop both the auto-receiver and the binding
- *   (the binding job is cancelled on completion).
+ * - Controlled by [scope]. Cancel and join the returned Job to wait until both the auto-receiver
+ *   and its binding have stopped.
  *
  * Assumptions
  * - Receivables emitted by the accountMonitor belong to this wallet’s addresses; if the accountMonitor also includes
@@ -515,7 +516,7 @@ fun AttoWallet.startAutoReceiver(
             logger.warn(e) { "Failed to collect receivables. Retrying in $retryAfter..." }
             delay(retryAfter)
             true
-        }.onCompletion { bindJob.cancel() }
+        }.onCompletion { bindJob.cancelAndJoin() }
         .launchIn(scope)
 }
 
@@ -523,7 +524,8 @@ fun AttoWallet.startAutoReceiver(
  * Convenience form of [startAutoReceiver] that runs on a dedicated dispatcher.
  *
  * Lifecycle
- * - Returns a Job; cancel it to stop auto-receiving and its internal binding. No parent scope is attached.
+ * - Returns an [AttoJob]. Use [AttoJob.cancelAndJoin] to wait until auto-receiving and its internal
+ *   binding have stopped. No parent scope is attached.
  *
  * When to use
  * - Quick starts and tools without an app-managed scope. For long-running apps, prefer the scoped overload.
@@ -540,5 +542,6 @@ fun AttoWallet.startAutoReceiver(
     return AttoJob.create(
         activeProvider = { job.isActive },
         cancellation = { job.cancel() },
+        cancellationAndJoin = { job.cancelAndJoin() },
     )
 }

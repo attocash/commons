@@ -21,6 +21,8 @@ actual class AttoNodeMock actual constructor(
     }
 
     private val network = Network.newNetwork()
+    private var lifecycleActive = false
+    private var resourcesClosed = false
 
     private val mysql =
         MySQLContainer(configuration.mysqlImage)
@@ -74,8 +76,19 @@ actual class AttoNodeMock actual constructor(
 
     @JvmSynthetic
     actual suspend fun start() {
-        mysql.start()
-        node.start()
+        check(!lifecycleActive && !resourcesClosed) { "Node mock is already started or closed" }
+        lifecycleActive = true
+        try {
+            mysql.start()
+            node.start()
+        } catch (exception: Throwable) {
+            try {
+                close()
+            } catch (cleanupException: Throwable) {
+                exception.addSuppressed(cleanupException)
+            }
+            throw exception
+        }
     }
 
     @JvmSynthetic
@@ -84,8 +97,12 @@ actual class AttoNodeMock actual constructor(
     }
 
     actual override fun close() {
-        node.close()
-        mysql.close()
-        network.close()
+        if (resourcesClosed) {
+            return
+        }
+
+        resourcesClosed = true
+        lifecycleActive = false
+        closeTestcontainersResources(node, mysql, network)
     }
 }

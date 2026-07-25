@@ -10,6 +10,7 @@ import kotlin.js.Promise
 actual class AttoNodeMock actual constructor(
     private val configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
+    private val lifecycle = TestcontainersLifecycle("Node mock")
     private var network: JsAny? = null
     private var mysqlContainer: JsAny? = null
     private var nodeContainer: JsAny? = null
@@ -27,9 +28,10 @@ actual class AttoNodeMock actual constructor(
         get() = configuration.genesisTransaction
 
     actual suspend fun start() {
-        configureTestcontainersRuntime()
-
+        lifecycle.beginStart()
         try {
+            configureTestcontainersRuntime()
+            awaitScheduledTestcontainersCleanup()
             val testcontainersModule = importTestcontainers().awaitTestcontainers()
             val mysqlModule = importMySql().awaitTestcontainers()
             val wait = getWait(testcontainersModule)
@@ -75,25 +77,22 @@ actual class AttoNodeMock actual constructor(
     }
 
     actual suspend fun stop() {
-        val resources = takeResources() ?: return
+        val resources = takeResources()
         stopTestcontainersResources(resources.node, resources.mysql, resources.network)
     }
 
     actual override fun close() {
-        val resources = takeResources() ?: return
+        val resources = takeResources()
         scheduleTestcontainersCleanup(resources.node, resources.mysql, resources.network)
     }
 
-    private fun takeResources(): AttoNodeMockResources? {
-        if (nodeContainer == null && mysqlContainer == null && network == null) {
-            return null
-        }
-
+    private fun takeResources(): AttoNodeMockResources {
         val resources = AttoNodeMockResources(nodeContainer, mysqlContainer, network)
         nodeContainer = null
         mysqlContainer = null
         network = null
         started = false
+        lifecycle.release()
         return resources
     }
 

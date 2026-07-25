@@ -102,7 +102,7 @@ class AttoWalletTest {
                     }
                 assertEquals(sendAmount, balance)
 
-                receiverJob.cancel()
+                receiverJob.cancelAndJoin()
                 val sendTransaction2 = wallet.send(genesisAccountIndex, wallet.getAddress(accountIndex2), sendAmount)
                 assertEquals(AttoAmount.MAX - (sendAmount + sendAmount), wallet.getAccount(genesisAccountIndex)!!.balance)
 

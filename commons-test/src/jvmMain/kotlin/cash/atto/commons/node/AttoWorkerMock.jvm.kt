@@ -27,6 +27,8 @@ actual class AttoWorkerMock actual constructor(
                     }
                 }
             }
+    private var lifecycleActive = false
+    private var resourceClosed = false
 
     actual val baseUrl: String
         get() {
@@ -36,7 +38,18 @@ actual class AttoWorkerMock actual constructor(
 
     @JvmSynthetic
     actual suspend fun start() {
-        worker.start()
+        check(!lifecycleActive && !resourceClosed) { "Work server mock is already started or closed" }
+        lifecycleActive = true
+        try {
+            worker.start()
+        } catch (exception: Throwable) {
+            try {
+                close()
+            } catch (cleanupException: Throwable) {
+                exception.addSuppressed(cleanupException)
+            }
+            throw exception
+        }
     }
 
     @JvmSynthetic
@@ -45,6 +58,12 @@ actual class AttoWorkerMock actual constructor(
     }
 
     actual override fun close() {
-        worker.close()
+        if (resourceClosed) {
+            return
+        }
+
+        resourceClosed = true
+        lifecycleActive = false
+        closeTestcontainersResources(worker)
     }
 }

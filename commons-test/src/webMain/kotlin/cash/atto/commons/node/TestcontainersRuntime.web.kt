@@ -2,11 +2,41 @@
 
 package cash.atto.commons.node
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.Promise
+import kotlin.time.Duration.Companion.milliseconds
+
+private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+private var scheduledCleanup: Deferred<Unit> = CompletableDeferred(Unit)
+private var scheduledCleanupFailure: Throwable? = null
+private val activeEndpointRetryDelays = listOf(100, 200, 400, 800).map { it.milliseconds }
+
+internal class TestcontainersLifecycle(
+    private val resourceName: String,
+) {
+    private var active = false
+
+    fun beginStart() {
+        check(!active) { "$resourceName is already started or starting" }
+        active = true
+    }
+
+    fun release() {
+        active = false
+    }
+}
 
 internal fun configureTestcontainersRuntime() {
     js(
@@ -26,62 +56,87 @@ internal suspend fun stopTestcontainersResources(
     first: JsAny?,
     second: JsAny? = null,
     third: JsAny? = null,
-) {
-    var failure: Throwable? = null
-    for (resource in listOf(first, second, third)) {
-        if (resource == null) {
-            continue
-        }
-
-        try {
-            stopTestcontainersResource(resource).awaitTestcontainers()
-        } catch (exception: Throwable) {
-            if (failure == null) {
-                failure = exception
-            } else {
-                failure.addSuppressed(exception)
-            }
-        }
-    }
-
-    failure?.let { throw it }
-}
+) = stopTestcontainersResources(resourceStops(first, second, third))
 
 internal fun scheduleTestcontainersCleanup(
     first: JsAny?,
     second: JsAny? = null,
     third: JsAny? = null,
-) {
-    js(
-        """
-        (function() {
-            var resources = [first, second, third];
-            var cleanupQueue = globalThis.__attoCommonsTestcontainerCleanupQueue || Promise.resolve();
-            globalThis.__attoCommonsTestcontainerCleanupQueue = cleanupQueue
-                .then(function() {
-                    var firstError = null;
-                    var cleanup = Promise.resolve();
-                    resources.forEach(function(resource) {
-                        cleanup = cleanup.then(function() {
-                            if (resource == null) return;
-                            return resource.stop().catch(function(error) {
-                                if (firstError == null) firstError = error;
-                            });
-                        });
-                    });
-                    return cleanup.then(function() {
-                        if (firstError != null) throw firstError;
-                    });
-                })
-                .catch(function(error) {
-                    console.warn(error);
-                });
-        })()
-        """,
-    )
+) = scheduleTestcontainersCleanup(resourceStops(first, second, third))
+
+internal suspend fun stopTestcontainersResources(resourceStops: List<suspend () -> Unit>) {
+    withContext(NonCancellable) {
+        var failure: Throwable? = null
+        for (stopResource in resourceStops) {
+            try {
+                stopTestcontainersResource(stopResource)
+            } catch (exception: Throwable) {
+                failure = failure.withSuppressed(exception)
+            }
+        }
+
+        failure?.let { throw it }
+    }
+}
+
+internal fun scheduleTestcontainersCleanup(resourceStops: List<suspend () -> Unit>) {
+    val previousCleanup = scheduledCleanup
+    scheduledCleanup =
+        cleanupScope.async {
+            previousCleanup.await()
+            try {
+                stopTestcontainersResources(resourceStops)
+            } catch (exception: Throwable) {
+                scheduledCleanupFailure = scheduledCleanupFailure.withSuppressed(exception)
+            }
+        }
+}
+
+internal suspend fun awaitScheduledTestcontainersCleanup() {
+    while (true) {
+        val cleanup = scheduledCleanup
+        cleanup.await()
+        if (cleanup === scheduledCleanup) {
+            break
+        }
+    }
+
+    val failure = scheduledCleanupFailure
+    scheduledCleanupFailure = null
+    failure?.let { throw it }
+}
+
+private fun resourceStops(
+    first: JsAny?,
+    second: JsAny?,
+    third: JsAny?,
+): List<suspend () -> Unit> =
+    listOfNotNull(first, second, third).map { resource ->
+        { stopTestcontainersResource(resource).awaitTestcontainers() }
+    }
+
+private suspend fun stopTestcontainersResource(stopResource: suspend () -> Unit) {
+    var retryIndex = 0
+    while (true) {
+        try {
+            stopResource()
+            return
+        } catch (exception: Throwable) {
+            if (!exception.hasActiveEndpoints() || retryIndex == activeEndpointRetryDelays.size) {
+                throw exception
+            }
+            delay(activeEndpointRetryDelays[retryIndex++])
+        }
+    }
 }
 
 private fun stopTestcontainersResource(resource: JsAny): Promise<JsAny?> = js("resource.stop()")
+
+private fun Throwable?.withSuppressed(exception: Throwable): Throwable = this?.apply { addSuppressed(exception) } ?: exception
+
+private fun Throwable.hasActiveEndpoints(): Boolean =
+    generateSequence(this) { it.cause }
+        .any { it.message.orEmpty().contains("has active endpoints", ignoreCase = true) }
 
 internal suspend fun <T : JsAny?> Promise<T>.awaitTestcontainers(): T =
     suspendCancellableCoroutine { continuation ->

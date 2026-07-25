@@ -8,6 +8,7 @@ import kotlin.js.Promise
 actual class AttoWorkerMock internal actual constructor(
     private val configuration: AttoWorkerMockConfiguration,
 ) : AutoCloseable {
+    private val lifecycle = TestcontainersLifecycle("Work server mock")
     private var container: JsAny? = null
     private var started = false
 
@@ -20,9 +21,10 @@ actual class AttoWorkerMock internal actual constructor(
         }
 
     actual suspend fun start() {
-        configureTestcontainersRuntime()
-
+        lifecycle.beginStart()
         try {
+            configureTestcontainersRuntime()
+            awaitScheduledTestcontainersCleanup()
             val testcontainersModule = importTestcontainers().awaitTestcontainers()
             val wait = getWait(testcontainersModule)
 
@@ -46,19 +48,20 @@ actual class AttoWorkerMock internal actual constructor(
     }
 
     actual suspend fun stop() {
-        val worker = takeContainer() ?: return
+        val worker = takeContainer()
         stopTestcontainersResources(worker)
     }
 
     actual override fun close() {
-        val worker = takeContainer() ?: return
+        val worker = takeContainer()
         scheduleTestcontainersCleanup(worker)
     }
 
     private fun takeContainer(): JsAny? {
-        val worker = container ?: return null
+        val worker = container
         container = null
         started = false
+        lifecycle.release()
         return worker
     }
 

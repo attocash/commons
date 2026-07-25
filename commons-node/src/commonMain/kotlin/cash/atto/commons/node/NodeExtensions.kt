@@ -11,6 +11,7 @@ import cash.atto.commons.AttoTransaction
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -108,4 +109,5 @@ internal fun Job.toAttoJob(): AttoJob =
     AttoJob.create(
         activeProvider = { isActive },
         cancellation = { cancel() },
+        cancellationAndJoin = { cancelAndJoin() },
     )
