@@ -3,7 +3,7 @@
 kotlin = "2.3.21"
 
 # Kotlinx
-kotlinx-coroutines = "1.10.2"
+kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.8.0"
 kotlinx-io = "0.9.1"
 kotlinx-serialization = "1.11.0"
