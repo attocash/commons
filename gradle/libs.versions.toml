@@ -15,7 +15,7 @@ ktor = "3.5.1"
 
 # Logging
 kotlin-logging = "8.0.4"
-slf4j = "2.0.17"
+slf4j = "2.0.18"
 
 # Testing
 testcontainers = "2.0.5"
