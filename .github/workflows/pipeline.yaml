@@ -206,7 +206,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      - name: Pack npm Packages
+        run: ./gradlew packJsPackage --stacktrace -Pversion="${{ needs.version.outputs.version }}"
+
       - name: Publish npm Packages
-        run: ./gradlew publishJsPackageToNpmjsRegistry --stacktrace -Pversion="${{ needs.version.outputs.version }}"
-        env:
-          NPM_CONFIG_LOGLEVEL: verbose
+        run: |
+          for package in ./*/build/packages/*.tgz; do
+            npm publish "$package" --provenance --access public
+          done
