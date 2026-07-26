@@ -12,3 +12,15 @@ updates:
       interval: daily
     labels:
       - "dependencies"
+  - package-ecosystem: npm
+    directory: "/examples/js-client"
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: "*"
+  - package-ecosystem: maven
+    directory: "/examples/java-client"
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: "*"
