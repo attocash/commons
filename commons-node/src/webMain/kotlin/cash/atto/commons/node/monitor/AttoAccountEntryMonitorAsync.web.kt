@@ -21,7 +21,7 @@ actual class AttoAccountEntryMonitorAsync internal actual constructor(
 
     fun onAccountEntry(
         onAccountEntry: suspend (AttoAccountEntry) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = accountEntryMonitor.stream(),

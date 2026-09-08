@@ -30,7 +30,7 @@ actual class AttoAccountMonitorAsync internal actual constructor(
 
     fun onAccount(
         onAccount: (AttoAccount) -> Any,
-        onCancel: (Exception?) -> Any,
+        onCancel: (Throwable?) -> Any,
     ): AttoJob =
         scope.consumeStream(
             stream = accountMonitor.accountStream(),
@@ -42,7 +42,7 @@ actual class AttoAccountMonitorAsync internal actual constructor(
     fun onReceivable(
         minAmount: AttoAmount = AttoAmount.MIN,
         onReceivable: (AttoReceivable) -> Any,
-        onCancel: (Exception?) -> Any,
+        onCancel: (Throwable?) -> Any,
     ): AttoJob =
         scope.consumeStream(
             stream = accountMonitor.receivableStream(minAmount),

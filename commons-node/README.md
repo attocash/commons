@@ -39,6 +39,13 @@ val account = client.account(address.publicKey)
 val accounts = client.account(listOf(address1, address2))
 ```
 
+## Async subscriptions
+
+Async client and monitor subscriptions report completion through `onCancel`.
+Its parameter is `Throwable?`: a stream failure is passed through unchanged,
+and normal completion or cancellation reports `null`. Callbacks previously
+declared with an explicit `Exception?` parameter must accept `Throwable?`.
+
 ## Membership monitor
 
 Track a dynamic set of addresses and derive streams from it.

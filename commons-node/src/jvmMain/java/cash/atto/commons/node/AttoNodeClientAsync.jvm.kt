@@ -18,11 +18,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.future.future
-import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.cancellation.CancellationException
 
 @JsExportForJs
 actual class AttoNodeClientAsync actual constructor(
@@ -35,26 +32,9 @@ actual class AttoNodeClientAsync actual constructor(
 
     fun account(addresses: Collection<AttoAddress>): CompletableFuture<Collection<AttoAccount>> = scope.future { client.account(addresses) }
 
-    private inline fun <T> CoroutineScope.consumeStream(
-        stream: Flow<T>,
-        crossinline onEach: suspend (T) -> Unit,
-        noinline onCancel: (Exception?) -> Unit,
-    ): AttoJob =
-        launch {
-            try {
-                stream.collect { onEach(it) }
-                onCancel(null)
-            } catch (e: CancellationException) {
-                onCancel(null)
-                throw e
-            } catch (e: Exception) {
-                onCancel(e)
-            }
-        }.toAttoJob()
-
     fun onAccount(
         onAccount: (AttoAccount) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.accountStream(),
@@ -65,7 +45,7 @@ actual class AttoNodeClientAsync actual constructor(
     fun onAccount(
         publicKey: AttoPublicKey,
         onAccount: (AttoAccount) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.accountStream(publicKey),
@@ -76,7 +56,7 @@ actual class AttoNodeClientAsync actual constructor(
     fun onAccount(
         addresses: Collection<AttoAddress>,
         onAccount: (AttoAccount) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.accountStream(addresses),
@@ -89,7 +69,7 @@ actual class AttoNodeClientAsync actual constructor(
         publicKey: AttoPublicKey,
         minAmount: AttoAmount = AttoAmount(1U),
         onReceivable: (AttoReceivable) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.receivableStream(publicKey, minAmount),
@@ -102,7 +82,7 @@ actual class AttoNodeClientAsync actual constructor(
         addresses: Collection<AttoAddress>,
         minAmount: AttoAmount = AttoAmount(1U),
         onReceivable: (AttoReceivable) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.receivableStream(addresses, minAmount),
@@ -114,7 +94,7 @@ actual class AttoNodeClientAsync actual constructor(
 
     fun onAccountEntry(
         onAccountEntry: (AttoAccountEntry) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.accountEntryStream(),
@@ -125,7 +105,7 @@ actual class AttoNodeClientAsync actual constructor(
     fun onAccountEntry(
         hash: AttoHash,
         onAccountEntry: (AttoAccountEntry) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.accountEntryStream(hash),
@@ -139,7 +119,7 @@ actual class AttoNodeClientAsync actual constructor(
         fromHeight: AttoHeight = AttoHeight(1UL),
         toHeight: AttoHeight? = null,
         onAccountEntry: (AttoAccountEntry) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.accountEntryStream(publicKey, fromHeight, toHeight),
@@ -150,7 +130,7 @@ actual class AttoNodeClientAsync actual constructor(
     fun onAccountEntry(
         heightSearch: HeightSearch,
         onAccountEntry: (AttoAccountEntry) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.accountEntryStream(heightSearch),
@@ -162,7 +142,7 @@ actual class AttoNodeClientAsync actual constructor(
 
     fun onTransaction(
         onTransaction: (AttoTransaction) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.transactionStream(),
@@ -173,7 +153,7 @@ actual class AttoNodeClientAsync actual constructor(
     fun onTransaction(
         hash: AttoHash,
         onTransaction: (AttoTransaction) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.transactionStream(hash),
@@ -187,7 +167,7 @@ actual class AttoNodeClientAsync actual constructor(
         fromHeight: AttoHeight = AttoHeight(1UL),
         toHeight: AttoHeight? = null,
         onTransaction: (AttoTransaction) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.transactionStream(publicKey, fromHeight, toHeight),
@@ -198,7 +178,7 @@ actual class AttoNodeClientAsync actual constructor(
     fun onTransaction(
         heightSearch: HeightSearch,
         onTransaction: (AttoTransaction) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = client.transactionStream(heightSearch),

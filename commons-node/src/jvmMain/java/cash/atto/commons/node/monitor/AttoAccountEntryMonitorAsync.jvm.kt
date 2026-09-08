@@ -21,7 +21,7 @@ actual class AttoAccountEntryMonitorAsync actual constructor(
 
     fun onAccountEntry(
         onAccountEntry: Function<AttoAccountEntry, CompletableFuture<Void>>,
-        onCancel: Function<Exception?, CompletableFuture<Void>>,
+        onCancel: Function<Throwable?, CompletableFuture<Void>>,
     ): AttoJob =
         scope.consumeStream(
             stream = accountEntryMonitor.stream(),

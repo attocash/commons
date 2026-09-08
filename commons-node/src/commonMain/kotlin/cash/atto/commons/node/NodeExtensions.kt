@@ -91,7 +91,7 @@ fun ByteArray.toBlockJson(): String = AttoBlock.fromByteArray(this).toJson()
 internal inline fun <T> CoroutineScope.consumeStream(
     stream: Flow<T>,
     crossinline onEach: suspend (T) -> Unit,
-    noinline onCancel: suspend (Exception?) -> Unit,
+    noinline onCancel: suspend (Throwable?) -> Unit,
 ): AttoJob =
     launch {
         try {
@@ -100,7 +100,7 @@ internal inline fun <T> CoroutineScope.consumeStream(
         } catch (e: CancellationException) {
             onCancel(null)
             throw e
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             onCancel(e)
         }
     }.toAttoJob()

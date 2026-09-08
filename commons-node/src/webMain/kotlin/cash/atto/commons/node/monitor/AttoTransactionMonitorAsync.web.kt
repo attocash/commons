@@ -21,7 +21,7 @@ actual class AttoTransactionMonitorAsync internal actual constructor(
 
     fun onTransaction(
         onTransaction: suspend (AttoTransaction) -> Unit,
-        onCancel: (Exception?) -> Unit,
+        onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
             stream = transactionMonitor.stream(),

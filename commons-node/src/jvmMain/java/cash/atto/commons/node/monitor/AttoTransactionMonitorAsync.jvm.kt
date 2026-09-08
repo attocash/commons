@@ -22,7 +22,7 @@ actual class AttoTransactionMonitorAsync internal actual constructor(
 
     fun onTransaction(
         onTransaction: Function<AttoTransaction, CompletableFuture<Void>>,
-        onCancel: Function<Exception?, CompletableFuture<Void>>,
+        onCancel: Function<Throwable?, CompletableFuture<Void>>,
     ): AttoJob =
         scope.consumeStream(
             stream = transactionMonitor.stream(),
