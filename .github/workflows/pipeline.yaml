@@ -61,7 +61,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
 
       - run: |
           ./gradlew --info --no-daemon ktlintCheck allTests --stacktrace
@@ -86,7 +86,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
 
       - name: Pack npm snapshots
         run: ./gradlew packJsPackage --stacktrace -Pversion="${{ needs.version.outputs.npm_snapshot_version }}"
@@ -110,7 +110,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
 
       - name: Publish Maven Snapshot
         run: |
@@ -170,7 +170,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
 
       - name: Publish Maven Release
         run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --stacktrace -P version="${{ needs.version.outputs.version }}"
@@ -204,7 +204,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
 
       - name: Pack npm Packages
         run: ./gradlew packJsPackage --stacktrace -Pversion="${{ needs.version.outputs.version }}"
