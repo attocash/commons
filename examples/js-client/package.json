@@ -14,11 +14,13 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@attocash/commons-node-remote": "6.7.1-patch.1",
-    "@attocash/commons-wallet": "6.7.1-patch.1",
-    "@attocash/commons-worker-remote": "6.7.1-patch.1"
+    "@attocash/commons-core": "7.0.2",
+    "@attocash/commons-node": "7.0.2",
+    "@attocash/commons-node-remote": "7.0.2",
+    "@attocash/commons-wallet": "7.0.2",
+    "@attocash/commons-worker-remote": "7.0.2"
   },
   "devDependencies": {
-    "@attocash/commons-test": "6.7.1-patch.1"
+    "@attocash/commons-test": "7.0.2"
   }
 }

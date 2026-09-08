@@ -12,7 +12,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <atto.commons.version>6.3.0</atto.commons.version>
+        <atto.commons.version>7.0.2</atto.commons.version>
     </properties>
 
     <repositories>
@@ -82,7 +82,12 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.2</version>
                 <configuration>
-                    <mainClass>cash.atto.Main</mainClass>
+                    <executable>${java.home}/bin/java</executable>
+                    <arguments>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>cash.atto.Main</argument>
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>

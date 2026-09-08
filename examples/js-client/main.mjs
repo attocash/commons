@@ -4,24 +4,13 @@ import {
   AttoAddress,
   AttoAlgorithm,
   AttoAmount,
-  AttoHeight,
   AttoMnemonic,
   AttoPublicKey,
   AttoUnit,
-  toAttoHeight,
   toAttoIndex,
-  toPrivateKey,
-  toPublicKey,
-  toSeedAsync,
 } from '@attocash/commons-core';
 
-import {
-  accountEntryToJson,
-  AttoAccountEntryMonitorAsyncBuilder,
-  AttoAccountMonitorAsyncBuilder,
-  AttoTransactionMonitorAsyncBuilder,
-  transactionToJson,
-} from '@attocash/commons-node';
+import {AttoAccountMonitorAsyncBuilder} from '@attocash/commons-node';
 
 import {AttoNodeClientAsyncBuilder} from '@attocash/commons-node-remote';
 import {AttoWalletAsyncBuilder} from '@attocash/commons-wallet';
@@ -35,14 +24,14 @@ globalThis.require = createRequire(import.meta.url);
 async function main() {
   try {
     // Generate mnemonic and seed
-    const mnemonic = AttoMnemonic.generate();
+    const mnemonic = await AttoMnemonic.generate();
     console.log("Mnemonic: " + mnemonic.phrase);
-    console.log("Parsed Mnemonic: " + AttoMnemonic.fromPhrase(mnemonic.phrase).phrase);
-    const seed = await toSeedAsync(mnemonic);
+    console.log("Parsed Mnemonic: " + (await AttoMnemonic.fromPhrase(mnemonic.phrase)).phrase);
+    const seed = await mnemonic.toSeedAsync();
 
     // Generate private key for genesis account (index 0) for mock node
     const genesisIndex = toAttoIndex(0);
-    const genesisPrivateKey = toPrivateKey(seed, genesisIndex);
+    const genesisPrivateKey = await seed.toPrivateKey(genesisIndex);
 
     // Create and start AttoNodeMockAsync using builder
     const nodeMock = await new AttoNodeMockAsyncBuilder(genesisPrivateKey).build();
@@ -58,8 +47,6 @@ async function main() {
     let transactionJob;
     let accountEntryJob;
     let accountMonitor;
-    let transactionMonitor;
-    let accountEntryMonitor;
     let nodeClient;
 
     try {
@@ -69,32 +56,6 @@ async function main() {
 
       // Create account monitor for auto-receive functionality
       accountMonitor = new AttoAccountMonitorAsyncBuilder(nodeClient).build();
-
-      // Create transaction monitor to track transactions
-      transactionMonitor = new AttoTransactionMonitorAsyncBuilder(nodeClient, accountMonitor)
-        .heightProvider(async (address) => {
-          // Start from height 2 for genesis (skip genesis block at height 1)
-          const genesisPublicKey = toPublicKey(genesisPrivateKey);
-          const genesisAddress = new AttoAddress(AttoAlgorithm.V1, genesisPublicKey);
-          if (address.equals(genesisAddress)) {
-            return toAttoHeight("2");
-          }
-          return AttoHeight.MIN;
-        })
-        .build();
-
-      // Create account entry monitor to track account entries
-      accountEntryMonitor = new AttoAccountEntryMonitorAsyncBuilder(nodeClient, accountMonitor)
-        .heightProvider(async (address) => {
-          // Start from height 2 for genesis (skip genesis block at height 1)
-          const genesisPublicKey = toPublicKey(genesisPrivateKey);
-          const genesisAddress = new AttoAddress(AttoAlgorithm.V1, genesisPublicKey);
-          if (address.equals(genesisAddress)) {
-            return toAttoHeight("2");
-          }
-          return AttoHeight.MIN;
-        })
-        .build();
 
       // Create AttoWalletAsync using builder with auto-receive enabled
       wallet = new AttoWalletAsyncBuilder(nodeClient, worker)
@@ -139,18 +100,17 @@ async function main() {
       console.log(`Account 1 address: ${address1}`);
       console.log(`Account 2 address: ${address2}`);
 
-      // Register transaction monitor to track all transactions
-      console.log("\n=== Registering Transaction Monitor ===");
-      transactionJob = transactionMonitor.onTransaction(
-        async (transaction) => console.log(`Transaction monitor received: ${transactionToJson(transaction)}`),
-        async (err) => err && console.error(err)
+      // Register node streams to track all transactions and account entries
+      console.log("\n=== Registering Transaction Stream ===");
+      transactionJob = nodeClient.onTransactionAll(
+        (transaction) => console.log(`Transaction stream received: ${transaction.toJson()}`),
+        (err) => err && console.error(err)
       );
 
-      // Register account entry monitor to track all account entries
-      console.log("=== Registering Account Entry Monitor ===");
-      accountEntryJob = accountEntryMonitor.onAccountEntry(
-        async (entry) => console.log(`Account entry monitor received: ${accountEntryToJson(entry)}`),
-        async (err) => err && console.error(err)
+      console.log("=== Registering Account Entry Stream ===");
+      accountEntryJob = nodeClient.onAccountEntryAll(
+        (entry) => console.log(`Account entry stream received: ${entry.toJson()}`),
+        (err) => err && console.error(err)
       );
 
       // Send from genesis account (index 0) to account 1
@@ -215,12 +175,14 @@ async function main() {
     } finally {
       // Clean up resources
       try {
-        accountEntryJob?.cancel?.();
-        transactionJob?.cancel?.();
+        await accountEntryJob?.cancelAndJoin?.();
+        await transactionJob?.cancelAndJoin?.();
         wallet?.close?.();
+        accountMonitor?.close?.();
+        nodeClient?.close?.();
       } finally {
-        nodeMock.close();
-        workerMock.close();
+        await workerMock.stop();
+        await nodeMock.stop();
         console.log("Mock servers stopped");
       }
     }

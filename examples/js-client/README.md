@@ -6,7 +6,7 @@ transactions using Node.js.
 
 ## Prerequisites
 
-- Node.js (version 18 or higher recommended)
+- Node.js 24 or higher
 - A working internet connection to fetch npm packages and images
 - Docker or Podman installed and running
 
@@ -15,8 +15,7 @@ transactions using Node.js.
 Install the released npm packages in this directory:
 
 ```bash
-npm install @attocash/commons-node-remote @attocash/commons-worker-remote @attocash/commons-wallet
-npm install --save-dev @attocash/commons-test
+npm install
 ```
 
 For an unreleased checkout before the split packages are available on npm, build local tarballs with
@@ -39,17 +38,17 @@ This example mirrors the functionality of the Java client example:
 2. **Starts mock servers** - Launches AttoNodeMock and AttoWorkerMock for testing
 3. **Creates a wallet** - Initializes an AttoWallet with auto-receive functionality
 4. **Opens accounts** - Creates three accounts (indices 0, 1, and 2)
-5. **Monitors transactions** - Sets up transaction and account entry monitors
+5. **Monitors transactions** - Subscribes to transaction and account entry streams
 6. **Performs transfers** - Sends ATTO from the genesis account to the other accounts
 7. **Displays balances** - Shows account balances and heights after transactions
 
 ## Key Features Demonstrated
 
-- **Mnemonic generation** using `AttoMnemonic.generate()`
-- **Seed derivation** using `toSeedAsync()`
-- **Private key derivation** from seed and index
+- **Mnemonic generation** using `await AttoMnemonic.generate()`
+- **Seed derivation** using `await mnemonic.toSeedAsync()`
+- **Private key derivation** using `await seed.toPrivateKey()`
 - **Mock server setup** for testing without a real node
 - **Wallet builder pattern** with auto-receive configuration
 - **Account management** (opening, checking balances)
 - **Transaction sending** between accounts
-- **Real-time monitoring** of transactions and account entries
+- **Real-time streaming** of transactions and account entries

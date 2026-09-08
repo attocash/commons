@@ -7,6 +7,7 @@ transactions.
 
 - Java 17 or higher
 - Maven (included via wrapper)
+- Docker or Podman installed and running
 
 ## Building
 
@@ -21,8 +22,10 @@ Build the example:
 Execute the example:
 
 ```bash
-./mvnw exec:java
+./mvnw exec:exec
 ```
+
+The example runs in its own JVM so Testcontainers can complete its shutdown hooks.
 
 ## What the Example Does
 
@@ -35,13 +38,13 @@ This example demonstrates the core functionality of the Atto Commons library:
 5. **Monitors transactions** - Sets up transaction and account entry monitors
 6. **Performs transfers** - Sends ATTO from the genesis account to the other accounts
 7. **Displays balances** - Shows account balances and heights after transactions
-8. **Cleans up** - Properly closes mock servers
+8. **Cleans up** - Properly closes clients, monitors, wallet jobs, and mock servers
 
 ## Key Features Demonstrated
 
-- **Mnemonic generation** using `AttoMnemonic.generate()`
+- **Mnemonic generation** using `AttoMnemonics.generateBlocking()`
 - **Seed derivation** using `AttoSeeds.toSeedBlocking()`
-- **Private key derivation** from seed and index using `AttoPrivateKeys.toPrivateKey()`
+- **Private key derivation** from seed and index using `AttoPrivateKeys.toPrivateKeyBlocking()`
 - **Mock server setup** for testing without a real node using builder pattern
 - **Async client and worker** creation with `AttoNodeClientAsyncBuilder` and `AttoWorkerAsyncBuilder`
 - **Account monitoring** for auto-receive functionality
@@ -49,12 +52,13 @@ This example demonstrates the core functionality of the Atto Commons library:
 - **Wallet builder pattern** with auto-receive configuration
 - **Account management** (opening, checking balances)
 - **Transaction sending** between accounts with `wallet.send()`
-- **Proper resource cleanup** in finally block
+- **Proper resource cleanup** before stopping the mock servers
 
 ## Important Notes
 
 - The example uses **mock servers** that run locally for testing
 - The genesis account (index 0) starts with the maximum ATTO balance
 - Mock servers are automatically cleaned up when the example completes
-- All async operations use `CompletableFuture.get()` to block and wait for results
+- Core cryptographic setup uses the blocking JVM API; wallet, client, worker, and mock operations use
+  `CompletableFuture.get()` to wait for results
 - Transaction and account monitors start from height 2 for the genesis account (skipping the genesis block at height 1)

@@ -10,19 +10,19 @@ import cash.atto.commons.worker.AttoWorkerAsyncBuilder;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static cash.atto.commons.AttoKeyIndexes.toAttoIndex;
 
 public class Main {
-    public static void main(String[] args) throws ExecutionException, InterruptedException, TimeoutException {
-        AttoMnemonic mnemonic = AttoMnemonic.generate();
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        AttoMnemonic mnemonic = AttoMnemonics.generateBlocking();
         AttoSeed seed = AttoSeeds.toSeedBlocking(mnemonic);
 
         // Generate private key for genesis account (index 0)
         AttoKeyIndex genesisIndex = AttoKeyIndexes.toAttoIndex(0);
-        AttoPrivateKey genesisPrivateKey = AttoPrivateKeys.toPrivateKey(seed, genesisIndex);
+        AttoPrivateKey genesisPrivateKey = AttoPrivateKeys.toPrivateKeyBlocking(seed, genesisIndex);
+        AttoPublicKey genesisPublicKey = AttoPublicKeys.toPublicKeyBlocking(genesisPrivateKey);
+        AttoAddress genesisAddress = genesisPublicKey.toAddress(AttoAlgorithm.V1);
 
         // Create and start AttoNodeMockAsync using its builder
         AttoNodeMockAsync nodeMock = new AttoNodeMockAsyncBuilder(genesisPrivateKey).build();
@@ -46,7 +46,6 @@ public class Main {
             AttoTransactionMonitorAsync transactionMonitor = new AttoTransactionMonitorAsyncBuilder(nodeClient, accountMonitor)
                 .heightProvider(address -> {
                     // Start from height 2 for genesis (skip genesis block at height 1)
-                    AttoAddress genesisAddress = AttoAddresses.toAddress(AttoPublicKeys.toPublicKey(genesisPrivateKey), AttoAlgorithm.V1);
                     if (address.equals(genesisAddress)) {
                         return CompletableFuture.completedFuture(AttoHeights.toAttoHeight(2));
                     }
@@ -58,7 +57,6 @@ public class Main {
             AttoAccountEntryMonitorAsync accountEntryMonitor = new AttoAccountEntryMonitorAsyncBuilder(nodeClient, accountMonitor)
                 .heightProvider(address -> {
                     // Start from height 2 for genesis (skip genesis block at height 1)
-                    AttoAddress genesisAddress = AttoAddresses.toAddress(AttoPublicKeys.toPublicKey(genesisPrivateKey), AttoAlgorithm.V1);
                     if (address.equals(genesisAddress)) {
                         return CompletableFuture.completedFuture(AttoHeights.toAttoHeight(2));
                     }
@@ -195,6 +193,14 @@ public class Main {
                 System.out.println("Account 2 balance: " + account2Final.getBalance());
                 System.out.println("Account 2 height: " + account2Final.getHeight());
             }
+
+            accountEntryJob.cancel();
+            transactionJob.cancel();
+            wallet.close();
+            accountEntryMonitor.close();
+            transactionMonitor.close();
+            accountMonitor.close();
+            nodeClient.close();
 
             System.out.println("\n=== Demo completed successfully! ===");
 
