@@ -23,7 +23,7 @@ mockk = "1.14.11"
 
 # Security
 bouncycastle = "1.86"
-java-jwt = "4.5.2"
+java-jwt = "4.6.1"
 
 # Database
 mysql-connector = "26.7.0"
