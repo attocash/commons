@@ -75,6 +75,10 @@ Transaction decoding is structural only: `fromByteArray`, `fromBuffer`, and seri
 performing cryptographic verification. Call the suspend `validate()` or `isValid()` method when verification is
 required.
 
+`AttoPublicKey` and `AttoSignature` constructors check byte length, but do not establish that a key can sign or that a
+signature is valid. Public keys also appear in receiver and representative addresses, and signatures may be decoded
+before validation.
+
 ### Serialize/deserialize
 
 ```kotlin
@@ -115,4 +119,9 @@ their own executor.
 
 JavaScript exports suspend members directly as Promise-returning methods, for example
 `await mnemonic.toSeedAsync()`, `await seed.toPrivateKey(index)`, and `await privateKey.toPublicKey()`.
+`AttoSignature.isValidMessage(publicKey, messageBytes)` verifies the same raw bytes accepted by
+`AttoSigner.signMessage(messageBytes)`; the signature uses the `ATTO Signed Message v1` domain-separated framing.
+Message verification prechecks point encodings, known small-order points, and signature scalar range before using the
+platform verifier.
+Use a `Uint8Array` or `Int8Array` for bytes, and do not trim, normalize, or otherwise rewrite signed input.
 Deprecated top-level compatibility functions remain available throughout 7.x and will be removed in 8.0.

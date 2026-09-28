@@ -10,7 +10,46 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmSynthetic
+
+// All eight canonical encodings in the Ed25519 torsion subgroup; this is not a full point validity check.
+private val smallOrderEd25519PointEncodings =
+    setOf(
+        "00".repeat(32),
+        "00".repeat(31) + "80",
+        "01" + "00".repeat(31),
+        "EC" + "FF".repeat(30) + "7F",
+        "C7176A703D4DD84FBA3C0B760D10670F2A2053FA2C39CCC64EC7FD7792AC037A",
+        "C7176A703D4DD84FBA3C0B760D10670F2A2053FA2C39CCC64EC7FD7792AC03FA",
+        "26E8958FC2B227B045C3F489F2EF98F0D5DFAC05D3C63339B13802886D53FC05",
+        "26E8958FC2B227B045C3F489F2EF98F0D5DFAC05D3C63339B13802886D53FC85",
+    )
+
+private val ed25519GroupOrder = "EDD3F55C1A631258D69CF7A2DEF9DE14" + "00".repeat(15) + "10"
+
+private fun ByteArray.isCanonicalEd25519PointEncoding(): Boolean {
+    if (size != 32) return false
+    if ((this[31].toUByte().toInt() and 0x7F) < 0x7F) return true
+    for (index in 30 downTo 1) {
+        if (this[index].toUByte().toInt() < 0xFF) return true
+    }
+    return this[0].toUByte().toInt() < 0xED
+}
+
+private fun ByteArray.isCanonicalEd25519Scalar(): Boolean {
+    if (size != 32) return false
+    for (index in 31 downTo 0) {
+        val value = this[index].toUByte().toInt()
+        val limit = ed25519GroupOrder.substring(index * 2, index * 2 + 2).toInt(16)
+        if (value < limit) return true
+        if (value > limit) return false
+    }
+    return false
+}
+
+internal fun ByteArray.passesEd25519PointEncodingPrechecks(): Boolean =
+    isCanonicalEd25519PointEncoding() && toHex() !in smallOrderEd25519PointEncodings
 
 @Serializable(with = AttoSignatureAsStringSerializer::class)
 @OptIn(ExperimentalJsExport::class)
@@ -37,12 +76,24 @@ data class AttoSignature(
 
     override fun hashCode(): Int = value.contentHashCode()
 
+    internal fun passesVerificationPrechecks(): Boolean =
+        value.copyOfRange(0, 32).passesEd25519PointEncodingPrechecks() &&
+            value.copyOfRange(32, 64).isCanonicalEd25519Scalar()
+
     @JsExport.Ignore
     @JvmSynthetic
     suspend fun isValid(
         publicKey: AttoPublicKey,
         hash: AttoHash,
-    ): Boolean = verifyEd25519(this, publicKey, hash)
+    ): Boolean {
+        if (!publicKey.value.passesEd25519PointEncodingPrechecks() || !passesVerificationPrechecks()) return false
+        return try {
+            verifyEd25519(this, publicKey, hash)
+        } catch (_: IllegalArgumentException) {
+            // The JVM verifier throws for malformed public key points.
+            false
+        }
+    }
 
     @JsExport.Ignore
     @JvmSynthetic
@@ -55,7 +106,11 @@ data class AttoSignature(
         return isValid(publicKey, hash)
     }
 
-    @JsExport.Ignore
+    /**
+     * Verify exact message bytes using the ATTO Signed Message v1 framing.
+     * Keys and signatures also hold unverified wire data; the shared verifier prechecks their encodings.
+     */
+    @JsName("isValidMessage")
     @JvmSynthetic
     suspend fun isValidMessage(
         publicKey: AttoPublicKey,
