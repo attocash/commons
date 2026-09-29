@@ -193,10 +193,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # registry-url would add an unresolved NODE_AUTH_TOKEN placeholder to .npmrc during Yarn install.
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org/'
           package-manager-cache: false
 
       - uses: actions/setup-java@v6
