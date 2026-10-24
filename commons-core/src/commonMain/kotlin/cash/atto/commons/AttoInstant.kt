@@ -11,6 +11,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonEncoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.time.Clock
@@ -66,13 +67,19 @@ data class AttoInstant
 fun Instant.toAtto(): AttoInstant = AttoInstant(this)
 
 object AttoInstantAsLongSerializer : KSerializer<AttoInstant> {
+    // Retain the numeric descriptor and encoding for binary formats.
     override val descriptor: SerialDescriptor = Long.serializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
         value: AttoInstant,
     ) {
-        encoder.encodeLong(value.value.toEpochMilliseconds())
+        val milliseconds = value.value.toEpochMilliseconds()
+        if (encoder is JsonEncoder) {
+            encoder.encodeString(milliseconds.toString())
+        } else {
+            encoder.encodeLong(milliseconds)
+        }
     }
 
     override fun deserialize(decoder: Decoder): AttoInstant = AttoInstant(Instant.fromEpochMilliseconds(decoder.decodeLong()))

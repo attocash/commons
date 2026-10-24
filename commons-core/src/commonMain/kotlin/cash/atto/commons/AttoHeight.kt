@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonEncoder
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
@@ -73,13 +74,18 @@ fun Long.toAttoHeight() = this.toULong().toAttoHeight()
 fun String.toAttoHeight(): AttoHeight = AttoHeight(this.toULong())
 
 object AttoHeightSerializer : KSerializer<AttoHeight> {
+    // Retain the numeric descriptor and encoding for binary formats.
     override val descriptor = ULong.serializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
         value: AttoHeight,
     ) {
-        ULong.serializer().serialize(encoder, value.value)
+        if (encoder is JsonEncoder) {
+            encoder.encodeString(value.value.toString())
+        } else {
+            ULong.serializer().serialize(encoder, value.value)
+        }
     }
 
     override fun deserialize(decoder: Decoder): AttoHeight = AttoHeight(ULong.serializer().deserialize(decoder))

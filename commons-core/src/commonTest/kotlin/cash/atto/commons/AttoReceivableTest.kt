@@ -40,10 +40,10 @@ class AttoReceivableTest {
                "version":0,
                "algorithm":"V1",
                "publicKey":"53F1A85D25EDA5021C01A77A2B1BA99CEF9DD5FD912D7465B8B652FDEDB6A4F8",
-               "timestamp":1705517157478,
+               "timestamp":"1705517157478",
                "receiverAlgorithm":"V1",
                "receiverPublicKey":"0C400961629D759176F009249A33899440900ABCE275F6C5C01C6F7F37A2C59A",
-               "amount":18000000000000000000
+               "amount":"18000000000000000000"
             }
             """
 

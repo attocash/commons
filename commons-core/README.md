@@ -89,6 +89,14 @@ val json = tx.toJson()
 val txFromJson = AttoTransaction.fromJson(json)
 ```
 
+JSON encodes amounts, heights, and default timestamps as decimal strings to preserve all 64 bits in JavaScript.
+Timestamps remain Unix epoch milliseconds; `AttoInstantAsStringSerializer` still uses ISO dates when explicitly selected.
+Small numeric types, including protocol versions and key indexes, remain JSON numbers.
+
+Decoding accepts both decimal strings and legacy numeric fields, including mixed payloads. Binary formats, transaction
+bytes, and hashes are unchanged. Consumers that parse JSON directly must accept strings for these fields; use `BigInt`
+for exact arithmetic rather than converting them to JavaScript `number`.
+
 ### JavaScript height values
 
 Use the decimal string API to convert a height to JavaScript `bigint` without precision or sign loss:

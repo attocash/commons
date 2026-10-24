@@ -41,9 +41,9 @@ class AttoJsonTest {
 
         // Then
         assertContains(json, "\"version\":65535")
-        assertContains(json, "\"height\":18446744073709551615")
-        assertContains(json, "\"balance\":18000000000000000000")
-        assertContains(json, "\"lastTransactionTimestamp\":9223372036854775807")
+        assertContains(json, "\"height\":\"18446744073709551615\"")
+        assertContains(json, "\"balance\":\"18000000000000000000\"")
+        assertContains(json, "\"lastTransactionTimestamp\":\"9223372036854775807\"")
         assertEquals(maximumAccount, AttoAccount.fromJson(json))
     }
 
@@ -80,15 +80,51 @@ class AttoJsonTest {
 
         // Then
         assertContains(json, "\"version\":65535")
-        assertContains(json, "\"height\":18446744073709551615")
-        assertContains(json, "\"balance\":18000000000000000000")
-        assertContains(json, "\"timestamp\":9223372036854775807")
-        assertContains(json, "\"amount\":18000000000000000000")
+        assertContains(json, "\"height\":\"18446744073709551615\"")
+        assertContains(json, "\"balance\":\"18000000000000000000\"")
+        assertContains(json, "\"timestamp\":\"9223372036854775807\"")
+        assertContains(json, "\"amount\":\"18000000000000000000\"")
         assertEquals(transaction, fromJson)
         assertEquals(transaction, fromBytes)
         assertContentEquals(bytes, fromJson.toByteArray())
         assertEquals(transaction.hash, fromJson.hash)
         assertEquals(transaction.hash, fromBytes.hash)
+    }
+
+    @Test
+    fun `should accept legacy and mixed numeric account fields`() {
+        // Given
+        val expected =
+            account.copy(
+                height = AttoHeight.MAX,
+                balance = AttoAmount(AttoAmount.MAX.raw - 1UL),
+                lastTransactionTimestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE),
+            )
+        val legacyJson =
+            """
+            {
+                "publicKey":"$publicKey",
+                "network":"LOCAL",
+                "version":0,
+                "algorithm":"V1",
+                "height":18446744073709551615,
+                "balance":17999999999999999999,
+                "lastTransactionHash":"$hash",
+                "lastTransactionTimestamp":9223372036854775807,
+                "representativeAlgorithm":"V1",
+                "representativePublicKey":"$otherPublicKey"
+            }
+            """.trimIndent()
+        val mixedJson = legacyJson.replace("\"height\":18446744073709551615", "\"height\":\"18446744073709551615\"")
+
+        // When
+        val legacyAccount = AttoAccount.fromJson(legacyJson)
+        val mixedAccount = AttoAccount.fromJson(mixedJson)
+
+        // Then
+        assertEquals(expected, legacyAccount)
+        assertEquals(expected, mixedAccount)
+        assertEquals(expected, AttoAccount.fromJson(legacyAccount.toJson()))
     }
 
     @Test

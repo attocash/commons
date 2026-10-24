@@ -72,7 +72,7 @@ internal class AttoAmountTest {
     @Test
     fun `should serialize json`() {
         // given
-        val expectedJson = "18000000000000000000"
+        val expectedJson = "\"18000000000000000000\""
 
         // when
         val amount = Json.decodeFromString<AttoAmount>(expectedJson)

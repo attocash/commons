@@ -39,13 +39,13 @@ class AttoAccountEntryTest {
                "hash":"68BA42CDD87328380BE32D5AA6DBB86E905B50273D37AF1DE12F47B83A001154",
                "algorithm":"V1",
                "publicKey":"FD595851104FDDB2FEBF3739C8006C8AAE9B8A2B1BC390D5FDF07EBDD8583FA1",
-               "height":0,
+               "height":"0",
                "blockType":"RECEIVE",
                "subjectAlgorithm":"V1",
                "subjectPublicKey":"2EB21717813E7A0E0A7E308B8E2FD8A051F8724F5C5F0047E92E19310C582E3A",
-               "previousBalance":0,
-               "balance":100,
-               "timestamp":1704616009211
+               "previousBalance":"0",
+               "balance":"100",
+               "timestamp":"1704616009211"
             }
             """
 

@@ -107,10 +107,9 @@ object AttoSchemas {
                     ).pattern("^atto://[a-z2-7]{61}$")
                     .example(AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(32))).toString()),
             AttoInstant::class to
-                IntegerSchema()
-                    .format("int64")
-                    .minimum(BigDecimal.ZERO)
-                    .description("Unix epoch time in milliseconds since 1970-01-01T00:00:00Z")
+                StringSchema()
+                    .pattern("^-?[0-9]{1,19}$")
+                    .description("Unix epoch milliseconds since 1970-01-01T00:00:00Z as a signed 64-bit decimal string")
                     .example(AttoInstant.now().toEpochMilliseconds().toString()),
         )
 
