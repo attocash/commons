@@ -4,7 +4,7 @@ Core primitives and utilities used across the Atto ecosystem. Multiplatform (JVM
 
 What you get:
 
-- Mnemonic and seed derivation (BIP‑39 style)
+- 24-word English mnemonics and BIP-39 seed derivation
 - Keys and addresses
 - Blocks and transactions (send/receive/open)
 - Serialization (buffer/JSON/Protobuf) and validation helpers
@@ -36,6 +36,13 @@ val privateKey = seed.toPrivateKey(0U)
 val publicKey = privateKey.toPublicKey()
 val address = AttoAddress(AttoAlgorithm.V1, publicKey)
 ```
+
+`toSeed(passphrase)` applies Unicode NFKD normalization to the mnemonic and full `"mnemonic" + passphrase` salt
+before PBKDF2-HMAC-SHA512, as required by BIP-39. It does not additionally trim whitespace or fold case.
+The same behavior applies to JavaScript's `toSeedAsync()` and JVM's `toSeedBlocking()`.
+
+Unicode passphrases changed by NFKD can derive different keys and addresses than in previous releases.
+Empty and ASCII passphrases are unchanged. There is no legacy or raw derivation mode.
 
 ### Sign and verify a message
 

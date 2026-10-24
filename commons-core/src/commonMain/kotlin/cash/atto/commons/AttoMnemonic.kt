@@ -36,6 +36,8 @@ private fun toEntropyWithChecksum(words: List<String>): ByteArray {
 
 internal expect suspend fun checksum(entropy: ByteArray): Byte
 
+internal expect fun normalizeMnemonicNfkd(value: String): String
+
 @JsExportForJs
 @OptIn(ExperimentalJsExport::class)
 class AttoMnemonic private constructor(
@@ -116,11 +118,12 @@ class AttoMnemonic private constructor(
 
     fun toEntropy(): ByteArray = toEntropyWithChecksum(words).sliceArray(0 until ENTROPY_SIZE)
 
+    /** Derives the seed using BIP-39 UTF-8 NFKD normalization for the mnemonic and salt. */
     @JsName("toSeedAsync")
     @JvmSynthetic
     suspend fun toSeed(passphrase: String = ""): AttoSeed {
-        val mnemonic = words.joinToString(" ")
-        val salt = "mnemonic$passphrase"
+        val mnemonic = normalizeMnemonicNfkd(phrase)
+        val salt = normalizeMnemonicNfkd("mnemonic$passphrase")
         val iterations = 2048
         val keyLength = 512
 
