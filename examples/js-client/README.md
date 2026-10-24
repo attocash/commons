@@ -1,54 +1,63 @@
-# Atto JavaScript Client Example
+# JavaScript client example
 
-This example demonstrates how to use the Atto Commons JavaScript packages to create wallets, manage accounts, and
-perform
-transactions using Node.js.
+Run a local wallet demo in Node.js using the individual Atto Commons npm packages. It starts a containerized node, MySQL database, and Work Server, sends funds between three accounts, and prints transaction and account-entry streams.
 
 ## Prerequisites
 
-- Node.js 24 or higher
-- A working internet connection to fetch npm packages and images
-- Docker or Podman installed and running
+- Node.js 24 and npm.
+- Docker or a compatible Podman API accessible to Testcontainers, with permission to create containers and networks.
+- Network access to download npm packages and missing container images.
 
-## Setup
+This is a Node.js ESM program. [package.json](package.json) currently pins Commons `7.0.2`; `npm install` uses those packages, not the current checkout automatically. Use [local tarballs](#try-the-current-checkout) to run against the current source. The example leaves container image selection to the mock defaults; this checkout's defaults and runtime requirements are documented in [commons-test](../../commons-test/README.md).
 
-Install the released npm packages in this directory:
+## Run
 
-```bash
+From this directory:
+
+```sh
 npm install
+npm start
 ```
 
-For an unreleased checkout before the split packages are available on npm, build local tarballs with
-`./gradlew packJsPackage -Pversion=0.0.0-local` from the repository root and install the tarballs from each module's
-`build/packages` directory.
+`npm start` runs `node main.mjs`. Expect service URLs, generated addresses, published transaction hashes, stream events, and balances. Startup can take time while images download and MySQL initializes. The script prints its generated mnemonic; use it only for disposable local testing.
 
-## Running the Example
+## Try the current checkout
 
-Execute the example:
+To use locally built Commons packages instead of the pinned release, run these commands from the repository root:
 
-```bash
-node main.mjs
+```sh
+./gradlew packJsPackage -Pversion=0.0.0-local.1 -Psigning.skip=true
+cd examples/js-client
+npm install --no-save \
+  ../../commons-core/build/packages/attocash-commons-core-0.0.0-local.1.tgz \
+  ../../commons-transport/build/packages/attocash-commons-transport-0.0.0-local.1.tgz \
+  ../../commons-node/build/packages/attocash-commons-node-0.0.0-local.1.tgz \
+  ../../commons-node-remote/build/packages/attocash-commons-node-remote-0.0.0-local.1.tgz \
+  ../../commons-worker/build/packages/attocash-commons-worker-0.0.0-local.1.tgz \
+  ../../commons-worker-remote/build/packages/attocash-commons-worker-remote-0.0.0-local.1.tgz \
+  ../../commons-wallet/build/packages/attocash-commons-wallet-0.0.0-local.1.tgz \
+  ../../commons-test/build/packages/attocash-commons-test-0.0.0-local.1.tgz
+npm start
 ```
 
-## What the Example Does
+Install all eight tarballs together so their internal Commons dependencies use the same local version.
 
-This example mirrors the functionality of the Java client example:
+## Read the example
 
-1. **Generates a mnemonic and seed** - Creates a new wallet seed from a random mnemonic
-2. **Starts mock servers** - Launches AttoNodeMock and AttoWorkerMock for testing
-3. **Creates a wallet** - Initializes an AttoWallet with auto-receive functionality
-4. **Opens accounts** - Creates three accounts (indices 0, 1, and 2)
-5. **Monitors transactions** - Subscribes to transaction and account entry streams
-6. **Performs transfers** - Sends ATTO from the genesis account to the other accounts
-7. **Displays balances** - Shows account balances and heights after transactions
+[main.mjs](main.mjs) exposes `require` with `createRequire` for the underlying client runtime. It awaits `AttoMnemonic.generate()`, `mnemonic.toSeedAsync()`, and `seed.toPrivateKey(index)`, builds and starts both mock services, then configures `AttoWalletAsyncBuilder` with `.signerProviderSeed(seed)` and auto-receive.
 
-## Key Features Demonstrated
+Index zero holds `AttoAmount.MAX` because its private key is used to generate the local node's genesis transaction. Newly generated wallets on an existing network have no funds. The example opens indices zero through two, then sends 1,000 and 2,000 ATTO from zero using `sendByIndex`. Opening a wallet account registers it locally; receiving the first payment opens a new recipient on-chain.
 
-- **Mnemonic generation** using `await AttoMnemonic.generate()`
-- **Seed derivation** using `await mnemonic.toSeedAsync()`
-- **Private key derivation** using `await seed.toPrivateKey()`
-- **Mock server setup** for testing without a real node
-- **Wallet builder pattern** with auto-receive configuration
-- **Account management** (opening, checking balances)
-- **Transaction sending** between accounts
-- **Real-time streaming** of transactions and account entries
+The script uses Promise methods including `openAccount`, `getAddress`, and `getAccountByIndex`. This demo uses an all-zero representative address and fixed delays before printing balances. Choose a representative appropriate for your network and wait for an observed result with a timeout in production code or integration tests.
+
+## Cleanup
+
+The script cancels and joins its stream jobs, closes the wallet, account monitor, and node client, then awaits worker and node `stop()`. Both mock starts occur before the inner cleanup block; if startup fails between them, use your container runtime to inspect any remaining test resources. For reusable tests, put startup inside the same `try/finally` that owns teardown, as shown in [commons-test](../../commons-test/README.md#start-and-stop-local-services).
+
+Long-lived subscriptions keep work running until canceled. See [subscription completion](../../MIGRATION.md#subscription-completion) for completion callback behavior.
+
+## Further reading
+
+- [Wallet API](../../commons-wallet/README.md) and [remote node client](../../commons-node-remote/README.md).
+- [Java version](../java-client/README.md).
+- [JavaScript package migration](../../MIGRATION.md#javascript-packages), [repository overview](../../README.md), and [BSD 3-Clause license](../../LICENSE).

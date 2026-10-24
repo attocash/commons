@@ -1,87 +1,48 @@
-# @attocash/commons-js
+# commons-js
 
-[![npm version](https://img.shields.io/npm/v/@attocash/commons-js.svg)](https://www.npmjs.com/package/@attocash/commons-js)
-[![license](https://img.shields.io/github/license/attocash/commons.svg)](https://github.com/attocash/commons/blob/main/LICENSE)
+Deprecated aggregate JavaScript package. New applications should import the individual
+`@attocash/commons-*` packages listed in the [module guide](../README.md#choose-a-module).
 
-Deprecated aggregate JavaScript and TypeScript package for Atto Commons.
+## Replace aggregate imports
 
-`@attocash/commons-js` still exists as a compatibility package for applications that import everything from one module.
-New code should install and import the individual packages instead.
-
-## Install
-
-Prefer individual packages:
+Install only the modules the application uses, keeping Commons versions aligned:
 
 ```sh
-npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
-npm install @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
-npm install --save-dev @attocash/commons-test
+npm install @attocash/commons-core @attocash/commons-node-remote
 ```
 
-The deprecated aggregate package remains available during the transition:
+Import each API from its owning package:
 
-```sh
-npm install @attocash/commons-js
+```javascript
+import { AttoMnemonic } from "@attocash/commons-core";
+import { AttoNodeClientAsyncBuilder } from "@attocash/commons-node-remote";
 ```
 
-Both styles are published as ESM and include TypeScript declarations.
+The current generated aggregate runtime does not re-export the individual packages' APIs. Its generated
+TypeScript declarations alone do not establish that an aggregate import will work. Depend directly on the
+owning package rather than treating `commons-js` as an alias for all modules.
 
-## Import Migration
+## Find the replacement
 
-Old aggregate import:
+| API | Package and guide |
+| --- | --- |
+| Mnemonics, keys, addresses, amounts, blocks, transactions | [commons-core](../commons-core/README.md) |
+| Node monitors and subscriptions | [commons-node](../commons-node/README.md) |
+| HTTP node client builder | [commons-node-remote](../commons-node-remote/README.md) |
+| HTTP Work Server client builder | [commons-worker-remote](../commons-worker-remote/README.md) |
+| Wallet builder and operations | [commons-wallet](../commons-wallet/README.md) |
+| Mock services | [commons-test](../commons-test/README.md) |
 
-```js
-import {
-  AttoAddress,
-  AttoMnemonic,
-  AttoNodeClientAsyncBuilder,
-  AttoWalletAsyncBuilder,
-  AttoWorkerAsyncBuilder,
-  toSeedAsync,
-} from '@attocash/commons-js'
-```
+For browser and CPU workers, check the respective [worker guides](../README.md#choose-a-module) before choosing a
+JavaScript API; Kotlin support does not imply a public JavaScript factory.
 
-New individual imports:
+The [migration guide](../MIGRATION.md#javascript-packages) covers package changes. The
+[JavaScript client example](../examples/js-client/README.md) shows individual imports in an application.
 
-```js
-import {AttoAddress, AttoMnemonic, toSeedAsync} from '@attocash/commons-core'
-import {AttoNodeClientAsyncBuilder} from '@attocash/commons-node-remote'
-import {AttoWalletAsyncBuilder} from '@attocash/commons-wallet'
-import {AttoWorkerAsyncBuilder} from '@attocash/commons-worker-remote'
-```
+## Build maintainers
 
-## Package Map
+This module retains the aggregate artifact definition. Shared linkage for split npm packages is handled by
+[commons-npm-bundle](../commons-npm-bundle/README.md), not by aggregate imports.
+See [the entry resource](src/jsMain/resources/index.mjs) and [build configuration](build.gradle.kts) for its current shape.
 
-| Package                           | Use it for                                                                                            |
-|-----------------------------------|-------------------------------------------------------------------------------------------------------|
-| `@attocash/commons-core`          | Protocol primitives, amounts, mnemonics, keys, addresses, blocks, transactions, hashes, JSON helpers. |
-| `@attocash/commons-node`          | Node operations, account monitors, transaction monitors, account-entry monitors, receivable helpers.  |
-| `@attocash/commons-node-remote`   | HTTP node client builder.                                                                             |
-| `@attocash/commons-worker`        | Local CPU proof-of-work helpers.                                                                      |
-| `@attocash/commons-worker-remote` | HTTP Work Server client builder.                                                                      |
-| `@attocash/commons-worker-web`    | Browser WebGPU/WebGL proof-of-work worker.                                                            |
-| `@attocash/commons-wallet`        | Wallet builder and async wallet helpers.                                                              |
-| `@attocash/commons-test`          | Mock node and worker services for tests and demos.                                                    |
-
-## Requirements
-
-- Node.js 18 or newer is recommended.
-- Use ESM imports. In Node.js files, use `.mjs` or set `"type": "module"`.
-- Remote node and worker clients still need `require` exposed for the underlying runtime:
-
-```js
-import {createRequire} from 'node:module'
-
-globalThis.require = createRequire(import.meta.url)
-```
-
-## Examples
-
-- [examples/js-client](https://github.com/attocash/commons/tree/main/examples/js-client) shows the individual package
-  imports with local mock node and worker services.
-- [Atto documentation](https://atto.cash/docs) has integration guides for nodes, work servers, wallet servers, and
-  offline signing.
-
-## License
-
-[BSD 3-Clause](https://github.com/attocash/commons/blob/main/LICENSE)
+[License](../LICENSE).

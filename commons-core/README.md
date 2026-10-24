@@ -1,180 +1,146 @@
 # commons-core
 
-Core primitives and utilities used across the Atto ecosystem. Multiplatform (JVM/JS/Wasm).
+Protocol values and cryptography for Atto applications: mnemonics, keys, addresses, amounts, blocks,
+transactions, signing, hashing, and serialization. Available for Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm,
+with Java blocking facades and a JavaScript/TypeScript npm package.
 
-What you get:
+Core operations run without a node. For networking, use [commons-node-remote](../commons-node-remote/README.md);
+for proof-of-work generation, use a [worker implementation](../README.md#choose-a-module).
 
-- 24-word English mnemonics and BIP-39 seed derivation
-- Keys and addresses
-- Blocks and transactions (send/receive/open)
-- Serialization (buffer/JSON/Protobuf) and validation helpers
-- Hashing and proof‑of‑work interfaces
-
-## Installation
-
-Gradle:
+## Install
 
 ```kotlin
-implementation("cash.atto:commons-core:<version>")
+dependencies {
+    implementation("cash.atto:commons-core:<version>")
+}
 ```
-
-NPM:
 
 ```sh
 npm install @attocash/commons-core
 ```
 
-## Examples (from tests)
+JavaScript packages use ESM. Node.js 24 is used in CI; the current hash dependency requires Node.js 20.19
+or newer. Browsers need WebCrypto. Key derivation, signing, and signature verification use suspending Kotlin
+functions and Promise-returning JavaScript methods.
 
-### Generate mnemonic, derive seed, and keys
+## Derive an address
+
+### Kotlin
 
 ```kotlin
-val mnemonic = AttoMnemonic.generate()
-val seed = mnemonic.toSeed()
+import cash.atto.commons.AttoAlgorithm
+import cash.atto.commons.AttoMnemonic
 
-val privateKey = seed.toPrivateKey(0U)
-val publicKey = privateKey.toPublicKey()
-val address = AttoAddress(AttoAlgorithm.V1, publicKey)
+suspend fun main() {
+    val mnemonic = AttoMnemonic.generate()
+    val seed = mnemonic.toSeed()
+    val privateKey = seed.toPrivateKey(0U)
+    val publicKey = privateKey.toPublicKey()
+    val address = publicKey.toAddress(AttoAlgorithm.V1)
+    println(address)
+}
 ```
 
-`fromEntropy()` accepts 32 bytes (256 bits) of raw entropy for a 24-word English mnemonic. `toEntropy()` returns
-those 32 bytes; the checksum is added and validated internally. Earlier releases used a 33-byte buffer including
-the checksum. Entropy import/export now requires raw 32-byte values; existing mnemonic phrases and their seeds
-are unchanged by this representation change.
+### JavaScript and TypeScript
 
-`toSeed(passphrase)` applies Unicode NFKD normalization to the mnemonic and full `"mnemonic" + passphrase` salt
-before PBKDF2-HMAC-SHA512, as required by BIP-39.
-The same behavior applies to JavaScript's `toSeedAsync()` and JVM's `toSeedBlocking()`.
+Save this as an `.mjs` file, or use a project configured for ESM:
 
-Unicode passphrases changed by NFKD can derive different keys and addresses than in previous releases.
-Empty and ASCII passphrases are unchanged. There is no legacy or raw derivation mode.
+```javascript
+import { AttoAlgorithm, AttoMnemonic, toAttoIndex } from "@attocash/commons-core";
 
-### Sign and verify a message
+const mnemonic = await AttoMnemonic.generate();
+const seed = await mnemonic.toSeedAsync();
+const privateKey = await seed.toPrivateKey(toAttoIndex(0));
+const publicKey = await privateKey.toPublicKey();
+const address = publicKey.toAddress(AttoAlgorithm.V1);
+console.log(address.toString());
+```
+
+Mnemonics use 24 English words. `fromPhrase()` validates the words and checksum; `fromEntropy()` accepts
+32 bytes of raw entropy, and `toEntropy()` returns those 32 bytes without the checksum.
+`toSeed(passphrase)` uses BIP-39 NFKD normalization and PBKDF2-HMAC-SHA512 to derive a 64-byte seed.
+See the [migration notes](../MIGRATION.md#mnemonic-entropy) when upgrading entropy or passphrase handling.
+
+## Sign a message
+
+The following Kotlin snippet continues from the address example:
 
 ```kotlin
-val message = "atto message".encodeToByteArray()
+val message = "hello".encodeToByteArray()
 val signature = privateKey.signMessage(message)
-
 check(signature.isValidMessage(publicKey, message))
 ```
 
-### Build and validate a transaction
+In JavaScript, create a signer from the private key:
 
-```kotlin
-val receiveBlock = AttoReceiveBlock(
-  version = 0U.toAttoVersion(),
-  network = AttoNetwork.LOCAL,
-  address = AttoAddress(AttoAlgorithm.V1, publicKey),
-  height = 2U.toAttoHeight(),
-  balance = AttoAmount.MAX,
-  timestamp = AttoInstant.now(),
-  previous = AttoHash(Random.nextBytes(ByteArray(32))),
-  sendHashAlgorithm = AttoAlgorithm.V1,
-  sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
-)
-
-val tx = AttoTransaction(
-  block = receiveBlock,
-  signature = privateKey.sign(receiveBlock.hash),
-  work = AttoWorker.cpu().work(receiveBlock),
-)
-
-check(tx.isValid())
+```javascript
+const signer = await privateKey.toSigner();
+const message = Int8Array.from(new TextEncoder().encode("hello"));
+const signature = await signer.signMessage(message);
+console.log(await signature.isValidMessage(signer.publicKey, message));
 ```
 
-Transaction decoding is structural only: `fromByteArray`, `fromBuffer`, and serializers parse the payload without
-performing cryptographic verification. Call the suspend `validate()` or `isValid()` method when verification is
-required.
+Message signing uses the `ATTO Signed Message v1` domain-separated format. Verify the exact bytes that were
+signed; changing the text or its encoding changes the message. Use `Int8Array` for the generated TypeScript byte APIs.
 
-`AttoPublicKey` and `AttoSignature` constructors check byte length, but do not establish that a key can sign or that a
-signature is valid. Public keys also appear in receiver and representative addresses, and signatures may be decoded
-before validation.
+## Decode and validate a transaction
 
-Blocks, votes, accounts, account entries, and receivables store addresses as their canonical identity. Read `algorithm`,
-`publicKey`, and the receiver, representative, or subject equivalents as projections of the corresponding address.
-OPEN block `height` is a constant projection and always `1`.
-
-The address-based constructor and data-class `copy` API intentionally break source compatibility. Constructors,
-`copy` calls, and destructuring now follow the canonical addresses: replace `block.copy(publicKey = key)` with
-`block.copy(address = AttoAddress(block.algorithm, key))`, and use `receiverAddress`, `representativeAddress`, or
-`subjectAddress` for related identities. OPEN `height` is not a constructor or `copy` parameter.
-JavaScript constructors now take addresses in place of the algorithm/public-key pairs. Account operations accept addresses:
-`AttoAccount.open(representativeAddress, receivable)`, `account.send(receiverAddress, amount)`, and
-`account.change(representativeAddress)`.
-
-JSON preserves its existing fields and defaults. Blocks emit legacy algorithm/public-key projections alongside their
-addresses; accounts, receivables, and votes omit addresses, and account entries include addresses only with `encodeDefaults`.
-When an address is present in input, decoding ignores its projected fields, including conflicting or malformed
-values. Payloads without an address can still supply the legacy algorithm/public-key pair. OPEN `height` is always
-emitted as `"1"`, and input `height` is ignored.
-
-JSON output, binary layouts, and hashes remain unchanged for the same values.
-
-### Serialize/deserialize
+Given an encoded transaction, decode it and explicitly validate it:
 
 ```kotlin
-val bytes = tx.toByteArray()
-val txFromBytes = AttoTransaction.fromByteArray(bytes)
+import cash.atto.commons.AttoTransaction
 
-val json = tx.toJson()
-val txFromJson = AttoTransaction.fromJson(json)
+suspend fun decodeTransaction(json: String): AttoTransaction {
+    val transaction = AttoTransaction.fromJson(json)
+    check(transaction.isValid()) { "Invalid transaction" }
+    return transaction
+}
 ```
 
-JSON encodes amounts, heights, and default timestamps as decimal strings to preserve all 64 bits in JavaScript.
-Timestamps remain Unix epoch milliseconds; `AttoInstantAsStringSerializer` still uses ISO dates when explicitly selected.
-Small numeric types, including protocol versions and key indexes, remain JSON numbers.
+Decoding parses the structure. Validation checks the block, signature, and proof of work; acceptance by a node
+also depends on ledger state. Constructing a public key or signature checks its length, not its authenticity.
 
-Decoding accepts both decimal strings and legacy numeric fields, including mixed payloads. Binary formats, transaction
-bytes, and hashes are unchanged. Consumers that parse JSON directly must accept strings for these fields; use `BigInt`
-for exact arithmetic rather than converting them to JavaScript `number`.
+Once a transaction is available, serialize it with:
 
-### JavaScript height values
+```kotlin
+val bytes = transaction.toByteArray()
+val json = transaction.toJson()
+val restored = AttoTransaction.fromByteArray(bytes)
+```
 
-Use the decimal string API to convert a height to JavaScript `bigint` without precision or sign loss:
+See [transaction tests](src/commonTest/kotlin/cash/atto/commons/AttoTransactionTest.kt) for complete block,
+signature, and worker examples. Work generation requires an additional worker module.
 
-```typescript
+## Addresses and numeric values
+
+Blocks and account models accept addresses as their identity. Their algorithm and public-key properties are
+projections of the address; OPEN block height is always `1`.
+
+Default JSON encodes amounts, heights, and timestamps as decimal strings to preserve their 64-bit values.
+Timestamps are Unix epoch milliseconds. In JavaScript, use decimal strings or `bigint` for exact arithmetic:
+
+```javascript
 import { toAttoHeight } from "@attocash/commons-core";
 
 const height = toAttoHeight("18446744073709551615");
 const value = BigInt(height.toString());
+console.log(value);
 ```
 
-The Kotlin `height.value: ULong` property is not exported to JavaScript. Replace existing JavaScript `height.value`
-reads with `BigInt(height.toString())`; directly exporting `ULong` exposes signed backing values above `2^63 - 1`.
+The Kotlin `ULong` height backing value is not exposed to JavaScript. Protocol versions and key indexes remain
+JSON numbers. [Migration details](../MIGRATION.md#json-numbers) describe older numeric payloads and wire compatibility.
 
-### CPU proof‑of‑work
+## Java callers
 
-This example also requires `commons-worker` or `@attocash/commons-worker`.
+Use the JVM `*Blocking` facades for suspending cryptographic operations, such as
+`AttoMnemonics.generateBlocking()`, `AttoSeeds.toSeedBlocking(mnemonic)`, and
+`AttoPublicKeys.toPublicKeyBlocking(privateKey)`. Schedule them on an executor when asynchronous Java execution
+is needed. See the [Java example](../examples/java-client/README.md).
 
-```kotlin
-val work = AttoWorker.cpu().work(receiveBlock)
-```
+## Further reading
 
-See `commons-core/src/commonTest/kotlin/cash/atto/commons/AttoTransactionTest.kt` for more end‑to‑end examples.
-
-## Suspend crypto API
-
-Browser implementations use WebCrypto, whose digest, key import, signing, and verification operations are
-asynchronous. The common Kotlin API therefore suspends for every operation that can reach those platform APIs:
-
-- mnemonic creation and generation: `AttoMnemonic.fromWords`, `fromPhrase`, `fromEntropy`, and `generate`;
-- private-key derivation: `AttoSeed.toPrivateKey`;
-- Ed25519 key loading and signing: `AttoPrivateKey.toPublicKey`, `toSigner`, `sign`, and `signMessage`;
-- Ed25519 verification: `AttoSignature.isValid` and `isValidMessage`;
-- verification that depends on a signature: `AttoSignedVote.isValid`, `AttoTransaction.validate`, and
-  `AttoTransaction.isValid`.
-
-Pure parsing, serialization, BLAKE2b hashing, address operations, block validation, and proof-of-work checks remain
-synchronous. The suspend methods are hidden from Java. JVM callers can use the corresponding `*Blocking` methods
-exposed by `AttoMnemonics`, `AttoSeeds`, `AttoPrivateKeys`, `AttoPublicKeys`, `AttoSigners`, `AttoSignatures`,
-`AttoVotes`, and `AttoTransactions`. Java callers that need asynchronous execution can schedule those operations on
-their own executor.
-
-JavaScript exports suspend members directly as Promise-returning methods, for example
-`await mnemonic.toSeedAsync()`, `await seed.toPrivateKey(index)`, and `await privateKey.toPublicKey()`.
-`AttoSignature.isValidMessage(publicKey, messageBytes)` verifies the same raw bytes accepted by
-`AttoSigner.signMessage(messageBytes)`; the signature uses the `ATTO Signed Message v1` domain-separated framing.
-Message verification prechecks point encodings, known small-order points, and signature scalar range before using the
-platform verifier.
-Use a `Uint8Array` or `Int8Array` for bytes, and do not trim, normalize, or otherwise rewrite signed input.
-Deprecated top-level compatibility functions remain available throughout 7.x and will be removed in 8.0.
+- [Mnemonic tests](src/commonTest/kotlin/cash/atto/commons/AttoMnemonicTest.kt)
+- [Seed normalization vectors](src/commonTest/kotlin/cash/atto/commons/AttoSeedNormalizationTest.kt)
+- [Address and wire migration](../MIGRATION.md#addresses)
+- [All modules](../README.md#choose-a-module)
+- [License](../LICENSE)

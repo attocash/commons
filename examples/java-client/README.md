@@ -1,64 +1,38 @@
-# Atto Java Client Example
+# Java client example
 
-This example demonstrates how to use the Atto Commons Java library to create wallets, manage accounts, and perform
-transactions.
+Run a complete local wallet demo from Java: start an Atto node, MySQL, and a Work Server in containers, then send funds between accounts and observe transactions and account entries.
 
 ## Prerequisites
 
-- Java 17 or higher
-- Maven (included via wrapper)
-- Docker or Podman installed and running
+- A JDK; Java 21 or newer is a suitable choice for this example.
+- Docker or a compatible Podman API accessible to Testcontainers, with permission to create containers and networks.
+- Network access to download Maven dependencies and missing container images.
 
-## Building
+The Maven wrapper is included. The [POM](pom.xml) currently pins Commons `7.0.2`; running this example uses those artifacts, not the current checkout automatically. The example leaves container image selection to the mock defaults; see [commons-test](../../commons-test/README.md) for this checkout's defaults and runtime setup.
 
-Build the example:
+## Run
 
-```bash
+From this directory:
+
+```sh
 ./mvnw clean package
-```
-
-## Running the Example
-
-Execute the example:
-
-```bash
 ./mvnw exec:exec
 ```
 
-The example runs in its own JVM so Testcontainers can complete its shutdown hooks.
+The `exec:exec` configuration launches a separate JVM so Testcontainers shutdown hooks can run. The demo prints service URLs, addresses, transaction hashes, and balances, then closes its resources. Startup can take time while images download and MySQL initializes.
 
-## What the Example Does
+## Read the example
 
-This example demonstrates the core functionality of the Atto Commons library:
+[Main.java](src/main/java/cash/atto/Main.java) generates a mnemonic and derives index zero's private key using the blocking JVM cryptographic helpers. It passes that key to the node mock builder, which creates a local genesis transaction. That specific account starts with `AttoAmount.MAX` on the local network; a randomly generated wallet on an existing network would have no funds.
 
-1. **Generates a mnemonic and seed** - Creates a new wallet seed from a random mnemonic
-2. **Starts mock servers** - Launches AttoNodeMockAsync and AttoWorkerMockAsync for testing
-3. **Creates a wallet** - Initializes an AttoWalletAsync with auto-receive functionality
-4. **Opens accounts** - Creates three accounts (indices 0, 1, and 2)
-5. **Monitors transactions** - Sets up transaction and account entry monitors
-6. **Performs transfers** - Sends ATTO from the genesis account to the other accounts
-7. **Displays balances** - Shows account balances and heights after transactions
-8. **Cleans up** - Properly closes clients, monitors, wallet jobs, and mock servers
+The rest of the example uses `CompletableFuture` APIs and waits with `.get()`. It registers three wallet accounts, enables auto-receive, sends 1,000 and 2,000 ATTO from index zero, and displays the results. Transaction and account-entry monitors start the genesis account at height two to skip its genesis block.
 
-## Key Features Demonstrated
+This is a demonstration: the representative is an all-zero test address and balance displays use fixed delays rather than assertions that receiving has finished. Use a network-appropriate representative and bounded outcome checks in an application or test suite. `openAccount` registers local wallet membership; the first received payment opens a new recipient on-chain.
 
-- **Mnemonic generation** using `AttoMnemonics.generateBlocking()`
-- **Seed derivation** using `AttoSeeds.toSeedBlocking()`
-- **Private key derivation** from seed and index using `AttoPrivateKeys.toPrivateKeyBlocking()`
-- **Mock server setup** for testing without a real node using builder pattern
-- **Async client and worker** creation with `AttoNodeClientAsyncBuilder` and `AttoWorkerAsyncBuilder`
-- **Account monitoring** for auto-receive functionality
-- **Transaction and account entry monitoring** with custom height providers
-- **Wallet builder pattern** with auto-receive configuration
-- **Account management** (opening, checking balances)
-- **Transaction sending** between accounts with `wallet.send()`
-- **Proper resource cleanup** before stopping the mock servers
+The normal success path cancels subscriptions and closes the wallet, monitors, and node client; the outer `finally` closes the mock servers. Both mock starts occur before that cleanup block. For reusable tests, put startup inside the same `try/finally` that owns teardown. See [commons-test lifecycle guidance](../../commons-test/README.md#start-and-stop-local-services).
 
-## Important Notes
+## Further reading
 
-- The example uses **mock servers** that run locally for testing
-- The genesis account (index 0) starts with the maximum ATTO balance
-- Mock servers are automatically cleaned up when the example completes
-- Core cryptographic setup uses the blocking JVM API; wallet, client, worker, and mock operations use
-  `CompletableFuture.get()` to wait for results
-- Transaction and account monitors start from height 2 for the genesis account (skipping the genesis block at height 1)
+- [Wallet APIs](../../commons-wallet/README.md) and [node monitors](../../commons-node/README.md).
+- [JavaScript version](../js-client/README.md).
+- [Cryptographic API migration](../../MIGRATION.md#suspending-cryptography), [repository overview](../../README.md), and [BSD 3-Clause license](../../LICENSE).

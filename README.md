@@ -1,133 +1,114 @@
 # Atto Commons
 
-A multiplatform library of building blocks for Atto applications. It provides primitives (mnemonics, keys, addresses,
-blocks), client tooling to talk to a node, wallet utilities, and proof‑of‑work workers (CPU/OpenCL/WebGPU/WebGL/remote).
-Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm are supported where applicable.
+Kotlin and JavaScript libraries for building Atto applications: derive keys, create and sign transactions,
+connect to nodes, manage wallets, and generate proof of work.
 
-NOTE: The API is evolving and may include breaking changes between releases.
+The modules target Kotlin/JVM, Kotlin/JS, and Kotlin/Wasm where supported. Java callers use JVM blocking
+facades; JavaScript and TypeScript callers use ESM packages with Promise-based APIs.
 
-## Modules
+## Choose a module
 
-- commons-core — primitives: mnemonic/seed, keys, addresses, blocks/transactions, serialization, utilities.
-- commons-transport — shared HTTP transport used by remote Commons clients.
-- commons-node — node operations and monitors (account membership, transactions, account entries).
-- commons-node-remote — remote HTTP client for talking to a node.
-- commons-signer-remote — remote signer client for external key management.
-- commons-wallet — simple wallet utilities built on top of node + worker.
-- commons-worker — CPU proof‑of‑work implementation.
-- commons-worker-opencl — OpenCL proof‑of‑work implementation (JVM only).
-- commons-worker-web — WebGPU and WebGL proof-of-work implementations (browser JS/Wasm).
-- commons-worker-remote — talk to a remote worker service.
-- commons-spring-boot-starter — Spring Boot integrations for Atto services.
-- commons-test — test utilities and mock node/worker services.
-- commons-js — deprecated aggregate JavaScript/TypeScript package. Prefer the individual `@attocash/commons-*` packages.
+| Task | Module |
+| --- | --- |
+| Work with mnemonics, keys, addresses, amounts, and transactions | [commons-core](commons-core/README.md) |
+| Query accounts and consume node streams | [commons-node](commons-node/README.md) |
+| Connect to a node over HTTP | [commons-node-remote](commons-node-remote/README.md) |
+| Share HTTP transport between remote adapters | [commons-transport](commons-transport/README.md) |
+| Sign through an external signer service on the JVM | [commons-signer-remote](commons-signer-remote/README.md) |
+| Manage accounts, send funds, and receive payments | [commons-wallet](commons-wallet/README.md) |
+| Generate proof of work on a CPU | [commons-worker](commons-worker/README.md) |
+| Generate proof of work with OpenCL on the JVM | [commons-worker-opencl](commons-worker-opencl/README.md) |
+| Generate proof of work with WebGPU or WebGL in a browser | [commons-worker-web](commons-worker-web/README.md) |
+| Request proof of work from a Work Server | [commons-worker-remote](commons-worker-remote/README.md) |
+| Configure Commons in a Spring Boot application | [commons-spring-boot-starter](commons-spring-boot-starter/README.md) |
+| Run tests against mock nodes and workers | [commons-test](commons-test/README.md) |
 
-Each module has its own README with detailed examples based on tests. Start here for a quick taste.
+For JavaScript, use individual `@attocash/commons-*` packages. The deprecated
+[commons-js](commons-js/README.md) project is retained for older aggregate-package integrations.
+The [npm linkage project](commons-npm-bundle/README.md) is internal build tooling.
 
-## Installation
+## Install
 
-Gradle coordinates vary per module, for example:
+Install the modules you need, using the same release version across Commons dependencies.
+For a Kotlin application, start with core:
 
 ```kotlin
 dependencies {
-  // Core primitives
-  implementation("cash.atto:commons-core:<version>")
-  // Shared HTTP transport for custom remote adapters
-  implementation("cash.atto:commons-transport:<version>")
-  // Node client (remote over HTTP)
-  implementation("cash.atto:commons-node-remote:<version>")
-  // Wallet utilities
-  implementation("cash.atto:commons-wallet:<version>")
-  // CPU worker (pure Kotlin)
-  implementation("cash.atto:commons-worker:<version>")
-  // OpenCL worker (JVM)
-  implementation("cash.atto:commons-worker-opencl:<version>")
-  // Web workers (browser JS/Wasm)
-  implementation("cash.atto:commons-worker-web:<version>")
+    implementation("cash.atto:commons-core:<version>")
 }
 ```
 
-On JS/Node, install the package for each module you use:
+For JavaScript or TypeScript:
 
 ```sh
-npm i @attocash/commons-core @attocash/commons-transport @attocash/commons-node @attocash/commons-node-remote
-npm i @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
-npm i -D @attocash/commons-test
+npm install @attocash/commons-core
 ```
 
-Browser-only WebGPU/WebGL workers are available as `@attocash/commons-worker-web`.
-`@attocash/commons-js` remains as a deprecated aggregate package for existing applications during the transition.
+Use ESM imports (`.mjs`, or `"type": "module"` in `package.json`). Node.js 24 is used in CI;
+the current hash dependency requires Node.js 20.19 or newer. Browser cryptography requires WebCrypto.
+Each module README lists any additional dependencies and platform requirements.
 
-For unreleased checkouts before the split packages are available on npm, build local tarballs with
-`./gradlew packJsPackage -Pversion=0.0.0-local` and install the packages from each module's `build/packages` directory.
+## Create an address
 
-## Quick start
-
-- Generate a mnemonic and derive a seed (suspend):
+This Kotlin program runs without a node or worker:
 
 ```kotlin
-val mnemonic = AttoMnemonic.generate()
-val seed = mnemonic.toSeed()
+import cash.atto.commons.AttoAlgorithm
+import cash.atto.commons.AttoMnemonic
+
+suspend fun main() {
+    val mnemonic = AttoMnemonic.generate()
+    val seed = mnemonic.toSeed()
+    val publicKey = seed.toPrivateKey(0U).toPublicKey()
+    println(publicKey.toAddress(AttoAlgorithm.V1))
+}
 ```
 
-- Derive keys and address (suspend):
+Continue with the [core guide](commons-core/README.md) for JavaScript, message signing, and serialization.
+Use the [wallet guide](commons-wallet/README.md) to connect account operations to a node and worker.
+Creating an address does not create a funded account on the network.
 
-```kotlin
-val privateKey = seed.toPrivateKey(0U)
-val publicKey = privateKey.toPublicKey()
-val address = publicKey.toAddress(AttoAlgorithm.V1)
+## Examples
+
+- [Java client](examples/java-client/README.md): JVM blocking APIs and mock services.
+- [JavaScript client](examples/js-client/README.md): Promise APIs, a wallet, and node subscriptions.
+
+Both examples use local mock services. Their READMEs describe the pinned dependencies and container prerequisites.
+
+## Build and test
+
+Use the checked-in Gradle wrapper. Most modules use a JDK 17 toolchain; the Spring Boot starter uses JDK 21.
+Browser tests need Chrome/Chromium, OpenCL tests need a driver/runtime, and mock-node tests need a
+Docker-compatible container runtime.
+
+```sh
+./gradlew ktlintCheck allTests -Psigning.skip=true
+./gradlew :commons-spring-boot-starter:test -Psigning.skip=true
 ```
 
-- Connect to a node and a worker (remote services):
+The JVM-only Spring test task is separate from multiplatform `allTests`. To check core alone:
 
-```kotlin
-val client = AttoNodeClient.remote("http://localhost:8080")
-val worker = AttoWorker.remote("http://localhost:8085")
+```sh
+./gradlew :commons-core:ktlintCheck :commons-core:allTests -Psigning.skip=true
 ```
 
-- Create a wallet, open accounts, and send funds (based on tests):
+To try an unreleased checkout from npm, pack matching local versions:
 
-```kotlin
-val wallet = AttoWallet.create(client, worker, seed)
-
-// Open index 0 (often the genesis in tests) and a few more
-wallet.openAccount(0U.toAttoIndex())
-wallet.openAccount(1U.toAttoIndex(), 3U.toAttoIndex())
-
-// Query balances
-val balance0 = wallet.getAccount(0U.toAttoIndex())!!.balance
-
-// Send 1 ATTO from account 0 to account 2
-val amount = AttoAmount.from(AttoUnit.ATTO, "1")
-val toAddress = wallet.getAddress(2U.toAttoIndex())
-val tx = wallet.send(0U.toAttoIndex(), toAddress, amount)
+```sh
+./gradlew packJsPackage -Pversion=0.0.0-local.1 -Psigning.skip=true
 ```
 
-- Listen to node monitors and acknowledge progress:
+Tarballs are written to each module's `build/packages/` directory. Install the local tarballs for the package
+and its Commons dependencies together; avoid mixing local packages with a different published version.
+The [JavaScript example](examples/js-client/README.md) describes local package installation.
 
-```kotlin
-val accountMonitor = client.createAccountMonitor()
-val txnMonitor = accountMonitor.toTransactionMonitor { 1U.toAttoHeight() }
+## Upgrading and help
 
-// Collect first message
-val msg = txnMonitor.stream().first()
-msg.acknowledge()
-```
+Read [the migration guide](MIGRATION.md) when updating existing applications. It covers address-based APIs,
+raw mnemonic entropy, Unicode passphrases, JSON numeric fields, and asynchronous APIs.
 
-For full examples and advanced flows (auto-receive, account-entry monitor, OpenCL), see the module READMEs below.
+Use [GitHub issues](https://github.com/attocash/commons/issues) for bugs and questions, and
+[releases](https://github.com/attocash/commons/releases) for published changes.
+Contributions should include focused checks for changed behavior and pass the applicable Gradle checks.
 
-## Module READMEs
-
-- commons-core/README.md — primitives and serialization examples
-- commons-transport/README.md — shared HTTP transport
-- commons-wallet/README.md — wallet setup, send/receive, auto-receiver, monitors
-- commons-node/README.md — node client and monitors
-- commons-node-remote/README.md — remote node client
-- commons-signer-remote/README.md — remote signer client
-- commons-worker/README.md — CPU PoW
-- commons-worker-opencl/README.md — OpenCL PoW
-- commons-worker-web/README.md — WebGPU/WebGL PoW
-- commons-worker-remote/README.md — remote worker client
-- commons-test/README.md — mock services for tests and demos
-- commons-spring-boot-starter/README.md — Spring Boot integration
-- commons-js/README.md — deprecated aggregate JS/TS package
+[BSD 3-Clause license](LICENSE).

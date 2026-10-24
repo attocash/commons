@@ -1,99 +1,76 @@
 # commons-node
 
-Node-facing operations and higher-level monitors. This module defines the interfaces and helpers used by remote clients
-and wallet flows.
+Node client interfaces, coroutine streams, and account monitors. Use this module to write code against `AttoNodeClient` or track a changing set of addresses. Add [Commons Node Remote](../commons-node-remote/README.md) to connect to an HTTP node, or [Commons Test](../commons-test/README.md) for a mock node.
 
-Highlights:
-
-- `AttoNodeClient` + `AttoNodeOperations`
-- Account membership monitor: `AttoAccountMonitor`
-- Height-aware monitors: `toTransactionMonitor()`, `toAccountEntryMonitor()`
-- Receivable stream utilities
-
-## Installation
-
-Gradle:
+## Add the dependency
 
 ```kotlin
 implementation("cash.atto:commons-node:<version>")
 ```
 
-NPM:
+JavaScript consumers use the exported async clients and monitor builders:
 
 ```sh
 npm install @attocash/commons-node
 ```
 
-## Basic client operations
+See the [remote client guide](../commons-node-remote/README.md#javascript) for a JavaScript connection example.
 
-The concrete remote client lives in `commons-node-remote`. Example below assumes you built a client there and pass it
-in.
+## Track accounts in Kotlin
+
+This example also needs `cash.atto:commons-node-remote:<version>`, a reachable node, and an address to monitor. Pass the node URL and address as command-line arguments. `collect` keeps running until the stream completes, fails, or the coroutine is cancelled.
 
 ```kotlin
-val client: AttoNodeClient = AttoNodeClient.remote("http://localhost:8080")
+import cash.atto.commons.AttoAddress
+import cash.atto.commons.node.AttoNodeClient
+import cash.atto.commons.node.monitor.createAccountMonitor
+import cash.atto.commons.node.remote
+import kotlinx.coroutines.flow.collect
 
-// Single account by public key
-val account = client.account(address)
+suspend fun main(args: Array<String>) {
+    require(args.size == 2) { "Usage: <node-url> <address>" }
+    val client = AttoNodeClient.remote(args[0])
+    val monitor = client.createAccountMonitor()
+    monitor.monitor(AttoAddress.parse(args[1]))
 
-// Multiple accounts by address
-val accounts = client.account(listOf(address1, address2))
+    for (account in monitor.getAccounts()) {
+        println(account.toJson())
+    }
+    monitor.accountStream().collect { account ->
+        println(account.toJson())
+    }
+}
 ```
+
+`monitor(address)` and `monitor(addresses)` add membership; `stopMonitoring(address)` removes it. Membership changes restart streams for the new set, and emitted values are filtered to that set. `getAccount(address)` requires the address to be monitored; `getAccounts()` fetches snapshots for all members. `receivableStream(minAmount)` emits receivables for monitored receiver addresses.
+
+## Resume from acknowledged heights
+
+Transaction and account-entry monitors wrap each value in a message with `acknowledge()`. Acknowledgement records the message's height in memory for subsequent stream requests. Process the value before acknowledging it, and persist your own progress if it must survive process restarts. The recorded height is reused as the next search's `fromHeight`; consumers should tolerate replay.
+
+This partial snippet continues with `monitor` from the example above:
+
+```kotlin
+import cash.atto.commons.AttoHeight
+import cash.atto.commons.node.monitor.toTransactionMonitor
+
+val transactions = monitor.toTransactionMonitor { AttoHeight.MIN }
+transactions.stream().collect { message ->
+    println(message.value.toJson())
+    message.acknowledge()
+}
+```
+
+Use `toAccountEntryMonitor` for the same pattern with account entries. A suspending height provider can load an initial height for each address.
+
+Account streams and height monitors retry stream failures after ten seconds; the receivable monitor forwards failures to its collector. Normal stream completion does not trigger reconnection.
 
 ## Async subscriptions
 
-Async client and monitor subscriptions report completion through `onCancel`.
-Its parameter is `Throwable?`: a stream failure is passed through unchanged,
-and normal completion or cancellation reports `null`. Callbacks previously
-declared with an explicit `Exception?` parameter must accept `Throwable?`.
+`AttoNodeClientAsync` and async monitor builders expose callback subscriptions that return an `AttoJob`. Cancel the job to stop one subscription; close the client or monitor to cancel its owned subscriptions. On JavaScript, one-shot operations return promises; JVM wrappers use `CompletableFuture`.
 
-## Membership monitor
+The completion callback is named `onCancel` and accepts `Throwable?`: failures are passed through unchanged, while normal completion and cancellation report `null`. See [subscription migration notes](../MIGRATION.md#subscription-completion) when updating typed callbacks.
 
-Track a dynamic set of addresses and derive streams from it.
+For the full operation set, see [AttoNodeOperations](src/commonMain/kotlin/cash/atto/commons/node/AttoNodeOperations.kt). See [monitor filtering tests](src/commonTest/kotlin/cash/atto/commons/node/monitor/AttoMonitorFilteringTest.kt) and the [wallet guide](../commons-wallet/README.md) for related flows.
 
-```kotlin
-val monitor = client.createAccountMonitor()
-
-// Add addresses to track
-monitor.monitor(listOf(address1, address2))
-
-// Ask the node for current account snapshots for tracked addresses
-val current = monitor.getAccounts()
-```
-
-## Receivable stream
-
-```kotlin
-// Stream receivables for all tracked addresses
-val min = AttoAmount.MIN
-val receivables = monitor.receivableStream(min)
-```
-
-## Height-aware transaction monitor
-
-```kotlin
-// Build a transaction monitor from the membership monitor.
-// Provide per-address initial heights; default to 1 if unknown.
-val initialHeights = mapOf(/* AttoAddress -> AttoHeight */)
-val txMonitor = monitor.toTransactionMonitor { address ->
-  initialHeights[address] ?: 1U.toAttoHeight()
-}
-
-// Consume messages and acknowledge to advance stored heights
-val msg = txMonitor.stream().first()
-val tx = msg.value
-msg.acknowledge() // moves height
-```
-
-## Height-aware account-entry monitor
-
-```kotlin
-val entryMonitor = monitor.toAccountEntryMonitor { 1U.toAttoHeight() }
-val msg = entryMonitor.stream().first()
-val entry = msg.value
-msg.acknowledge() // moves height
-```
-
-See:
-
-- `commons-node/src/commonMain/kotlin/cash/atto/commons/node/monitor/*`
-- `commons-wallet` README for end-to-end usage with a wallet.
+[Project overview](../README.md) · [License](../LICENSE)

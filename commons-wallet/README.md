@@ -1,97 +1,91 @@
 # commons-wallet
 
-A thin wallet utility layer built on top of the node client and a PoW worker. Provides helpers to:
+Manage seed-derived accounts, sign and publish transfers, and receive incoming funds through an Atto node and a proof-of-work worker. Use this module when you want account state and transaction construction managed for you; use [commons-node](../commons-node/README.md) directly for queries and streams.
 
-- Derive addresses from a seed (per index)
-- Open accounts, send funds, and query balances
-- Start an auto-receiver that listens for receivables and publishes receive/open blocks
-
-Examples below are distilled from `commons-wallet` and integration tests.
-
-## Installation
-
-Gradle:
+## Install
 
 ```kotlin
 implementation("cash.atto:commons-wallet:<version>")
 ```
 
-NPM:
+For JavaScript and TypeScript:
 
 ```sh
-npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote
-npm install @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
+npm install @attocash/commons-core @attocash/commons-node @attocash/commons-node-remote @attocash/commons-worker @attocash/commons-worker-remote @attocash/commons-wallet
 ```
 
-## Setup
+Use the same release for all Commons packages. The [JavaScript guide](../commons-js/README.md) covers ESM and runtime setup; the [Java example](../examples/java-client/README.md) uses the `CompletableFuture` API.
+
+## Open a wallet account
+
+Start a node API and a Work Server before running this example. Replace the localhost URLs with your service endpoints. A generated seed has no funds: the example registers an address locally and queries its state; it does not create an on-chain account or a balance.
 
 ```kotlin
-// Primitives
-val mnemonic = AttoMnemonic.generate()
-val seed = mnemonic.toSeed()
+import cash.atto.commons.AttoMnemonic
+import cash.atto.commons.node.AttoNodeClient
+import cash.atto.commons.node.remote
+import cash.atto.commons.toAttoIndex
+import cash.atto.commons.wallet.AttoWallet
+import cash.atto.commons.worker.AttoWorker
+import cash.atto.commons.worker.remote
+import kotlinx.coroutines.runBlocking
 
-// Remote services (replace with your endpoints)
-val client = AttoNodeClient.remote("http://localhost:8080")
-val worker = AttoWorker.remote("http://localhost:8085")
-
-// Wallet instance
-val wallet = AttoWallet.create(client, worker, seed)
-```
-
-## Open accounts
-
-```kotlin
-// Often index 0 is the first account
-wallet.openAccount(0U.toAttoIndex())
-
-// Open multiple accounts at once
-wallet.openAccount(1U.toAttoIndex(), 3U.toAttoIndex())
-
-// Get the public address for an index
-val address2 = wallet.getAddress(2U.toAttoIndex())
-```
-
-## Query balances and state
-
-```kotlin
-val account0 = wallet.getAccount(0U.toAttoIndex())
-val balance0 = account0?.balance // AttoAmount or null if not opened yet
-```
-
-## Send funds
-
-```kotlin
-val amount = AttoAmount.from(AttoUnit.ATTO, "1")
-val destination = wallet.getAddress(2U.toAttoIndex())
-val tx = wallet.send(0U.toAttoIndex(), destination, amount)
-```
-
-## Monitors and auto-receive
-
-You can subscribe to node monitors and acknowledge processed heights. Start an auto-receiver to handle incoming
-receivables.
-
-```kotlin
-// Create account membership monitor from the client
-val accountMonitor = client.createAccountMonitor()
-
-// Start auto-receiver: provide a representative address supplier
-val receiverJob = wallet.startAutoReceiver(accountMonitor) {
-  AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32)))
+fun main() = runBlocking {
+    val seed = AttoMnemonic.generate().toSeed()
+    val client = AttoNodeClient.remote("http://localhost:8080")
+    AttoWorker.remote("http://localhost:8085").use { worker ->
+        val wallet = AttoWallet.create(client, worker, seed)
+        val index = 0U.toAttoIndex()
+        wallet.openAccount(index)
+        println(wallet.getAddress(index))
+        println(wallet.getAccount(index)?.balance) // null until opened on-chain
+    }
 }
-
-// Transaction monitor: track transactions from the current height forward
-val initialHeights = mapOf(/* address -> nextHeight */)
-val txnMonitor = accountMonitor.toTransactionMonitor { address ->
-  initialHeights[address] ?: 1U.toAttoHeight()
-}
-
-// Collect and acknowledge a message
-val msg = txnMonitor.stream().first()
-msg.acknowledge() // move the height forward
-
-// When done
-receiverJob.cancel()
 ```
 
-See `commons-wallet/src/commonTest/kotlin/cash/atto/commons/wallet/AttoWalletTest.kt` for a full scenario.
+Keep the mnemonic securely if the account will hold funds. `openAccount` must precede `getAddress`, `getAccount`, sending, or receiving for that index. Opening the same index twice fails; `closeAccount` removes it from the wallet's local membership. A wallet created from one signer supports only index zero.
+
+## Send and receive
+
+Within a suspending context, send from an already funded, open wallet account:
+
+```kotlin
+import cash.atto.commons.AttoAmount
+import cash.atto.commons.AttoUnit
+
+// wallet, senderIndex, and destinationAddress are supplied by your application.
+val transaction = wallet.send(
+    senderIndex,
+    destinationAddress,
+    AttoAmount.from(AttoUnit.ATTO, "1"),
+)
+```
+
+Sending publishes a send block. The destination must publish a receive block to add the funds to its balance. Use `wallet.receive(receivable, representativeAddress)` explicitly, or enable the auto-receiver. Receiving the first payment opens the on-chain account and requires a representative address.
+
+The auto-receiver uses the wallet's address membership and a node account monitor. In an application coroutine scope:
+
+```kotlin
+import cash.atto.commons.node.monitor.createAccountMonitor
+import cash.atto.commons.wallet.startAutoReceiver
+import kotlinx.coroutines.cancelAndJoin
+
+val monitor = client.createAccountMonitor()
+val receiverJob = wallet.startAutoReceiver(scope, monitor) { representativeAddress }
+try {
+    // Keep the application scope alive while handling incoming payments.
+} finally {
+    receiverJob.cancelAndJoin()
+}
+```
+
+Use a representative appropriate for your network. Cancel and join wallet jobs before closing workers or other closeable dependencies. The auto-receiver manages incoming receivables; the wallet's cached account state is not a general replacement for live node queries when other processes also publish for the same keys.
+
+JavaScript uses `AttoWalletAsyncBuilder`, `.signerProviderSeed(seed)`, and awaited methods such as `openAccount`, `getAddress`, `getAccountByIndex`, and `sendByIndex`. See the [runnable JavaScript example](../examples/js-client/README.md) for setup, auto-receive, and teardown.
+
+## Further reading
+
+- [Wallet integration test](src/commonTest/kotlin/cash/atto/commons/wallet/AttoWalletTest.kt): a funded local genesis account, transfers, acknowledgements, and auto-receive.
+- [commons-test](../commons-test/README.md): container-backed local services for integration tests.
+- [Core types and cryptography](../commons-core/README.md) and [suspending API migration](../MIGRATION.md#suspending-cryptography).
+- [Repository overview](../README.md) and [BSD 3-Clause license](../LICENSE).
