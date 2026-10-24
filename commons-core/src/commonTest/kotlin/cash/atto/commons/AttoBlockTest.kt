@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
@@ -87,33 +88,86 @@ class AttoBlockTest {
         }
     }
 
+    @Test
+    fun `should update owner projections bytes and hashes when copying addresses`() {
+        // Given
+        val originals = listOf(sendBlock, receiveBlock, openBlock, changeBlock)
+        val originalHashes = originals.map { it.hash }
+        val address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32) { 42 }))
+
+        // When
+        val copies =
+            listOf(
+                sendBlock.copy(address = address),
+                receiveBlock.copy(address = address),
+                openBlock.copy(address = address),
+                changeBlock.copy(address = address),
+            )
+
+        // Then
+        copies.zip(originalHashes).forEach { (copy, originalHash) ->
+            assertEquals(address, copy.address)
+            assertEquals(address.algorithm, copy.algorithm)
+            assertEquals(address.publicKey, copy.publicKey)
+            assertNotEquals(originalHash, copy.hash)
+            assertEquals(copy, AttoBlock.fromByteArray(copy.toByteArray()))
+            assertEquals(copy, AttoBlock.fromJson(copy.toJson()))
+        }
+        assertEquals(1U.toAttoHeight(), copies.single { it is AttoOpenBlock }.height)
+    }
+
+    @Test
+    fun `should update receiver and representative projections bytes and hashes when copying addresses`() {
+        // Given
+        val originals = listOf(sendBlock, openBlock, changeBlock)
+        val originalHashes = originals.map { it.hash }
+        val address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32) { 42 }))
+
+        // When
+        val send = sendBlock.copy(receiverAddress = address)
+        val open = openBlock.copy(representativeAddress = address)
+        val change = changeBlock.copy(representativeAddress = address)
+        val copies = listOf(send, open, change)
+
+        // Then
+        assertEquals(address.algorithm, send.receiverAlgorithm)
+        assertEquals(address.publicKey, send.receiverPublicKey)
+        assertEquals(address, send.toReceivable().receiverAddress)
+        listOf<RepresentativeSupport>(open, change).forEach { representative ->
+            assertEquals(address.algorithm, representative.representativeAlgorithm)
+            assertEquals(address.publicKey, representative.representativePublicKey)
+        }
+        copies.zip(originalHashes).forEach { (copy, originalHash) ->
+            assertNotEquals(originalHash, copy.hash)
+            assertEquals(copy, AttoBlock.fromByteArray(copy.toByteArray()))
+            assertEquals(copy, AttoBlock.fromJson(copy.toJson()))
+        }
+        assertEquals(1U.toAttoHeight(), open.height)
+    }
+
     companion object {
         val openBlock =
             AttoOpenBlock(
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
-                algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(ByteArray(32)))),
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),
                 sendHashAlgorithm = AttoAlgorithm.V1,
                 sendHash = AttoHash(Random.nextBytes(ByteArray(32))),
-                representativeAlgorithm = AttoAlgorithm.V1,
-                representativePublicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
+                representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(ByteArray(32)))),
             )
 
         val sendBlock =
             AttoSendBlock(
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
-                algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(ByteArray(32)))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount(1U),
                 timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.nextBytes(ByteArray(32))),
-                receiverAlgorithm = AttoAlgorithm.V1,
-                receiverPublicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
+                receiverAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(ByteArray(32)))),
                 amount = AttoAmount(1U),
             )
 
@@ -121,8 +175,7 @@ class AttoBlockTest {
             AttoReceiveBlock(
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
-                algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(ByteArray(32)))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),
@@ -135,14 +188,12 @@ class AttoBlockTest {
             AttoChangeBlock(
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
-                algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(ByteArray(32)))),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),
                 previous = AttoHash(Random.nextBytes(ByteArray(32))),
-                representativeAlgorithm = AttoAlgorithm.V1,
-                representativePublicKey = AttoPublicKey(Random.nextBytes(ByteArray(32))),
+                representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(ByteArray(32)))),
             )
 
         val validBlocks =
@@ -178,7 +229,7 @@ class AttoBlockTest {
                 // send zero amount
                 sendBlock.copy(amount = AttoAmount.MIN) as AttoBlock to "Amount must be greater than 0",
                 // self send
-                sendBlock.copy(receiverPublicKey = sendBlock.publicKey) as AttoBlock to
+                sendBlock.copy(receiverAddress = sendBlock.address) as AttoBlock to
                     "Receiver public key must be different from public key",
                 // receive zero balance
                 receiveBlock.copy(balance = AttoAmount.MIN) as AttoBlock to "Balance must be greater than 0",

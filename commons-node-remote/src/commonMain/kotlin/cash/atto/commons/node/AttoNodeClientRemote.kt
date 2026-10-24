@@ -7,7 +7,6 @@ import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
-import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVoterWeight
@@ -69,9 +68,9 @@ private class AttoNodeClientRemote(
             ),
         )
 
-    override suspend fun account(publicKey: AttoPublicKey): AttoAccount? =
+    override suspend fun account(address: AttoAddress): AttoAccount? =
         try {
-            get<AttoAccount>("accounts/$publicKey", timeout = 1.seconds)
+            get<AttoAccount>("accounts/${address.publicKey}", timeout = 1.seconds)
         } catch (e: Exception) {
             if (e.httpStatusCodeOrNull() == HTTP_NOT_FOUND) {
                 null
@@ -102,15 +101,15 @@ private class AttoNodeClientRemote(
 
     override fun accountStream(): Flow<AttoAccount> = fetchStream("accounts/stream")
 
-    override fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount> = fetchStream("accounts/$publicKey/stream")
+    override fun accountStream(address: AttoAddress): Flow<AttoAccount> = fetchStream("accounts/${address.publicKey}/stream")
 
     override fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount> =
         fetchStream("accounts/stream", AccountSearch(addresses))
 
     override fun receivableStream(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         minAmount: AttoAmount,
-    ): Flow<AttoReceivable> = fetchStream("accounts/$publicKey/receivables/stream?minAmount=$minAmount")
+    ): Flow<AttoReceivable> = fetchStream("accounts/${address.publicKey}/receivables/stream?minAmount=$minAmount")
 
     override fun receivableStream(
         addresses: Collection<AttoAddress>,
@@ -125,7 +124,7 @@ private class AttoNodeClientRemote(
     override fun accountEntryStream(hash: AttoHash): Flow<AttoAccountEntry> = fetchStream("accounts/entries/$hash/stream")
 
     override fun accountEntryStream(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         fromHeight: AttoHeight,
         toHeight: AttoHeight?,
     ): Flow<AttoAccountEntry> {
@@ -136,7 +135,7 @@ private class AttoNodeClientRemote(
                     append("&toHeight=$toHeight")
                 }
             }
-        return fetchStream("accounts/$publicKey/entries/stream?$queryParams")
+        return fetchStream("accounts/${address.publicKey}/entries/stream?$queryParams")
     }
 
     override fun accountEntryStream(search: HeightSearch): Flow<AttoAccountEntry> = fetchStream("accounts/entries/stream", search)
@@ -148,7 +147,7 @@ private class AttoNodeClientRemote(
     override fun transactionStream(hash: AttoHash): Flow<AttoTransaction> = fetchStream("transactions/$hash/stream")
 
     override fun transactionStream(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         fromHeight: AttoHeight,
         toHeight: AttoHeight?,
     ): Flow<AttoTransaction> {
@@ -159,7 +158,7 @@ private class AttoNodeClientRemote(
                     append("&toHeight=$toHeight")
                 }
             }
-        return fetchStream("accounts/$publicKey/transactions/stream?$queryParams")
+        return fetchStream("accounts/${address.publicKey}/transactions/stream?$queryParams")
     }
 
     override fun transactionStream(search: HeightSearch): Flow<AttoTransaction> = fetchStream("accounts/transactions/stream", search)

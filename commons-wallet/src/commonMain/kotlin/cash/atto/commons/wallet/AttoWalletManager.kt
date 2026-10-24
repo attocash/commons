@@ -55,7 +55,7 @@ class AttoWalletManager(
 
     private val mutex = Mutex()
 
-    val publicKey = viewer.publicKey
+    val address = viewer.address
     val account: AttoAccount? get() = viewer.account
 
     val accountFlow = viewer.accountFlow
@@ -172,8 +172,8 @@ class AttoWalletManager(
             val account = this.account
             val (block, newAccount) =
                 if (account == null) {
-                    val algorithmPublicKey = representativeProvider.invoke()
-                    AttoAccount.open(algorithmPublicKey.algorithm, algorithmPublicKey.publicKey, receivable, blockTimestamp)
+                    val representativeAddress = representativeProvider.invoke()
+                    AttoAccount.open(representativeAddress, receivable, blockTimestamp)
                 } else {
                     account.receive(receivable, blockTimestamp)
                 }
@@ -190,7 +190,7 @@ class AttoWalletManager(
         timestamp: AttoInstant? = null,
     ): AttoSendBlock {
         requireReady()
-        require(receiverAddress.publicKey != publicKey) { "You can't send $amount to yourself" }
+        require(receiverAddress != address) { "You can't send $amount to yourself" }
 
         mutex.withLock {
             val account = getAccountOrThrow()
@@ -200,7 +200,7 @@ class AttoWalletManager(
             }
 
             val blockTimestamp = timestamp ?: client.now()
-            val (block, newAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, blockTimestamp)
+            val (block, newAccount) = account.send(receiverAddress, amount, blockTimestamp)
 
             publish(block, newAccount)
 
@@ -218,7 +218,7 @@ class AttoWalletManager(
             val account = getAccountOrThrow()
 
             val blockTimestamp = timestamp ?: client.now()
-            val (block, newAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey, blockTimestamp)
+            val (block, newAccount) = account.change(representativeAddress, blockTimestamp)
 
             publish(block, newAccount)
 

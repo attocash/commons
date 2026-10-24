@@ -10,39 +10,38 @@ class AccountUpdateTest {
     private val timestamp = AttoInstant.fromEpochMilliseconds(1_705_517_157_478)
     private val account =
         AttoAccount(
-            publicKey = publicKey,
             network = AttoNetwork.LOCAL,
             version = 0.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
+            address = AttoAddress(AttoAlgorithm.V1, publicKey),
             height = 2.toAttoHeight(),
             balance = 1_000.toAttoAmount(),
             lastTransactionHash = AttoHash(ByteArray(32) { (it + 64).toByte() }),
             lastTransactionTimestamp = timestamp,
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = otherPublicKey,
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, otherPublicKey),
         )
     private val receivable =
         AttoReceivable(
             network = AttoNetwork.LOCAL,
             hash = AttoHash(ByteArray(32) { (it + 96).toByte() }),
             version = 0.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
-            publicKey = otherPublicKey,
+            address = AttoAddress(AttoAlgorithm.V1, otherPublicKey),
             timestamp = AttoInstant.fromEpochMilliseconds(timestamp.toEpochMilliseconds() - 1),
-            receiverAlgorithm = AttoAlgorithm.V1,
-            receiverPublicKey = publicKey,
+            receiverAddress = AttoAddress(AttoAlgorithm.V1, publicKey),
             amount = 100.toAttoAmount(),
         )
 
     @Test
     fun `should delegate account updates to domain operations`() {
+        // Given
         val timestampString = timestamp.toString()
 
-        val expectedOpen = AttoAccount.open(AttoAlgorithm.V1, otherPublicKey, receivable, timestamp)
-        val expectedSend = account.send(AttoAlgorithm.V1, otherPublicKey, 100.toAttoAmount(), timestamp)
+        // When
+        val expectedOpen = AttoAccount.open(representativeAddress, receivable, timestamp)
+        val expectedSend = account.send(representativeAddress, 100.toAttoAmount(), timestamp)
         val expectedReceive = account.receive(receivable, timestamp)
-        val expectedChange = account.change(AttoAlgorithm.V1, otherPublicKey, timestamp)
+        val expectedChange = account.change(representativeAddress, timestamp)
 
+        // Then
         assertUpdate(expectedOpen, attoAccountOpen(representativeAddress, receivable, timestampString))
         assertUpdate(expectedSend, attoAccountSend(account, representativeAddress, 100.toAttoAmount(), timestampString))
         assertUpdate(expectedReceive, attoAccountReceive(account, receivable, timestampString))

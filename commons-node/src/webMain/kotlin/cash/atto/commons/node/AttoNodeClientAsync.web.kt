@@ -8,7 +8,6 @@ import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoJob
-import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVoterWeight
@@ -32,8 +31,8 @@ actual class AttoNodeClientAsync
     ) : AutoCloseable {
         private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
-        @JsName("accountByPublicKey")
-        suspend fun account(publicKey: AttoPublicKey): AttoAccount? = client.account(publicKey)
+        @JsName("accountByAddress")
+        suspend fun account(address: AttoAddress): AttoAccount? = client.account(address)
 
         @JsName("accountByAddresses")
         suspend fun account(addresses: Array<AttoAddress>): Array<AttoAccount> = client.account(addresses.toList()).toTypedArray()
@@ -49,14 +48,14 @@ actual class AttoNodeClientAsync
                 onCancel = { onCancel.invoke(it) },
             )
 
-        @JsName("onAccountByPublicKey")
+        @JsName("onAccountByAddress")
         fun onAccount(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             onAccount: (AttoAccount) -> Any,
             onCancel: (Throwable?) -> Any,
         ): AttoJob =
             scope.consumeStream(
-                stream = client.accountStream(publicKey),
+                stream = client.accountStream(address),
                 onEach = { onAccount(it) },
                 onCancel = { onCancel.invoke(it) },
             )
@@ -73,15 +72,15 @@ actual class AttoNodeClientAsync
                 onCancel = { onCancel.invoke(it) },
             )
 
-        @JsName("onReceivableByPublicKey")
+        @JsName("onReceivableByAddress")
         fun onReceivable(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             minAmount: AttoAmount = AttoAmount(1U),
             onReceivable: (AttoReceivable) -> Any,
             onCancel: (Throwable?) -> Any,
         ): AttoJob =
             scope.consumeStream(
-                stream = client.receivableStream(publicKey, minAmount),
+                stream = client.receivableStream(address, minAmount),
                 onEach = { onReceivable.invoke(it) },
                 onCancel = { onCancel.invoke(it) },
             )
@@ -124,16 +123,16 @@ actual class AttoNodeClientAsync
                 onCancel = { onCancel.invoke(it) },
             )
 
-        @JsName("onAccountEntryByPublicKey")
+        @JsName("onAccountEntryByAddress")
         fun onAccountEntry(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             fromHeight: AttoHeight = AttoHeight(1UL),
             toHeight: AttoHeight? = null,
             onAccountEntry: (AttoAccountEntry) -> Any,
             onCancel: (Throwable?) -> Any,
         ): AttoJob =
             scope.consumeStream(
-                stream = client.accountEntryStream(publicKey, fromHeight, toHeight),
+                stream = client.accountEntryStream(address, fromHeight, toHeight),
                 onEach = { onAccountEntry.invoke(it) },
                 onCancel = { onCancel.invoke(it) },
             )
@@ -175,16 +174,16 @@ actual class AttoNodeClientAsync
                 onCancel = { onCancel.invoke(it) },
             )
 
-        @JsName("onTransactionByPublicKey")
+        @JsName("onTransactionByAddress")
         fun onTransaction(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             fromHeight: AttoHeight = AttoHeight(1UL),
             toHeight: AttoHeight? = null,
             onTransaction: (AttoTransaction) -> Any,
             onCancel: (Throwable?) -> Any,
         ): AttoJob =
             scope.consumeStream(
-                stream = client.transactionStream(publicKey, fromHeight, toHeight),
+                stream = client.transactionStream(address, fromHeight, toHeight),
                 onEach = { onTransaction.invoke(it) },
                 onCancel = { onCancel.invoke(it) },
             )

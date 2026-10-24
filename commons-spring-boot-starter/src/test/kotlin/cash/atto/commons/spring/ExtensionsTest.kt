@@ -1,6 +1,7 @@
 package cash.atto.commons.spring
 
 import cash.atto.commons.AttoAccount
+import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAlgorithm
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoHash
@@ -105,15 +106,13 @@ class ExtensionsTest {
 
     private fun create(height: ULong): AttoAccount =
         AttoAccount(
-            publicKey = publicKey,
             network = AttoNetwork.LOCAL,
             version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
+            address = AttoAddress(AttoAlgorithm.V1, publicKey),
             height = height.toAttoHeight(),
             balance = AttoAmount.MAX,
             lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
             lastTransactionTimestamp = AttoInstant.now(),
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = publicKey,
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, publicKey),
         )
 }

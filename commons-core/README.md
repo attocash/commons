@@ -52,8 +52,7 @@ check(signature.isValidMessage(publicKey, message))
 val receiveBlock = AttoReceiveBlock(
   version = 0U.toAttoVersion(),
   network = AttoNetwork.LOCAL,
-  algorithm = AttoAlgorithm.V1,
-  publicKey = publicKey,
+  address = AttoAddress(AttoAlgorithm.V1, publicKey),
   height = 2U.toAttoHeight(),
   balance = AttoAmount.MAX,
   timestamp = AttoInstant.now(),
@@ -78,6 +77,26 @@ required.
 `AttoPublicKey` and `AttoSignature` constructors check byte length, but do not establish that a key can sign or that a
 signature is valid. Public keys also appear in receiver and representative addresses, and signatures may be decoded
 before validation.
+
+Blocks, votes, accounts, account entries, and receivables store addresses as their canonical identity. Read `algorithm`,
+`publicKey`, and the receiver, representative, or subject equivalents as projections of the corresponding address.
+OPEN block `height` is a constant projection and always `1`.
+
+The address-based constructor and data-class `copy` API intentionally break source compatibility. Constructors,
+`copy` calls, and destructuring now follow the canonical addresses: replace `block.copy(publicKey = key)` with
+`block.copy(address = AttoAddress(block.algorithm, key))`, and use `receiverAddress`, `representativeAddress`, or
+`subjectAddress` for related identities. OPEN `height` is not a constructor or `copy` parameter.
+JavaScript constructors now take addresses in place of the algorithm/public-key pairs. Account operations accept addresses:
+`AttoAccount.open(representativeAddress, receivable)`, `account.send(receiverAddress, amount)`, and
+`account.change(representativeAddress)`.
+
+JSON preserves its existing fields and defaults. Blocks emit legacy algorithm/public-key projections alongside their
+addresses; accounts, receivables, and votes omit addresses, and account entries include addresses only with `encodeDefaults`.
+When an address is present in input, decoding ignores its projected fields, including conflicting or malformed
+values. Payloads without an address can still supply the legacy algorithm/public-key pair. OPEN `height` is always
+emitted as `"1"`, and input `height` is ignored.
+
+JSON output, binary layouts, and hashes remain unchanged for the same values.
 
 ### Serialize/deserialize
 

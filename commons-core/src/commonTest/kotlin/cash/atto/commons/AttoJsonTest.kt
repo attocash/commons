@@ -13,16 +13,14 @@ class AttoJsonTest {
     private val timestamp = AttoInstant.fromEpochMilliseconds(1_705_517_157_478)
     private val account =
         AttoAccount(
-            publicKey = publicKey,
             network = AttoNetwork.LOCAL,
             version = 0.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
+            address = AttoAddress(AttoAlgorithm.V1, publicKey),
             height = 2.toAttoHeight(),
             balance = 1_000.toAttoAmount(),
             lastTransactionHash = hash,
             lastTransactionTimestamp = timestamp,
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = otherPublicKey,
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, otherPublicKey),
         )
 
     @Test
@@ -55,14 +53,12 @@ class AttoJsonTest {
             AttoSendBlock(
                 network = AttoNetwork.LOCAL,
                 version = UShort.MAX_VALUE.toAttoVersion(),
-                algorithm = AttoAlgorithm.V1,
-                publicKey = maximumPublicKey,
+                address = AttoAddress(AttoAlgorithm.V1, maximumPublicKey),
                 height = AttoHeight.MAX,
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE),
                 previous = AttoHash(ByteArray(32) { -1 }),
-                receiverAlgorithm = AttoAlgorithm.V1,
-                receiverPublicKey = maximumPublicKey,
+                receiverAddress = AttoAddress(AttoAlgorithm.V1, maximumPublicKey),
                 amount = AttoAmount.MAX,
             )
         val transaction =

@@ -1,5 +1,9 @@
 package cash.atto.commons
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -9,62 +13,57 @@ import kotlin.time.Duration.Companion.seconds
 class AttoAccountTest {
     @Test
     fun `should open account`() {
-        // given
+        // Given
         val receivable =
             AttoReceivable(
                 network = AttoNetwork.LOCAL,
                 version = 0U.toAttoVersion(),
-                algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
-                receiverAlgorithm = AttoAlgorithm.V1,
-                receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32))),
+                receiverAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32))),
                 amount = 1000UL.toAttoAmount(),
                 timestamp = AttoInstant.now() - 10.seconds,
                 hash = AttoHash(Random.Default.nextBytes(32)),
             )
 
-        val representativeAlgorithm = AttoAlgorithm.V1
-        val representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32))
+        val representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32)))
         val timestamp = AttoInstant.now()
 
-        // when
+        // When
         val (openBlock, newAccount) =
             AttoAccount.open(
-                representativeAlgorithm = representativeAlgorithm,
-                representativePublicKey = representativePublicKey,
+                representativeAddress = representativeAddress,
                 receivable = receivable,
                 timestamp = timestamp,
             )
 
-        // then
+        // Then
         assertEquals(receivable.receiverPublicKey, newAccount.publicKey)
         assertEquals(1U.toAttoHeight(), newAccount.height)
         assertEquals(receivable.amount, newAccount.balance)
         assertEquals(openBlock.hash, newAccount.lastTransactionHash)
         assertEquals(timestamp, newAccount.lastTransactionTimestamp)
-        assertEquals(representativeAlgorithm, newAccount.representativeAlgorithm)
-        assertEquals(representativePublicKey, newAccount.representativePublicKey)
+        assertEquals(representativeAddress, openBlock.representativeAddress)
+        assertEquals(representativeAddress, newAccount.representativeAddress)
     }
 
     @Test
     fun `should send amount`() {
-        // given
+        // Given
         val account = AttoAccount.sample()
-        val receiverPublicKey = AttoPublicKey(Random.Default.nextBytes(32))
-        val receiverAlgorithm = AttoAlgorithm.V1
+        val receiverAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32)))
         val amount = 100UL.toAttoAmount()
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
-        // when
+        // When
         val (sendBlock, updatedAccount) =
             account.send(
-                receiverAlgorithm = receiverAlgorithm,
-                receiverPublicKey = receiverPublicKey,
+                receiverAddress = receiverAddress,
                 amount = amount,
                 timestamp = timestamp,
             )
 
-        // then
+        // Then
+        assertEquals(receiverAddress, sendBlock.receiverAddress)
         assertEquals(account.balance - amount, updatedAccount.balance)
         assertEquals(account.height + 1U, updatedAccount.height)
         assertEquals(sendBlock.hash, updatedAccount.lastTransactionHash)
@@ -80,11 +79,9 @@ class AttoAccountTest {
                 network = AttoNetwork.LOCAL,
                 hash = AttoHash(Random.Default.nextBytes(32)),
                 version = 0U.toAttoVersion(),
-                algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32))),
                 timestamp = account.lastTransactionTimestamp.minus(5.seconds),
-                receiverAlgorithm = account.algorithm,
-                receiverPublicKey = account.publicKey,
+                receiverAddress = account.address,
                 amount = 200UL.toAttoAmount(),
             )
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
@@ -113,11 +110,9 @@ class AttoAccountTest {
                 network = AttoNetwork.LOCAL,
                 hash = AttoHash(Random.Default.nextBytes(32)),
                 version = 0U.toAttoVersion(),
-                algorithm = account.algorithm,
-                publicKey = account.publicKey,
+                address = account.address,
                 timestamp = receivableTimestamp,
-                receiverAlgorithm = account.algorithm,
-                receiverPublicKey = account.publicKey,
+                receiverAddress = account.address,
                 amount = 200UL.toAttoAmount(),
             )
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
@@ -137,47 +132,44 @@ class AttoAccountTest {
 
     @Test
     fun `should change representative`() {
-        // given
+        // Given
         val account = AttoAccount.sample()
-        val newRepresentativeAlgorithm = AttoAlgorithm.V1
-        val newRepresentativePublicKey = AttoPublicKey(Random.Default.nextBytes(32))
+        val representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32)))
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
-        // when
+        // When
         val (changeBlock, updatedAccount) =
             account.change(
-                representativeAlgorithm = newRepresentativeAlgorithm,
-                representativePublicKey = newRepresentativePublicKey,
+                representativeAddress = representativeAddress,
                 timestamp = timestamp,
             )
 
-        // then
+        // Then
         assertEquals(account.balance, updatedAccount.balance)
         assertEquals(account.height + 1U, updatedAccount.height)
         assertEquals(changeBlock.hash, updatedAccount.lastTransactionHash)
         assertEquals(timestamp, updatedAccount.lastTransactionTimestamp)
-        assertEquals(newRepresentativeAlgorithm, updatedAccount.representativeAlgorithm)
-        assertEquals(newRepresentativePublicKey, updatedAccount.representativePublicKey)
+        assertEquals(representativeAddress, changeBlock.representativeAddress)
+        assertEquals(representativeAddress, updatedAccount.representativeAddress)
     }
 
     @Test
     fun `should not send to self`() {
-        // given
+        // Given
         val account = AttoAccount.sample()
         val timestamp = account.lastTransactionTimestamp.plus(1.seconds)
 
-        // when
+        // When
         val exception =
             assertFailsWith<IllegalArgumentException> {
                 account.send(
-                    receiverAlgorithm = account.algorithm,
-                    receiverPublicKey = account.publicKey,
+                    receiverAddress = account.address,
                     amount = 100UL.toAttoAmount(),
                     timestamp = timestamp,
                 )
             }
 
-        // then
+        // Then
         assertEquals("You can't send money to yourself", exception.message)
     }
 
@@ -186,16 +178,14 @@ class AttoAccountTest {
         // given
         val expectedAccount =
             AttoAccount(
-                publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32))),
                 network = AttoNetwork.LOCAL,
                 version = 0U.toAttoVersion(),
-                algorithm = AttoAlgorithm.V1,
                 height = 1U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
                 lastTransactionTimestamp = AttoInstant.now(),
-                representativeAlgorithm = AttoAlgorithm.V1,
-                representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+                representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32))),
             )
 
         // when
@@ -208,7 +198,7 @@ class AttoAccountTest {
 
     @Test
     fun `should deserialize json`() {
-        // given
+        // Given
         val expectedJson =
             """
                 {
@@ -225,25 +215,85 @@ class AttoAccountTest {
                 }
           """
 
-        // when
+        // When
         val account = AttoAccount.fromJson(expectedJson)
         val json = account.toJson()
 
-        // then
+        // Then
         assertEquals(expectedJson.compactJson(), json)
+    }
+
+    @Test
+    fun `should deserialize account from addresses alone`() {
+        // Given
+        val expected = AttoAccount.sample()
+        val encoded = Json.parseToJsonElement(expected.toJson()).jsonObject
+        val projections = setOf("algorithm", "publicKey", "representativeAlgorithm", "representativePublicKey")
+        val addressesOnly =
+            JsonObject(
+                encoded - projections +
+                    mapOf(
+                        "address" to JsonPrimitive(expected.address.toString()),
+                        "representativeAddress" to JsonPrimitive(expected.representativeAddress.toString()),
+                    ),
+            )
+
+        // When
+        val decoded = AttoAccount.fromJson(addressesOnly.toString())
+
+        // Then
+        assertEquals(expected, decoded)
+        assertEquals(encoded, Json.parseToJsonElement(decoded.toJson()))
+    }
+
+    @Test
+    fun `should ignore malformed account identity projections when addresses are present`() {
+        // Given
+        val expected = AttoAccount.sample()
+        val encoded = Json.parseToJsonElement(expected.toJson()).jsonObject
+        val projections = setOf("algorithm", "publicKey", "representativeAlgorithm", "representativePublicKey")
+        val malformed =
+            JsonObject(
+                encoded + projections.associateWith { JsonObject(emptyMap()) } +
+                    mapOf(
+                        "address" to JsonPrimitive(expected.address.toString()),
+                        "representativeAddress" to JsonPrimitive(expected.representativeAddress.toString()),
+                    ),
+            )
+
+        // When
+        val decoded = AttoAccount.fromJson(malformed.toString())
+
+        // Then
+        assertEquals(expected, decoded)
+        assertEquals(encoded, Json.parseToJsonElement(decoded.toJson()))
+    }
+
+    @Test
+    fun `should derive account identity projections from copied addresses`() {
+        // Given
+        val original = AttoAccount.sample()
+
+        // When
+        val copied = original.copy(address = original.representativeAddress, representativeAddress = original.address)
+
+        // Then
+        assertEquals(original.representativeAddress.algorithm, copied.algorithm)
+        assertEquals(original.representativeAddress.publicKey, copied.publicKey)
+        assertEquals(original.address.algorithm, copied.representativeAlgorithm)
+        assertEquals(original.address.publicKey, copied.representativePublicKey)
+        assertEquals(copied, AttoAccount.fromJson(copied.toJson()))
     }
 
     private fun AttoAccount.Companion.sample(): AttoAccount =
         AttoAccount(
-            publicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+            address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32))),
             network = AttoNetwork.LOCAL,
             version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
             height = 1U.toAttoHeight(),
             balance = AttoAmount(ULong.MAX_VALUE / 2U),
             lastTransactionHash = AttoHash(Random.Default.nextBytes(32)),
             lastTransactionTimestamp = AttoInstant.now(),
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = AttoPublicKey(Random.Default.nextBytes(32)),
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(32))),
         )
 }

@@ -1,5 +1,9 @@
 package cash.atto.commons
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,11 +17,9 @@ class AttoReceivableTest {
                 network = AttoNetwork.LOCAL,
                 hash = AttoHash(Random.nextBytes(32)),
                 version = 0U.toAttoVersion(),
-                algorithm = AttoAlgorithm.V1,
-                publicKey = AttoPublicKey(Random.nextBytes(32)),
+                address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(32))),
                 timestamp = AttoInstant.now(),
-                receiverAlgorithm = AttoAlgorithm.V1,
-                receiverPublicKey = AttoPublicKey(Random.nextBytes(32)),
+                receiverAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(32))),
                 amount = AttoAmount.MAX,
             )
 
@@ -31,7 +33,7 @@ class AttoReceivableTest {
 
     @Test
     fun `should deserialize json`() {
-        // given
+        // Given
         val expectedJson =
             """
             {
@@ -47,11 +49,73 @@ class AttoReceivableTest {
             }
             """
 
-        // when
+        // When
         val receivable = AttoReceivable.fromJson(expectedJson)
         val json = receivable.toJson()
 
-        // then
+        // Then
         assertEquals(expectedJson.compactJson(), json)
+    }
+
+    @Test
+    fun `should deserialize receivable from addresses alone`() {
+        // Given
+        val expected = AttoBlockTest.sendBlock.toReceivable()
+        val encoded = Json.parseToJsonElement(expected.toJson()).jsonObject
+        val projections = setOf("algorithm", "publicKey", "receiverAlgorithm", "receiverPublicKey")
+        val addressesOnly =
+            JsonObject(
+                encoded - projections +
+                    mapOf(
+                        "address" to JsonPrimitive(expected.address.toString()),
+                        "receiverAddress" to JsonPrimitive(expected.receiverAddress.toString()),
+                    ),
+            )
+
+        // When
+        val decoded = AttoReceivable.fromJson(addressesOnly.toString())
+
+        // Then
+        assertEquals(expected, decoded)
+        assertEquals(encoded, Json.parseToJsonElement(decoded.toJson()))
+    }
+
+    @Test
+    fun `should ignore malformed receivable identity projections when addresses are present`() {
+        // Given
+        val expected = AttoBlockTest.sendBlock.toReceivable()
+        val encoded = Json.parseToJsonElement(expected.toJson()).jsonObject
+        val projections = setOf("algorithm", "publicKey", "receiverAlgorithm", "receiverPublicKey")
+        val malformed =
+            JsonObject(
+                encoded + projections.associateWith { JsonObject(emptyMap()) } +
+                    mapOf(
+                        "address" to JsonPrimitive(expected.address.toString()),
+                        "receiverAddress" to JsonPrimitive(expected.receiverAddress.toString()),
+                    ),
+            )
+
+        // When
+        val decoded = AttoReceivable.fromJson(malformed.toString())
+
+        // Then
+        assertEquals(expected, decoded)
+        assertEquals(encoded, Json.parseToJsonElement(decoded.toJson()))
+    }
+
+    @Test
+    fun `should derive receivable identity projections from copied addresses`() {
+        // Given
+        val original = AttoBlockTest.sendBlock.toReceivable()
+
+        // When
+        val copied = original.copy(address = original.receiverAddress, receiverAddress = original.address)
+
+        // Then
+        assertEquals(original.receiverAddress.algorithm, copied.algorithm)
+        assertEquals(original.receiverAddress.publicKey, copied.publicKey)
+        assertEquals(original.address.algorithm, copied.receiverAlgorithm)
+        assertEquals(original.address.publicKey, copied.receiverPublicKey)
+        assertEquals(copied, AttoReceivable.fromJson(copied.toJson()))
     }
 }

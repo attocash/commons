@@ -2,8 +2,8 @@ package cash.atto.commons.wallet
 
 import cash.atto.commons.AttoAccount
 import cash.atto.commons.AttoAccountEntry
+import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoHeight
-import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.node.AttoNodeOperations
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -24,7 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Deprecated("Use AttoAccountMonitor instead")
 class AttoWalletViewer(
-    val publicKey: AttoPublicKey,
+    val address: AttoAddress,
     private val client: AttoNodeOperations,
     private val accountEntryRepository: AttoAccountEntryRepository? = null,
     private val transactionRepository: AttoTransactionRepository? = null,
@@ -39,7 +39,7 @@ class AttoWalletViewer(
     val accountFlow = accountState.asSharedFlow().filterNotNull()
     val account: AttoAccount? get() = accountState.value
 
-    val receivableFlow = client.receivableStream(publicKey)
+    val receivableFlow = client.receivableStream(address)
 
     private val _accountEntryFlow = MutableSharedFlow<AttoAccountEntry>()
     val accountEntryFlow = _accountEntryFlow.asSharedFlow()
@@ -50,13 +50,13 @@ class AttoWalletViewer(
     suspend fun updateAccount() {
         while (coroutineContext.isActive) {
             try {
-                val account = client.account(publicKey)
+                val account = client.account(address)
                 account?.let {
                     update(it)
                 }
                 return
             } catch (e: Exception) {
-                logger.warn(e) { "Failed to get account $publicKey. Retrying in $retryDelay..." }
+                logger.warn(e) { "Failed to get account $address. Retrying in $retryDelay..." }
                 delay(retryDelay)
             }
         }
@@ -71,9 +71,9 @@ class AttoWalletViewer(
         scope.launch {
             while (isActive) {
                 try {
-                    val fromHeight = accountEntryRepository.last(publicKey)?.height ?: AttoHeight(0U)
+                    val fromHeight = accountEntryRepository.last(address)?.height ?: AttoHeight(0U)
 
-                    client.accountEntryStream(publicKey, fromHeight + 1U).collect {
+                    client.accountEntryStream(address, fromHeight + 1U).collect {
                         _accountEntryFlow.emit(it)
                     }
                     break
@@ -112,9 +112,9 @@ class AttoWalletViewer(
         scope.launch {
             while (isActive) {
                 try {
-                    val fromHeight = transactionRepository.last(publicKey)?.height ?: AttoHeight(0U)
+                    val fromHeight = transactionRepository.last(address)?.height ?: AttoHeight(0U)
 
-                    client.transactionStream(publicKey, fromHeight + 1U).collect {
+                    client.transactionStream(address, fromHeight + 1U).collect {
                         _transactionFlow.emit(it)
                     }
                 } catch (e: Exception) {
@@ -150,7 +150,7 @@ class AttoWalletViewer(
         startAccountEntrySaver()
         startTransactionStream()
         startTransactionSaver()
-        logger.info { "Started wallet viewer for $publicKey" }
+        logger.info { "Started wallet viewer for $address" }
     }
 
     internal fun update(newAccount: AttoAccount) {

@@ -190,7 +190,7 @@ class AttoWallet(
 
             val timestamp = timestampProvider.invoke()
 
-            val (block, updatedAccount) = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, timestamp)
+            val (block, updatedAccount) = account.send(receiverAddress, amount, timestamp)
 
             val transaction = publish(index, block)
 
@@ -245,7 +245,7 @@ class AttoWallet(
     ): Pair<AttoBlock, AttoAccount> {
         require(representativeAddress != null) { "Representative address must be provided for a new account" }
         val timestamp = timestampProvider.invoke()
-        return AttoAccount.open(representativeAddress.algorithm, representativeAddress.publicKey, receivable, timestamp)
+        return AttoAccount.open(representativeAddress, receivable, timestamp)
     }
 
     private suspend fun receive(
@@ -275,7 +275,7 @@ class AttoWallet(
 
             val timestamp = timestampProvider.invoke()
 
-            val (block, updatedAccount) = account.change(representativeAddress.algorithm, representativeAddress.publicKey, timestamp)
+            val (block, updatedAccount) = account.change(representativeAddress, timestamp)
 
             val transaction = publish(index, block)
 

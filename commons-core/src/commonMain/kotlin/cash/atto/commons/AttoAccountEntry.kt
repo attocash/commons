@@ -1,22 +1,21 @@
-@file:OptIn(ExperimentalJsStatic::class)
+@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class)
 
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.Serializable
+import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsStatic
 
 @JsExportForJs
-@Serializable
+@Serializable(with = AttoAccountEntrySerializer::class)
 data class AttoAccountEntry(
     val hash: AttoHash,
-    val algorithm: AttoAlgorithm,
-    val publicKey: AttoPublicKey,
+    override val address: AttoAddress,
     override val height: AttoHeight,
     val blockType: AttoBlockType,
-    val subjectAlgorithm: AttoAlgorithm,
-    val subjectPublicKey: AttoPublicKey,
+    val subjectAddress: AttoAddress,
     val previousBalance: AttoAmount,
     val balance: AttoAmount,
     val timestamp: AttoInstant,
@@ -27,8 +26,17 @@ data class AttoAccountEntry(
         fun fromJson(value: String): AttoAccountEntry = attoJson.decodeFromString<AttoAccountEntry>(value)
     }
 
-    override val address = AttoAddress(algorithm, publicKey)
-    val subjectAddress = AttoAddress(subjectAlgorithm, subjectPublicKey)
+    val algorithm: AttoAlgorithm
+        get() = address.algorithm
+
+    val publicKey: AttoPublicKey
+        get() = address.publicKey
+
+    val subjectAlgorithm: AttoAlgorithm
+        get() = subjectAddress.algorithm
+
+    val subjectPublicKey: AttoPublicKey
+        get() = subjectAddress.publicKey
 
     fun toJson(): String = attoJson.encodeToString(this)
 }

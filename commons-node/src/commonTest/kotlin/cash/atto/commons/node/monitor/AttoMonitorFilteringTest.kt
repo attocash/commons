@@ -70,16 +70,14 @@ class AttoMonitorFilteringTest {
         height: UInt,
     ): AttoAccount =
         AttoAccount(
-            publicKey = publicKey,
             network = AttoNetwork.LOCAL,
             version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
+            address = AttoAddress(AttoAlgorithm.V1, publicKey),
             height = height.toAttoHeight(),
             balance = AttoAmount.MAX,
             lastTransactionHash = AttoHash(Random.nextBytes(32)),
             lastTransactionTimestamp = AttoInstant.now(),
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = trackedPublicKey,
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, trackedPublicKey),
         )
 
     private fun accountEntry(
@@ -88,12 +86,10 @@ class AttoMonitorFilteringTest {
     ): AttoAccountEntry =
         AttoAccountEntry(
             hash = AttoHash(Random.nextBytes(32)),
-            algorithm = AttoAlgorithm.V1,
-            publicKey = publicKey,
+            address = AttoAddress(AttoAlgorithm.V1, publicKey),
             height = height.toAttoHeight(),
             blockType = AttoBlockType.OPEN,
-            subjectAlgorithm = AttoAlgorithm.V1,
-            subjectPublicKey = publicKey,
+            subjectAddress = AttoAddress(AttoAlgorithm.V1, publicKey),
             previousBalance = AttoAmount.MIN,
             balance = AttoAmount.MAX,
             timestamp = AttoInstant.now(),
@@ -103,18 +99,18 @@ class AttoMonitorFilteringTest {
         private val accounts: Collection<AttoAccount> = emptyList(),
         private val accountEntries: Collection<AttoAccountEntry> = emptyList(),
     ) : AttoNodeClient {
-        override suspend fun account(publicKey: AttoPublicKey): AttoAccount? = accounts.firstOrNull { it.publicKey == publicKey }
+        override suspend fun account(address: AttoAddress): AttoAccount? = accounts.firstOrNull { it.address == address }
 
         override suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount> = accounts
 
         override fun accountStream(): Flow<AttoAccount> = accounts.asFlow()
 
-        override fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount> = accounts.asFlow()
+        override fun accountStream(address: AttoAddress): Flow<AttoAccount> = accounts.asFlow()
 
         override fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount> = accounts.asFlow()
 
         override fun receivableStream(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             minAmount: AttoAmount,
         ): Flow<AttoReceivable> = emptyFlow()
 
@@ -130,7 +126,7 @@ class AttoMonitorFilteringTest {
         override fun accountEntryStream(hash: AttoHash): Flow<AttoAccountEntry> = accountEntries.asFlow()
 
         override fun accountEntryStream(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             fromHeight: AttoHeight,
             toHeight: AttoHeight?,
         ): Flow<AttoAccountEntry> = accountEntries.asFlow()
@@ -144,7 +140,7 @@ class AttoMonitorFilteringTest {
         override fun transactionStream(hash: AttoHash): Flow<AttoTransaction> = emptyFlow()
 
         override fun transactionStream(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             fromHeight: AttoHeight,
             toHeight: AttoHeight?,
         ): Flow<AttoTransaction> = emptyFlow()

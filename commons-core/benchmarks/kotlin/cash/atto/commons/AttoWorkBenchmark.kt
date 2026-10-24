@@ -13,14 +13,12 @@ open class AttoWorkBenchmark {
         AttoOpenBlock(
             version = 0U.toAttoVersion(),
             network = AttoNetwork.LOCAL,
-            algorithm = AttoAlgorithm.V1,
-            publicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+            address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(ByteArray(32)))),
             balance = AttoAmount.MAX,
             timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             sendHashAlgorithm = AttoAlgorithm.V1,
             sendHash = AttoHash(Random.Default.nextBytes(ByteArray(32))),
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = AttoPublicKey(Random.Default.nextBytes(ByteArray(32))),
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.Default.nextBytes(ByteArray(32)))),
         )
     private val work = AttoWorker.cpu().work(openBlock)
 

@@ -8,7 +8,6 @@ import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoInstantAsStringSerializer
-import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVoterWeight
@@ -22,18 +21,18 @@ import kotlin.time.Duration.Companion.milliseconds
 interface AttoNodeOperations {
     companion object {}
 
-    suspend fun account(publicKey: AttoPublicKey): AttoAccount?
+    suspend fun account(address: AttoAddress): AttoAccount?
 
     suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount>
 
     fun accountStream(): Flow<AttoAccount>
 
-    fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount>
+    fun accountStream(address: AttoAddress): Flow<AttoAccount>
 
     fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount>
 
     fun receivableStream(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         minAmount: AttoAmount = AttoAmount(1U),
     ): Flow<AttoReceivable>
 
@@ -49,7 +48,7 @@ interface AttoNodeOperations {
     fun accountEntryStream(hash: AttoHash): Flow<AttoAccountEntry>
 
     fun accountEntryStream(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         fromHeight: AttoHeight = AttoHeight(1UL),
         toHeight: AttoHeight? = null,
     ): Flow<AttoAccountEntry>
@@ -63,7 +62,7 @@ interface AttoNodeOperations {
     fun transactionStream(hash: AttoHash): Flow<AttoTransaction>
 
     fun transactionStream(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         fromHeight: AttoHeight = AttoHeight(1UL),
         toHeight: AttoHeight? = null,
     ): Flow<AttoTransaction>

@@ -17,16 +17,20 @@ import kotlin.jvm.JvmSynthetic
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
-@Serializable
+@Serializable(with = AttoVoteSerializer::class)
 data class AttoVote(
     val version: AttoVersion,
-    val algorithm: AttoAlgorithm,
-    val publicKey: AttoPublicKey,
+    val address: AttoAddress,
     val blockAlgorithm: AttoAlgorithm,
     val blockHash: AttoHash,
     val timestamp: AttoInstant,
 ) : AttoHashable,
     AttoSerializable {
+    val algorithm: AttoAlgorithm
+        get() = address.algorithm
+    val publicKey: AttoPublicKey
+        get() = address.publicKey
+
     override val hash by lazy { toBuffer().hash() }
 
     companion object {
@@ -35,8 +39,7 @@ data class AttoVote(
         internal fun readFromBuffer(buffer: Buffer): AttoVote =
             AttoVote(
                 version = buffer.readAttoVersion(),
-                algorithm = buffer.readAttoAlgorithm(),
-                publicKey = buffer.readAttoPublicKey(),
+                address = AttoAddress(buffer.readAttoAlgorithm(), buffer.readAttoPublicKey()),
                 blockAlgorithm = buffer.readAttoAlgorithm(),
                 blockHash = buffer.readAttoHash(),
                 timestamp = buffer.readInstant(),

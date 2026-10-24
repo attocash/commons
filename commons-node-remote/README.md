@@ -42,7 +42,7 @@ val accounts = client.account(listOf(address1, address2))
 val receivables = client.receivableStream(listOf(address1, address2), AttoAmount.MIN)
 
 // Stream account entries by height range
-val entries = client.accountEntryStream(address1.publicKey, 1U.toAttoHeight(), null)
+val entries = client.accountEntryStream(address1, 1U.toAttoHeight(), null)
 
 // Publish a transaction
 client.publish(transaction)

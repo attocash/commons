@@ -46,7 +46,7 @@ class AttoAccountMonitor internal constructor(
 
     suspend fun getAccount(address: AttoAddress): AttoAccount? {
         require(state.getAddresses().contains(address)) { "Address $address not found in the accountMonitor" }
-        return client.account(address.publicKey)
+        return client.account(address)
     }
 
     fun membershipFlow(): Flow<Set<AttoAddress>> = state.membershipFlow()

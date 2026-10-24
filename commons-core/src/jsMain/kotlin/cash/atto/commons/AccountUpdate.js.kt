@@ -22,8 +22,7 @@ fun attoAccountOpen(
 ): AccountUpdate {
     val update =
         AttoAccount.open(
-            representativeAddress.algorithm,
-            representativeAddress.publicKey,
+            representativeAddress,
             receivable,
             timestamp.toInstant(),
         )
@@ -36,7 +35,7 @@ fun attoAccountSend(
     amount: AttoAmount,
     timestamp: String? = null,
 ): AccountUpdate {
-    val update = account.send(receiverAddress.algorithm, receiverAddress.publicKey, amount, timestamp.toInstant())
+    val update = account.send(receiverAddress, amount, timestamp.toInstant())
     return update.toAccountUpdate()
 }
 
@@ -54,6 +53,6 @@ fun attoAccountChange(
     representativeAddress: AttoAddress,
     timestamp: String? = null,
 ): AccountUpdate {
-    val update = account.change(representativeAddress.algorithm, representativeAddress.publicKey, timestamp.toInstant())
+    val update = account.change(representativeAddress, timestamp.toInstant())
     return update.toAccountUpdate()
 }

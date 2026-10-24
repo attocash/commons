@@ -33,7 +33,7 @@ in.
 val client: AttoNodeClient = AttoNodeClient.remote("http://localhost:8080")
 
 // Single account by public key
-val account = client.account(address.publicKey)
+val account = client.account(address)
 
 // Multiple accounts by address
 val accounts = client.account(listOf(address1, address2))

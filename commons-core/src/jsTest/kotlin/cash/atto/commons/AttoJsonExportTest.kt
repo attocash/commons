@@ -49,14 +49,12 @@ class AttoJsonExportTest {
             AttoSendBlock(
                 network = AttoNetwork.LOCAL,
                 version = UShort.MAX_VALUE.toAttoVersion(),
-                algorithm = AttoAlgorithm.V1,
-                publicKey = publicKey,
+                address = AttoAddress(AttoAlgorithm.V1, publicKey),
                 height = AttoHeight.MAX,
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE),
                 previous = AttoHash(ByteArray(32) { -1 }),
-                receiverAlgorithm = AttoAlgorithm.V1,
-                receiverPublicKey = AttoPublicKey(ByteArray(32) { (it + 32).toByte() }),
+                receiverAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32) { (it + 32).toByte() })),
                 amount = AttoAmount(AttoAmount.MAX.raw - 1UL),
             )
         val transaction =
@@ -85,16 +83,14 @@ class AttoJsonExportTest {
         timestamp: Long,
     ): AttoAccount =
         AttoAccount(
-            publicKey = AttoPublicKey(ByteArray(32)),
             network = AttoNetwork.LOCAL,
             version = UShort.MAX_VALUE.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
+            address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))),
             height = AttoHeight(height),
             balance = AttoAmount(balance),
             lastTransactionHash = AttoHash(ByteArray(32)),
             lastTransactionTimestamp = AttoInstant.fromEpochMilliseconds(timestamp),
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = AttoPublicKey(ByteArray(32)),
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32))),
         )
 
     private fun javascriptParseAndStringify(json: String): String = js("JSON.stringify(JSON.parse(json))")

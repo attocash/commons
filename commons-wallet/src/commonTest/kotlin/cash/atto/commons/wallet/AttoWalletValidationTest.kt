@@ -141,8 +141,7 @@ class AttoWalletValidationTest {
         AttoReceiveBlock(
             version = 0U.toAttoVersion(),
             network = AttoNetwork.LOCAL,
-            algorithm = AttoAlgorithm.V1,
-            publicKey = publicKey,
+            address = AttoAddress(AttoAlgorithm.V1, publicKey),
             height = 2U.toAttoHeight(),
             balance = AttoAmount.MAX,
             timestamp = AttoInstant.now(),
@@ -156,26 +155,22 @@ class AttoWalletValidationTest {
             network = AttoNetwork.LOCAL,
             hash = AttoHash(Random.nextBytes(32)),
             version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
-            publicKey = AttoPublicKey(Random.nextBytes(32)),
+            address = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(32))),
             timestamp = AttoInstant.now(),
-            receiverAlgorithm = AttoAlgorithm.V1,
-            receiverPublicKey = receiverPublicKey,
+            receiverAddress = AttoAddress(AttoAlgorithm.V1, receiverPublicKey),
             amount = 1UL.toAttoAmount(),
         )
 
     private fun account(publicKey: AttoPublicKey): AttoAccount =
         AttoAccount(
-            publicKey = publicKey,
             network = AttoNetwork.LOCAL,
             version = 0U.toAttoVersion(),
-            algorithm = AttoAlgorithm.V1,
+            address = AttoAddress(AttoAlgorithm.V1, publicKey),
             height = 1U.toAttoHeight(),
             balance = AttoAmount.MAX,
             lastTransactionHash = AttoHash(Random.nextBytes(32)),
             lastTransactionTimestamp = AttoInstant.now(),
-            representativeAlgorithm = AttoAlgorithm.V1,
-            representativePublicKey = AttoPublicKey(Random.nextBytes(32)),
+            representativeAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(Random.nextBytes(32))),
         )
 
     private class StaticWorker(
@@ -252,18 +247,18 @@ class AttoWalletValidationTest {
         private val accounts = accounts.associateBy { it.address }
         val published = mutableListOf<AttoTransaction>()
 
-        override suspend fun account(publicKey: AttoPublicKey): AttoAccount? = accounts[AttoAddress(AttoAlgorithm.V1, publicKey)]
+        override suspend fun account(address: AttoAddress): AttoAccount? = accounts[address]
 
         override suspend fun account(addresses: Collection<AttoAddress>): Collection<AttoAccount> = addresses.mapNotNull { accounts[it] }
 
         override fun accountStream(): Flow<AttoAccount> = emptyFlow()
 
-        override fun accountStream(publicKey: AttoPublicKey): Flow<AttoAccount> = emptyFlow()
+        override fun accountStream(address: AttoAddress): Flow<AttoAccount> = emptyFlow()
 
         override fun accountStream(addresses: Collection<AttoAddress>): Flow<AttoAccount> = emptyFlow()
 
         override fun receivableStream(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             minAmount: AttoAmount,
         ): Flow<AttoReceivable> = emptyFlow()
 
@@ -282,7 +277,7 @@ class AttoWalletValidationTest {
         override fun accountEntryStream(hash: AttoHash): Flow<AttoAccountEntry> = emptyFlow()
 
         override fun accountEntryStream(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             fromHeight: AttoHeight,
             toHeight: AttoHeight?,
         ): Flow<AttoAccountEntry> = emptyFlow()
@@ -296,7 +291,7 @@ class AttoWalletValidationTest {
         override fun transactionStream(hash: AttoHash): Flow<AttoTransaction> = emptyFlow()
 
         override fun transactionStream(
-            publicKey: AttoPublicKey,
+            address: AttoAddress,
             fromHeight: AttoHeight,
             toHeight: AttoHeight?,
         ): Flow<AttoTransaction> = emptyFlow()

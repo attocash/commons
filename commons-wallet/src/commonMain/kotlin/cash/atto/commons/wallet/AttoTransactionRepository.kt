@@ -1,6 +1,6 @@
 package cash.atto.commons.wallet
 
-import cash.atto.commons.AttoPublicKey
+import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,43 +19,43 @@ interface AttoTransactionRepository : AutoCloseable {
 
     suspend fun save(transaction: AttoTransaction)
 
-    suspend fun stream(publicKey: AttoPublicKey): Flow<AttoTransaction>
+    suspend fun stream(address: AttoAddress): Flow<AttoTransaction>
 
-    suspend fun last(publicKey: AttoPublicKey): AttoTransaction?
+    suspend fun last(address: AttoAddress): AttoTransaction?
 
     override fun close() {}
 }
 
 private class AttoInMemoryTransactionRepository : AttoTransactionRepository {
     private val mutex = Mutex()
-    private val transactionMap = mutableMapOf<AttoPublicKey, MutableList<AttoTransaction>>()
+    private val transactionMap = mutableMapOf<AttoAddress, MutableList<AttoTransaction>>()
     private val flow = MutableSharedFlow<AttoTransaction>()
 
     override suspend fun save(transaction: AttoTransaction) {
-        val publicKey = transaction.block.publicKey
+        val address = transaction.block.address
         mutex.withLock {
-            val transactions = transactionMap[publicKey] ?: mutableListOf()
+            val transactions = transactionMap[address] ?: mutableListOf()
             transactions.add(transaction)
-            transactionMap[publicKey] = transactions
+            transactionMap[address] = transactions
             flow.emit(transaction)
         }
     }
 
-    override suspend fun stream(publicKey: AttoPublicKey): Flow<AttoTransaction> {
+    override suspend fun stream(address: AttoAddress): Flow<AttoTransaction> {
         val cacheFlow =
             flow {
                 mutex.withLock {
-                    val transactions = transactionMap[publicKey]?.toList() ?: emptyList()
+                    val transactions = transactionMap[address]?.toList() ?: emptyList()
                     emitAll(transactions.asFlow())
                 }
             }
 
-        val liveFlow = flow.filter { it.block.publicKey == publicKey }
+        val liveFlow = flow.filter { it.block.address == address }
 
         return merge(cacheFlow, liveFlow)
     }
 
-    override suspend fun last(publicKey: AttoPublicKey): AttoTransaction? = transactionMap[publicKey]?.lastOrNull()
+    override suspend fun last(address: AttoAddress): AttoTransaction? = transactionMap[address]?.lastOrNull()
 }
 
 @Deprecated(

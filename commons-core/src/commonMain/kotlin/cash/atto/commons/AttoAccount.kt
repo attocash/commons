@@ -9,23 +9,30 @@ import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsExport
 import kotlin.js.JsStatic
 
-@Serializable
+@Serializable(with = AttoAccountSerializer::class)
 @JsExportForJs
 data class AttoAccount(
-    val publicKey: AttoPublicKey,
+    override val address: AttoAddress,
     val network: AttoNetwork,
     val version: AttoVersion,
-    val algorithm: AttoAlgorithm,
     override val height: AttoHeight,
     val balance: AttoAmount,
     val lastTransactionHash: AttoHash,
     val lastTransactionTimestamp: AttoInstant,
-    val representativeAlgorithm: AttoAlgorithm,
-    val representativePublicKey: AttoPublicKey,
+    val representativeAddress: AttoAddress,
 ) : HeightSupport,
     AddressSupport {
-    override val address by lazy { AttoAddress(algorithm, publicKey) }
-    val representativeAddress by lazy { AttoAddress(representativeAlgorithm, representativePublicKey) }
+    val algorithm: AttoAlgorithm
+        get() = address.algorithm
+
+    val publicKey: AttoPublicKey
+        get() = address.publicKey
+
+    val representativeAlgorithm: AttoAlgorithm
+        get() = representativeAddress.algorithm
+
+    val representativePublicKey: AttoPublicKey
+        get() = representativeAddress.publicKey
 
     companion object {
         @JsStatic
@@ -33,8 +40,7 @@ data class AttoAccount(
 
         @JsExport.Ignore
         fun open(
-            representativeAlgorithm: AttoAlgorithm,
-            representativePublicKey: AttoPublicKey,
+            representativeAddress: AttoAddress,
             receivable: AttoReceivable,
             timestamp: AttoInstant = AttoInstant.now(),
         ): Pair<AttoOpenBlock, AttoAccount> {
@@ -42,27 +48,23 @@ data class AttoAccount(
                 AttoOpenBlock(
                     network = receivable.network,
                     version = receivable.version,
-                    algorithm = receivable.receiverAlgorithm,
-                    publicKey = receivable.receiverPublicKey,
+                    address = receivable.receiverAddress,
                     balance = receivable.amount,
                     timestamp = timestamp,
                     sendHashAlgorithm = receivable.algorithm,
                     sendHash = receivable.hash,
-                    representativeAlgorithm = representativeAlgorithm,
-                    representativePublicKey = representativePublicKey,
+                    representativeAddress = representativeAddress,
                 )
             val account =
                 AttoAccount(
-                    publicKey = receivable.receiverPublicKey,
+                    address = receivable.receiverAddress,
                     network = receivable.network,
                     version = receivable.version,
-                    algorithm = receivable.receiverAlgorithm,
                     height = block.height,
                     balance = receivable.amount,
                     lastTransactionHash = block.hash,
                     lastTransactionTimestamp = timestamp,
-                    representativeAlgorithm = representativeAlgorithm,
-                    representativePublicKey = representativePublicKey,
+                    representativeAddress = representativeAddress,
                 )
             return Pair(block, account)
         }
@@ -70,12 +72,11 @@ data class AttoAccount(
 
     @JsExport.Ignore
     fun send(
-        receiverAlgorithm: AttoAlgorithm,
-        receiverPublicKey: AttoPublicKey,
+        receiverAddress: AttoAddress,
         amount: AttoAmount,
         timestamp: AttoInstant = AttoInstant.now(),
     ): Pair<AttoSendBlock, AttoAccount> {
-        if (receiverPublicKey == publicKey) {
+        if (receiverAddress.publicKey == publicKey) {
             throw IllegalArgumentException("You can't send money to yourself")
         }
         val newBalance = balance.minus(amount)
@@ -84,14 +85,12 @@ data class AttoAccount(
             AttoSendBlock(
                 network = network,
                 version = version,
-                algorithm = algorithm,
-                publicKey = publicKey,
+                address = address,
                 height = newHeight,
                 balance = newBalance,
                 timestamp = timestamp,
                 previous = lastTransactionHash,
-                receiverAlgorithm = receiverAlgorithm,
-                receiverPublicKey = receiverPublicKey,
+                receiverAddress = receiverAddress,
                 amount = amount,
             )
         val updatedAccount =
@@ -118,8 +117,7 @@ data class AttoAccount(
             AttoReceiveBlock(
                 network = network,
                 version = newVersion,
-                algorithm = algorithm,
-                publicKey = publicKey,
+                address = address,
                 height = newHeight,
                 balance = newBalance,
                 timestamp = timestamp,
@@ -140,8 +138,7 @@ data class AttoAccount(
 
     @JsExport.Ignore
     fun change(
-        representativeAlgorithm: AttoAlgorithm,
-        representativePublicKey: AttoPublicKey,
+        representativeAddress: AttoAddress,
         timestamp: AttoInstant = AttoInstant.now(),
     ): Pair<AttoChangeBlock, AttoAccount> {
         val newHeight = height + 1U.toAttoHeight()
@@ -149,22 +146,19 @@ data class AttoAccount(
             AttoChangeBlock(
                 network = network,
                 version = version,
-                algorithm = algorithm,
-                publicKey = publicKey,
+                address = address,
                 height = newHeight,
                 balance = balance,
                 timestamp = timestamp,
                 previous = lastTransactionHash,
-                representativeAlgorithm = representativeAlgorithm,
-                representativePublicKey = representativePublicKey,
+                representativeAddress = representativeAddress,
             )
         val updatedAccount =
             copy(
                 height = newHeight,
                 lastTransactionHash = block.hash,
                 lastTransactionTimestamp = timestamp,
-                representativeAlgorithm = representativeAlgorithm,
-                representativePublicKey = representativePublicKey,
+                representativeAddress = representativeAddress,
             )
         return Pair(block, updatedAccount)
     }

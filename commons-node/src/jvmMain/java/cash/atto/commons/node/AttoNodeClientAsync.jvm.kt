@@ -8,7 +8,6 @@ import cash.atto.commons.AttoHash
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoJob
-import cash.atto.commons.AttoPublicKey
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVoterWeight
@@ -28,7 +27,7 @@ actual class AttoNodeClientAsync actual constructor(
 ) : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
-    fun account(publicKey: AttoPublicKey): CompletableFuture<AttoAccount?> = scope.future { client.account(publicKey) }
+    fun account(address: AttoAddress): CompletableFuture<AttoAccount?> = scope.future { client.account(address) }
 
     fun account(addresses: Collection<AttoAddress>): CompletableFuture<Collection<AttoAccount>> = scope.future { client.account(addresses) }
 
@@ -43,12 +42,12 @@ actual class AttoNodeClientAsync actual constructor(
         )
 
     fun onAccount(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         onAccount: (AttoAccount) -> Unit,
         onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
-            stream = client.accountStream(publicKey),
+            stream = client.accountStream(address),
             onEach = { onAccount(it) },
             onCancel = { onCancel.invoke(it) },
         )
@@ -66,13 +65,13 @@ actual class AttoNodeClientAsync actual constructor(
 
     @JvmOverloads
     fun onReceivable(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         minAmount: AttoAmount = AttoAmount(1U),
         onReceivable: (AttoReceivable) -> Unit,
         onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
-            stream = client.receivableStream(publicKey, minAmount),
+            stream = client.receivableStream(address, minAmount),
             onEach = { onReceivable.invoke(it) },
             onCancel = { onCancel.invoke(it) },
         )
@@ -115,14 +114,14 @@ actual class AttoNodeClientAsync actual constructor(
 
     @JvmOverloads
     fun onAccountEntry(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         fromHeight: AttoHeight = AttoHeight(1UL),
         toHeight: AttoHeight? = null,
         onAccountEntry: (AttoAccountEntry) -> Unit,
         onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
-            stream = client.accountEntryStream(publicKey, fromHeight, toHeight),
+            stream = client.accountEntryStream(address, fromHeight, toHeight),
             onEach = { onAccountEntry.invoke(it) },
             onCancel = { onCancel.invoke(it) },
         )
@@ -163,14 +162,14 @@ actual class AttoNodeClientAsync actual constructor(
 
     @JvmOverloads
     fun onTransaction(
-        publicKey: AttoPublicKey,
+        address: AttoAddress,
         fromHeight: AttoHeight = AttoHeight(1UL),
         toHeight: AttoHeight? = null,
         onTransaction: (AttoTransaction) -> Unit,
         onCancel: (Throwable?) -> Unit,
     ): AttoJob =
         scope.consumeStream(
-            stream = client.transactionStream(publicKey, fromHeight, toHeight),
+            stream = client.transactionStream(address, fromHeight, toHeight),
             onEach = { onTransaction.invoke(it) },
             onCancel = { onCancel.invoke(it) },
         )

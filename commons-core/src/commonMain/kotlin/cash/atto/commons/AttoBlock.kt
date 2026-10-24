@@ -1,12 +1,10 @@
-@file:OptIn(ExperimentalSerializationApi::class, ExperimentalJsExport::class, ExperimentalJsStatic::class)
+@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class)
 
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
-import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -213,19 +211,17 @@ interface RepresentativeSupport {
 }
 
 @JsExportForJs
-@Serializable
+@Serializable(with = AttoSendBlockSerializer::class)
 @SerialName("SEND")
 data class AttoSendBlock(
     override val network: AttoNetwork,
     override val version: AttoVersion,
-    override val algorithm: AttoAlgorithm,
-    override val publicKey: AttoPublicKey,
+    override val address: AttoAddress,
     override val height: AttoHeight,
     override val balance: AttoAmount,
     override val timestamp: AttoInstant,
     override val previous: AttoHash,
-    val receiverAlgorithm: AttoAlgorithm,
-    val receiverPublicKey: AttoPublicKey,
+    val receiverAddress: AttoAddress,
     val amount: AttoAmount,
 ) : AttoBlock,
     PreviousSupport {
@@ -234,11 +230,17 @@ data class AttoSendBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    override val address = AttoAddress(algorithm, publicKey)
+    override val algorithm: AttoAlgorithm
+        get() = address.algorithm
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val receiverAddress = AttoAddress(receiverAlgorithm, receiverPublicKey)
+    override val publicKey: AttoPublicKey
+        get() = address.publicKey
+
+    val receiverAlgorithm: AttoAlgorithm
+        get() = receiverAddress.algorithm
+
+    val receiverPublicKey: AttoPublicKey
+        get() = receiverAddress.publicKey
 
     @JsExport.Ignore
     fun toReceivable(): AttoReceivable =
@@ -246,11 +248,9 @@ data class AttoSendBlock(
             network = network,
             hash = hash,
             version = version,
-            algorithm = algorithm,
-            publicKey = publicKey,
+            address = address,
             timestamp = timestamp,
-            receiverAlgorithm = receiverAlgorithm,
-            receiverPublicKey = receiverPublicKey,
+            receiverAddress = receiverAddress,
             amount = amount,
         )
 
@@ -268,14 +268,12 @@ data class AttoSendBlock(
             return AttoSendBlock(
                 network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
-                algorithm = serializedBlock.readAttoAlgorithm(),
-                publicKey = serializedBlock.readAttoPublicKey(),
+                address = AttoAddress(serializedBlock.readAttoAlgorithm(), serializedBlock.readAttoPublicKey()),
                 height = serializedBlock.readAttoHeight(),
                 balance = serializedBlock.readAttoAmount(),
                 timestamp = serializedBlock.readInstant(),
                 previous = serializedBlock.readAttoHash(),
-                receiverAlgorithm = serializedBlock.readAttoAlgorithm(),
-                receiverPublicKey = serializedBlock.readAttoPublicKey(),
+                receiverAddress = AttoAddress(serializedBlock.readAttoAlgorithm(), serializedBlock.readAttoPublicKey()),
                 amount = serializedBlock.readAttoAmount(),
             )
         }
@@ -327,13 +325,12 @@ data class AttoSendBlock(
 }
 
 @JsExportForJs
-@Serializable
+@Serializable(with = AttoReceiveBlockSerializer::class)
 @SerialName("RECEIVE")
 data class AttoReceiveBlock(
     override val network: AttoNetwork,
     override val version: AttoVersion,
-    override val algorithm: AttoAlgorithm,
-    override val publicKey: AttoPublicKey,
+    override val address: AttoAddress,
     override val height: AttoHeight,
     override val balance: AttoAmount,
     override val timestamp: AttoInstant,
@@ -348,8 +345,11 @@ data class AttoReceiveBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    override val address = AttoAddress(algorithm, publicKey)
+    override val algorithm: AttoAlgorithm
+        get() = address.algorithm
+
+    override val publicKey: AttoPublicKey
+        get() = address.publicKey
 
     companion object {
         @JsExport.Ignore
@@ -366,8 +366,7 @@ data class AttoReceiveBlock(
             return AttoReceiveBlock(
                 network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
-                algorithm = serializedBlock.readAttoAlgorithm(),
-                publicKey = serializedBlock.readAttoPublicKey(),
+                address = AttoAddress(serializedBlock.readAttoAlgorithm(), serializedBlock.readAttoPublicKey()),
                 height = serializedBlock.readAttoHeight(),
                 balance = serializedBlock.readAttoAmount(),
                 timestamp = serializedBlock.readInstant(),
@@ -396,19 +395,17 @@ data class AttoReceiveBlock(
 }
 
 @JsExportForJs
-@Serializable
+@Serializable(with = AttoOpenBlockSerializer::class)
 @SerialName("OPEN")
 data class AttoOpenBlock(
     override val network: AttoNetwork,
     override val version: AttoVersion,
-    override val algorithm: AttoAlgorithm,
-    override val publicKey: AttoPublicKey,
+    override val address: AttoAddress,
     override val balance: AttoAmount,
     override val timestamp: AttoInstant,
     override val sendHashAlgorithm: AttoAlgorithm,
     override val sendHash: AttoHash,
-    override val representativeAlgorithm: AttoAlgorithm,
-    override val representativePublicKey: AttoPublicKey,
+    val representativeAddress: AttoAddress,
 ) : AttoBlock,
     ReceiveSupport,
     RepresentativeSupport {
@@ -417,14 +414,20 @@ data class AttoOpenBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    override val height = AttoHeight(1UL)
+    override val algorithm: AttoAlgorithm
+        get() = address.algorithm
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    override val address = AttoAddress(algorithm, publicKey)
+    override val publicKey: AttoPublicKey
+        get() = address.publicKey
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)
+    override val height: AttoHeight
+        get() = AttoHeight.MIN
+
+    override val representativeAlgorithm: AttoAlgorithm
+        get() = representativeAddress.algorithm
+
+    override val representativePublicKey: AttoPublicKey
+        get() = representativeAddress.publicKey
 
     companion object {
         @JsExport.Ignore
@@ -436,14 +439,12 @@ data class AttoOpenBlock(
             AttoOpenBlock(
                 version = 0U.toAttoVersion(),
                 network = network,
-                algorithm = address.algorithm,
-                publicKey = address.publicKey,
+                address = address,
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),
                 sendHashAlgorithm = address.algorithm,
                 sendHash = AttoHash(ByteArray(32)),
-                representativeAlgorithm = address.algorithm,
-                representativePublicKey = address.publicKey,
+                representativeAddress = address,
             )
 
         @JsExport.Ignore
@@ -460,14 +461,12 @@ data class AttoOpenBlock(
             return AttoOpenBlock(
                 network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
-                algorithm = serializedBlock.readAttoAlgorithm(),
-                publicKey = serializedBlock.readAttoPublicKey(),
+                address = AttoAddress(serializedBlock.readAttoAlgorithm(), serializedBlock.readAttoPublicKey()),
                 balance = serializedBlock.readAttoAmount(),
                 timestamp = serializedBlock.readInstant(),
                 sendHashAlgorithm = serializedBlock.readAttoAlgorithm(),
                 sendHash = serializedBlock.readAttoHash(),
-                representativeAlgorithm = serializedBlock.readAttoAlgorithm(),
-                representativePublicKey = serializedBlock.readAttoPublicKey(),
+                representativeAddress = AttoAddress(serializedBlock.readAttoAlgorithm(), serializedBlock.readAttoPublicKey()),
             )
         }
     }
@@ -490,19 +489,17 @@ data class AttoOpenBlock(
 }
 
 @JsExportForJs
-@Serializable
+@Serializable(with = AttoChangeBlockSerializer::class)
 @SerialName("CHANGE")
 data class AttoChangeBlock(
     override val network: AttoNetwork,
     override val version: AttoVersion,
-    override val algorithm: AttoAlgorithm,
-    override val publicKey: AttoPublicKey,
+    override val address: AttoAddress,
     override val height: AttoHeight,
     override val balance: AttoAmount,
     override val timestamp: AttoInstant,
     override val previous: AttoHash,
-    override val representativeAlgorithm: AttoAlgorithm,
-    override val representativePublicKey: AttoPublicKey,
+    val representativeAddress: AttoAddress,
 ) : AttoBlock,
     PreviousSupport,
     RepresentativeSupport {
@@ -511,11 +508,17 @@ data class AttoChangeBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    override val address = AttoAddress(algorithm, publicKey)
+    override val algorithm: AttoAlgorithm
+        get() = address.algorithm
 
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val representativeAddress = AttoAddress(representativeAlgorithm, representativePublicKey)
+    override val publicKey: AttoPublicKey
+        get() = address.publicKey
+
+    override val representativeAlgorithm: AttoAlgorithm
+        get() = representativeAddress.algorithm
+
+    override val representativePublicKey: AttoPublicKey
+        get() = representativeAddress.publicKey
 
     companion object {
         @JsExport.Ignore
@@ -532,14 +535,12 @@ data class AttoChangeBlock(
             return AttoChangeBlock(
                 network = serializedBlock.readAttoNetwork(),
                 version = serializedBlock.readAttoVersion(),
-                algorithm = serializedBlock.readAttoAlgorithm(),
-                publicKey = serializedBlock.readAttoPublicKey(),
+                address = AttoAddress(serializedBlock.readAttoAlgorithm(), serializedBlock.readAttoPublicKey()),
                 height = serializedBlock.readAttoHeight(),
                 balance = serializedBlock.readAttoAmount(),
                 timestamp = serializedBlock.readInstant(),
                 previous = serializedBlock.readAttoHash(),
-                representativeAlgorithm = serializedBlock.readAttoAlgorithm(),
-                representativePublicKey = serializedBlock.readAttoPublicKey(),
+                representativeAddress = AttoAddress(serializedBlock.readAttoAlgorithm(), serializedBlock.readAttoPublicKey()),
             )
         }
     }

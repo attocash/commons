@@ -205,8 +205,7 @@ class AttoTransactionTest {
             AttoReceiveBlock(
                 version = 0U.toAttoVersion(),
                 network = AttoNetwork.LOCAL,
-                algorithm = AttoAlgorithm.V1,
-                publicKey = publicKey,
+                address = AttoAddress(AttoAlgorithm.V1, publicKey),
                 height = 2U.toAttoHeight(),
                 balance = AttoAmount.MAX,
                 timestamp = AttoInstant.now(),

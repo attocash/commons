@@ -1,23 +1,22 @@
-@file:OptIn(ExperimentalJsStatic::class)
+@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class)
 
 package cash.atto.commons
 
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.serialization.Serializable
+import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalJsStatic
 import kotlin.js.JsStatic
 
 @JsExportForJs
-@Serializable
+@Serializable(with = AttoReceivableSerializer::class)
 data class AttoReceivable(
     val network: AttoNetwork,
     val hash: AttoHash,
     val version: AttoVersion,
-    val algorithm: AttoAlgorithm,
-    val publicKey: AttoPublicKey,
+    val address: AttoAddress,
     val timestamp: AttoInstant,
-    val receiverAlgorithm: AttoAlgorithm,
-    val receiverPublicKey: AttoPublicKey,
+    val receiverAddress: AttoAddress,
     val amount: AttoAmount,
 ) {
     companion object {
@@ -25,8 +24,17 @@ data class AttoReceivable(
         fun fromJson(value: String): AttoReceivable = attoJson.decodeFromString<AttoReceivable>(value)
     }
 
-    val address by lazy { AttoAddress(algorithm, publicKey) }
-    val receiverAddress by lazy { AttoAddress(receiverAlgorithm, receiverPublicKey) }
+    val algorithm: AttoAlgorithm
+        get() = address.algorithm
+
+    val publicKey: AttoPublicKey
+        get() = address.publicKey
+
+    val receiverAlgorithm: AttoAlgorithm
+        get() = receiverAddress.algorithm
+
+    val receiverPublicKey: AttoPublicKey
+        get() = receiverAddress.publicKey
 
     fun toJson(): String = attoJson.encodeToString(this)
 }
