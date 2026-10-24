@@ -89,6 +89,20 @@ val json = tx.toJson()
 val txFromJson = AttoTransaction.fromJson(json)
 ```
 
+### JavaScript height values
+
+Use the decimal string API to convert a height to JavaScript `bigint` without precision or sign loss:
+
+```typescript
+import { toAttoHeight } from "@attocash/commons-core";
+
+const height = toAttoHeight("18446744073709551615");
+const value = BigInt(height.toString());
+```
+
+The Kotlin `height.value: ULong` property is not exported to JavaScript. Replace existing JavaScript `height.value`
+reads with `BigInt(height.toString())`; directly exporting `ULong` exposes signed backing values above `2^63 - 1`.
+
 ### CPU proof‑of‑work
 
 This example also requires `commons-worker` or `@attocash/commons-worker`.

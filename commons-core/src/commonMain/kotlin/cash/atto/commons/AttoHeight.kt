@@ -23,6 +23,7 @@ import kotlin.jvm.JvmSynthetic
 data class AttoHeight
     @JsExport.Ignore
     constructor(
+        @JsExport.Ignore
         val value: ULong,
     ) : Comparable<AttoHeight> {
         companion object {

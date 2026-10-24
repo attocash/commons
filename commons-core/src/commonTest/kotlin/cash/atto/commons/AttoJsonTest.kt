@@ -2,6 +2,7 @@ package cash.atto.commons
 
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
@@ -25,17 +26,69 @@ class AttoJsonTest {
         )
 
     @Test
-    fun `should preserve maximum unsigned integers`() {
+    fun `should preserve maximum account numeric fields`() {
         // Given
-        val maximumAccount = account.copy(height = AttoHeight.MAX, balance = AttoAmount.MAX)
+        val maximumAccount =
+            account.copy(
+                version = UShort.MAX_VALUE.toAttoVersion(),
+                height = AttoHeight.MAX,
+                balance = AttoAmount.MAX,
+                lastTransactionTimestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE),
+            )
 
         // When
         val json = maximumAccount.toJson()
 
         // Then
-        assertContains(json, AttoHeight.MAX.toString())
-        assertContains(json, AttoAmount.MAX.toString())
+        assertContains(json, "\"version\":65535")
+        assertContains(json, "\"height\":18446744073709551615")
+        assertContains(json, "\"balance\":18000000000000000000")
+        assertContains(json, "\"lastTransactionTimestamp\":9223372036854775807")
         assertEquals(maximumAccount, AttoAccount.fromJson(json))
+    }
+
+    @Test
+    fun `should preserve maximum send transaction fields`() {
+        // Given
+        val maximumPublicKey = AttoPublicKey(ByteArray(32) { -1 })
+        val block =
+            AttoSendBlock(
+                network = AttoNetwork.LOCAL,
+                version = UShort.MAX_VALUE.toAttoVersion(),
+                algorithm = AttoAlgorithm.V1,
+                publicKey = maximumPublicKey,
+                height = AttoHeight.MAX,
+                balance = AttoAmount.MAX,
+                timestamp = AttoInstant.fromEpochMilliseconds(Long.MAX_VALUE),
+                previous = AttoHash(ByteArray(32) { -1 }),
+                receiverAlgorithm = AttoAlgorithm.V1,
+                receiverPublicKey = maximumPublicKey,
+                amount = AttoAmount.MAX,
+            )
+        val transaction =
+            AttoTransaction(
+                block = block,
+                signature = AttoSignature(ByteArray(AttoSignature.SIZE) { -1 }),
+                work = AttoWork(ByteArray(AttoWork.SIZE) { -1 }),
+            )
+
+        // When
+        val json = transaction.toJson()
+        val fromJson = AttoTransaction.fromJson(json)
+        val bytes = transaction.toByteArray()
+        val fromBytes = AttoTransaction.fromByteArray(bytes)
+
+        // Then
+        assertContains(json, "\"version\":65535")
+        assertContains(json, "\"height\":18446744073709551615")
+        assertContains(json, "\"balance\":18000000000000000000")
+        assertContains(json, "\"timestamp\":9223372036854775807")
+        assertContains(json, "\"amount\":18000000000000000000")
+        assertEquals(transaction, fromJson)
+        assertEquals(transaction, fromBytes)
+        assertContentEquals(bytes, fromJson.toByteArray())
+        assertEquals(transaction.hash, fromJson.hash)
+        assertEquals(transaction.hash, fromBytes.hash)
     }
 
     @Test
