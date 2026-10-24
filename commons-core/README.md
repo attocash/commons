@@ -37,8 +37,13 @@ val publicKey = privateKey.toPublicKey()
 val address = AttoAddress(AttoAlgorithm.V1, publicKey)
 ```
 
+`fromEntropy()` accepts 32 bytes (256 bits) of raw entropy for a 24-word English mnemonic. `toEntropy()` returns
+those 32 bytes; the checksum is added and validated internally. Earlier releases used a 33-byte buffer including
+the checksum. Entropy import/export now requires raw 32-byte values; existing mnemonic phrases and their seeds
+are unchanged by this representation change.
+
 `toSeed(passphrase)` applies Unicode NFKD normalization to the mnemonic and full `"mnemonic" + passphrase` salt
-before PBKDF2-HMAC-SHA512, as required by BIP-39. It does not additionally trim whitespace or fold case.
+before PBKDF2-HMAC-SHA512, as required by BIP-39.
 The same behavior applies to JavaScript's `toSeedAsync()` and JVM's `toSeedBlocking()`.
 
 Unicode passphrases changed by NFKD can derive different keys and addresses than in previous releases.

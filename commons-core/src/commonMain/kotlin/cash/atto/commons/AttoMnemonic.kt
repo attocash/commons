@@ -51,7 +51,7 @@ class AttoMnemonic private constructor(
         get() = words.joinToString(" ")
 
     companion object {
-        const val ENTROPY_SIZE = 33
+        const val ENTROPY_SIZE = 32
 
         @JsExport.Ignore
         @JvmSynthetic
@@ -67,7 +67,7 @@ class AttoMnemonic private constructor(
             }
 
             val entropyWithChecksum = toEntropyWithChecksum(words)
-            if (entropyWithChecksum[32] != checksum(entropyWithChecksum)) {
+            if (entropyWithChecksum[ENTROPY_SIZE] != checksum(entropyWithChecksum)) {
                 throw AttoMnemonicException("Invalid mnemonic")
             }
 
@@ -80,6 +80,7 @@ class AttoMnemonic private constructor(
         @JvmSynthetic
         suspend fun fromPhrase(phrase: String): AttoMnemonic = fromWords(phrase.split(" "))
 
+        /** Creates a 24-word mnemonic from 32 bytes of raw entropy. */
         @OptIn(ExperimentalJsStatic::class)
         @JsName("fromEntropy")
         @JsStatic
@@ -90,8 +91,8 @@ class AttoMnemonic private constructor(
             }
 
             val words = ArrayList<String>(24)
-            val copy = entropy.copyOf()
-            copy[32] = checksum(entropy)
+            val copy = entropy.copyOf(ENTROPY_SIZE + 1)
+            copy[ENTROPY_SIZE] = checksum(copy)
             var scratch = 0
             var offset = 0
             for (byte in copy) {
@@ -116,7 +117,8 @@ class AttoMnemonic private constructor(
         }
     }
 
-    fun toEntropy(): ByteArray = toEntropyWithChecksum(words).sliceArray(0 until ENTROPY_SIZE)
+    /** Returns the 32 bytes of raw entropy without the mnemonic checksum. */
+    fun toEntropy(): ByteArray = toEntropyWithChecksum(words).copyOf(ENTROPY_SIZE)
 
     /** Derives the seed using BIP-39 UTF-8 NFKD normalization for the mnemonic and salt. */
     @JsName("toSeedAsync")
