@@ -33,7 +33,7 @@ jobs:
 
       - id: semantic
         name: Semantic Release Dry Run
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8
         with:
           semantic_version: 24.2.7
           dry_run: true
@@ -146,7 +146,7 @@ jobs:
           package-manager-cache: false
 
       - name: Create GitHub Release
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8
         with:
           semantic_version: 24.2.7
         env:
