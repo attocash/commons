@@ -33,7 +33,7 @@ jocl = "2.0.6"
 
 # Spring
 spring-boot = "4.1.2"
-springdoc-openapi = "3.1.1"
+springdoc-openapi = "3.2.0"
 
 # Swagger
 swagger = "2.2.55"
