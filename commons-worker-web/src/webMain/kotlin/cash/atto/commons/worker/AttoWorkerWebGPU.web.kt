@@ -50,11 +50,11 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
         val batchSize = totalInvocations * configuration.iterationsPerInvocation.toULong()
         var startNonce = 0UL
 
-        val inputBuffer = state.createBuffer(INPUT_BUFFER_SIZE, inputBufferUsage())
-        val resultBuffer = state.createBuffer(RESULT_BUFFER_SIZE, resultBufferUsage())
-        val readBuffer = state.createBuffer(RESULT_BUFFER_SIZE, readBufferUsage())
+        WebWorkerResources().use { buffers ->
+            val inputBuffer = buffers.acquire(state.createBuffer(INPUT_BUFFER_SIZE, inputBufferUsage())) { it.destroy() }
+            val resultBuffer = buffers.acquire(state.createBuffer(RESULT_BUFFER_SIZE, resultBufferUsage())) { it.destroy() }
+            val readBuffer = buffers.acquire(state.createBuffer(RESULT_BUFFER_SIZE, readBufferUsage())) { it.destroy() }
 
-        try {
             while (true) {
                 currentCoroutineContext().ensureActive()
 
@@ -96,10 +96,6 @@ actual class AttoWorkerWebGPU actual constructor() : AttoWorker {
 
                 startNonce += batchSize
             }
-        } finally {
-            inputBuffer.destroy()
-            resultBuffer.destroy()
-            readBuffer.destroy()
         }
     }
 

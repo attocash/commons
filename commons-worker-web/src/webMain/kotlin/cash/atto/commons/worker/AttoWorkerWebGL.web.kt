@@ -73,29 +73,38 @@ actual class AttoWorkerWebGL actual constructor() : AttoWorker {
 
         val gl = createWebGLContext() ?: throw IllegalStateException("WebGL2 API not available.")
         val configuration = createWebGLConfiguration(gl)
-        val program = createWebGLProgram(gl, webGLVertexShaderSource(), webGLFragmentShaderSource(configuration.iterations))
-        val texture = createWebGLResultTexture(gl, configuration.width, configuration.height)
-        val framebuffer = createWebGLFramebuffer(gl, texture)
+        val resources = WebWorkerResources()
+        return resources.initialize {
+            val program =
+                resources.acquire(createWebGLProgram(gl, webGLVertexShaderSource(), webGLFragmentShaderSource(configuration.iterations))) {
+                    deleteWebGLProgram(gl, it)
+                }
+            val texture =
+                resources.acquire(
+                    createWebGLResultTexture(gl, configuration.width, configuration.height),
+                ) { deleteWebGLTexture(gl, it) }
+            val framebuffer = resources.acquire(createWebGLFramebuffer(gl, texture)) { deleteWebGLFramebuffer(gl, it) }
 
-        val created =
-            WebGLState(
-                gl = gl,
-                program = program,
-                texture = texture,
-                framebuffer = framebuffer,
-                configuration = configuration,
-            )
-        state = created
-        return created
+            val created =
+                WebGLState(
+                    gl = gl,
+                    program = program,
+                    framebuffer = framebuffer,
+                    configuration = configuration,
+                    resources = resources,
+                )
+            state = created
+            created
+        }
     }
 }
 
 private class WebGLState(
     private val gl: WebGL2RenderingContext,
     private val program: WebGLProgram,
-    private val texture: WebGLTexture,
     private val framebuffer: WebGLFramebuffer,
     val configuration: WebGLWorkConfiguration,
+    private val resources: WebWorkerResources,
 ) {
     private val pixels = uint32Array(configuration.invocations * WEBGL_RESULT_WORDS)
     private val thresholdLowLocation = getWebGLUniformLocation(gl, program, "u_thresholdLow")
@@ -135,9 +144,7 @@ private class WebGLState(
     }
 
     fun close() {
-        deleteWebGLFramebuffer(gl, framebuffer)
-        deleteWebGLTexture(gl, texture)
-        deleteWebGLProgram(gl, program)
+        resources.close()
     }
 }
 
@@ -272,31 +279,48 @@ private fun createWebGLProgram(
     vertexSource: String,
     fragmentSource: String,
 ): WebGLProgram {
-    val vertexShader = compileWebGLShader(gl, "VERTEX_SHADER", vertexSource)
-    val fragmentShader = compileWebGLShader(gl, "FRAGMENT_SHADER", fragmentSource)
-    val program = linkWebGLProgram(gl, vertexShader, fragmentShader)
-    deleteWebGLShader(gl, vertexShader)
-    deleteWebGLShader(gl, fragmentShader)
-    return program
+    val resources = WebWorkerResources()
+    return resources.initialize {
+        WebWorkerResources().use { shaders ->
+            val vertexShader = shaders.acquire(compileWebGLShader(gl, "VERTEX_SHADER", vertexSource)) { deleteWebGLShader(gl, it) }
+            val fragmentShader = shaders.acquire(compileWebGLShader(gl, "FRAGMENT_SHADER", fragmentSource)) { deleteWebGLShader(gl, it) }
+            resources.acquire(linkWebGLProgram(gl, vertexShader, fragmentShader)) { deleteWebGLProgram(gl, it) }
+        }
+    }
 }
 
 private fun compileWebGLShader(
     gl: WebGL2RenderingContext,
     typeName: String,
     source: String,
-): WebGLShader =
+): WebGLShader {
+    val resources = WebWorkerResources()
+    return resources.initialize {
+        val shader = resources.acquire(allocateWebGLShader(gl, typeName)) { deleteWebGLShader(gl, it) }
+        compileWebGLShader(gl, shader, source)
+        shader
+    }
+}
+
+private fun allocateWebGLShader(
+    gl: WebGL2RenderingContext,
+    typeName: String,
+): WebGLShader = js("gl.createShader(gl[typeName])")
+
+private fun compileWebGLShader(
+    gl: WebGL2RenderingContext,
+    shader: WebGLShader,
+    source: String,
+): Unit =
     js(
         """
         (() => {
-            const shader = gl.createShader(gl[typeName]);
             gl.shaderSource(shader, source);
             gl.compileShader(shader);
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
                 const log = gl.getShaderInfoLog(shader) || "unknown shader compile error";
-                gl.deleteShader(shader);
                 throw new Error(log);
             }
-            return shader;
         })()
         """,
     )
@@ -305,20 +329,33 @@ private fun linkWebGLProgram(
     gl: WebGL2RenderingContext,
     vertexShader: WebGLShader,
     fragmentShader: WebGLShader,
-): WebGLProgram =
+): WebGLProgram {
+    val resources = WebWorkerResources()
+    return resources.initialize {
+        val program = resources.acquire(allocateWebGLProgram(gl)) { deleteWebGLProgram(gl, it) }
+        linkWebGLProgram(gl, program, vertexShader, fragmentShader)
+        program
+    }
+}
+
+private fun allocateWebGLProgram(gl: WebGL2RenderingContext): WebGLProgram = js("gl.createProgram()")
+
+private fun linkWebGLProgram(
+    gl: WebGL2RenderingContext,
+    program: WebGLProgram,
+    vertexShader: WebGLShader,
+    fragmentShader: WebGLShader,
+): Unit =
     js(
         """
         (() => {
-            const program = gl.createProgram();
             gl.attachShader(program, vertexShader);
             gl.attachShader(program, fragmentShader);
             gl.linkProgram(program);
             if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
                 const log = gl.getProgramInfoLog(program) || "unknown program link error";
-                gl.deleteProgram(program);
                 throw new Error(log);
             }
-            return program;
         })()
         """,
     )
@@ -327,11 +364,26 @@ private fun createWebGLResultTexture(
     gl: WebGL2RenderingContext,
     width: Int,
     height: Int,
-): WebGLTexture =
+): WebGLTexture {
+    val resources = WebWorkerResources()
+    return resources.initialize {
+        val texture = resources.acquire(allocateWebGLTexture(gl)) { deleteWebGLTexture(gl, it) }
+        initializeWebGLTexture(gl, texture, width, height)
+        texture
+    }
+}
+
+private fun allocateWebGLTexture(gl: WebGL2RenderingContext): WebGLTexture = js("gl.createTexture()")
+
+private fun initializeWebGLTexture(
+    gl: WebGL2RenderingContext,
+    texture: WebGLTexture,
+    width: Int,
+    height: Int,
+): Unit =
     js(
         """
         (() => {
-            const texture = gl.createTexture();
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -339,7 +391,6 @@ private fun createWebGLResultTexture(
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32UI, width, height);
             gl.bindTexture(gl.TEXTURE_2D, null);
-            return texture;
         })()
         """,
     )
@@ -347,19 +398,31 @@ private fun createWebGLResultTexture(
 private fun createWebGLFramebuffer(
     gl: WebGL2RenderingContext,
     texture: WebGLTexture,
-): WebGLFramebuffer =
+): WebGLFramebuffer {
+    val resources = WebWorkerResources()
+    return resources.initialize {
+        val framebuffer = resources.acquire(allocateWebGLFramebuffer(gl)) { deleteWebGLFramebuffer(gl, it) }
+        initializeWebGLFramebuffer(gl, framebuffer, texture)
+        framebuffer
+    }
+}
+
+private fun allocateWebGLFramebuffer(gl: WebGL2RenderingContext): WebGLFramebuffer = js("gl.createFramebuffer()")
+
+private fun initializeWebGLFramebuffer(
+    gl: WebGL2RenderingContext,
+    framebuffer: WebGLFramebuffer,
+    texture: WebGLTexture,
+): Unit =
     js(
         """
         (() => {
-            const framebuffer = gl.createFramebuffer();
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
             if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                gl.deleteFramebuffer(framebuffer);
                 throw new Error("WebGL2 integer framebuffer is incomplete.");
             }
-            return framebuffer;
         })()
         """,
     )

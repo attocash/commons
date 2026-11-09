@@ -40,7 +40,6 @@ import org.jocl.cl_context_properties
 import org.jocl.cl_device_id
 import org.jocl.cl_kernel
 import org.jocl.cl_platform_id
-import org.jocl.cl_program
 import org.jocl.cl_queue_properties
 
 actual class AttoWorkerOpenCL actual constructor(
@@ -51,95 +50,123 @@ actual class AttoWorkerOpenCL actual constructor(
         fileLocation.openStream().bufferedReader().use { it.readText() }
     }
 
+    private val resources = OpenCLResources()
+
     private val context: cl_context
     private val queue: cl_command_queue
-    private val program: cl_program
     private val kernel: cl_kernel
     private val globalWorkSize: LongArray
 
     init {
-        CL.setExceptionsEnabled(true)
+        try {
+            CL.setExceptionsEnabled(true)
 
-        val numPlatformsArray = IntArray(1)
-        clGetPlatformIDs(0, null, numPlatformsArray)
-        val numPlatforms = numPlatformsArray[0]
+            val numPlatformsArray = IntArray(1)
+            clGetPlatformIDs(0, null, numPlatformsArray)
+            val numPlatforms = numPlatformsArray[0]
 
-        val platforms = arrayOfNulls<cl_platform_id>(numPlatforms)
-        clGetPlatformIDs(platforms.size, platforms, null)
-        val platform = platforms[0]
+            val platforms = arrayOfNulls<cl_platform_id>(numPlatforms)
+            clGetPlatformIDs(platforms.size, platforms, null)
+            val platform = platforms[0]
 
-        val contextProperties = cl_context_properties()
-        contextProperties.addProperty(CL_CONTEXT_PLATFORM.toLong(), platform)
+            val contextProperties = cl_context_properties()
+            contextProperties.addProperty(CL_CONTEXT_PLATFORM.toLong(), platform)
 
-        val numDevicesArray = IntArray(1)
-        clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, null, numDevicesArray)
-        val numDevices = numDevicesArray[0]
+            val numDevicesArray = IntArray(1)
+            clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, null, numDevicesArray)
+            val numDevices = numDevicesArray[0]
 
-        if (deviceNumber.toInt() >= numDevices) {
-            throw IllegalArgumentException("Invalid device number: $deviceNumber. Only $numDevices devices available.")
+            if (deviceNumber.toInt() >= numDevices) {
+                throw IllegalArgumentException("Invalid device number: $deviceNumber. Only $numDevices devices available.")
+            }
+
+            val devices = arrayOfNulls<cl_device_id>(numDevices)
+            clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices, null)
+            val device = devices[deviceNumber.toInt()]
+
+            context = resources.acquire(clCreateContext(contextProperties, 1, arrayOf(device), null, null, null)) { clReleaseContext(it) }
+            queue =
+                resources.acquire(
+                    clCreateCommandQueueWithProperties(context, device, cl_queue_properties(), null),
+                ) { clReleaseCommandQueue(it) }
+
+            val program =
+                resources.acquire(
+                    clCreateProgramWithSource(context, 1, arrayOf(kernelSource), null, null),
+                ) { clReleaseProgram(it) }
+            clBuildProgram(program, 0, null, null, null, null)
+
+            kernel = resources.acquire(clCreateKernel(program, "work", null)) { clReleaseKernel(it) }
+
+            val maxWorkGroupSizeArray = LongArray(1)
+            clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.cl_long.toLong(), Pointer.to(maxWorkGroupSizeArray), null)
+            val maxWorkGroupSize = maxWorkGroupSizeArray[0]
+
+            val computeUnitsArray = IntArray(1)
+            clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, Sizeof.cl_uint.toLong(), Pointer.to(computeUnitsArray), null)
+            val computeUnits = computeUnitsArray[0]
+
+            globalWorkSize = LongArray(1) { maxWorkGroupSize * computeUnits }
+        } catch (failure: Throwable) {
+            resources.closeOnFailure(failure)
         }
-
-        val devices = arrayOfNulls<cl_device_id>(numDevices)
-        clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices, null)
-        val device = devices[deviceNumber.toInt()]
-
-        context = clCreateContext(contextProperties, 1, arrayOf(device), null, null, null)
-        queue = clCreateCommandQueueWithProperties(context, device, cl_queue_properties(), null)
-
-        program = clCreateProgramWithSource(context, 1, arrayOf(kernelSource), null, null)
-        clBuildProgram(program, 0, null, null, null, null)
-
-        kernel = clCreateKernel(program, "work", null)
-
-        val maxWorkGroupSizeArray = LongArray(1)
-        clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.cl_long.toLong(), Pointer.to(maxWorkGroupSizeArray), null)
-        val maxWorkGroupSize = maxWorkGroupSizeArray[0]
-
-        val computeUnitsArray = IntArray(1)
-        clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, Sizeof.cl_uint.toLong(), Pointer.to(computeUnitsArray), null)
-        val computeUnits = computeUnitsArray[0]
-
-        globalWorkSize = LongArray(1) { maxWorkGroupSize * computeUnits }
     }
 
     override suspend fun work(
         threshold: ULong,
         target: AttoWorkTarget,
-    ): AttoWork {
-        val resultHostData = LongArray(1)
-        val foundHostData = IntArray(1)
-        val bufResult = clCreateBuffer(context, CL_MEM_WRITE_ONLY, Sizeof.cl_long.toLong(), null, null)
-        val bufFound =
-            clCreateBuffer(context, CL_MEM_READ_WRITE or CL_MEM_COPY_HOST_PTR, Sizeof.cl_int.toLong(), Pointer.to(foundHostData), null)
-        val bufHash =
-            clCreateBuffer(context, CL_MEM_READ_ONLY or CL_MEM_COPY_HOST_PTR, target.value.size.toLong(), Pointer.to(target.value), null)
+    ): AttoWork =
+        OpenCLResources().use { buffers ->
+            val resultHostData = LongArray(1)
+            val foundHostData = IntArray(1)
+            val bufResult =
+                buffers.acquire(
+                    clCreateBuffer(context, CL_MEM_WRITE_ONLY, Sizeof.cl_long.toLong(), null, null),
+                ) { clReleaseMemObject(it) }
+            val bufFound =
+                buffers.acquire(
+                    clCreateBuffer(
+                        context,
+                        CL_MEM_READ_WRITE or CL_MEM_COPY_HOST_PTR,
+                        Sizeof.cl_int.toLong(),
+                        Pointer.to(foundHostData),
+                        null,
+                    ),
+                ) {
+                    clReleaseMemObject(it)
+                }
+            val bufHash =
+                buffers.acquire(
+                    clCreateBuffer(
+                        context,
+                        CL_MEM_READ_ONLY or CL_MEM_COPY_HOST_PTR,
+                        target.value.size.toLong(),
+                        Pointer.to(target.value),
+                        null,
+                    ),
+                ) {
+                    clReleaseMemObject(it)
+                }
 
-        clSetKernelArg(kernel, 0, Sizeof.cl_mem.toLong(), Pointer.to(bufResult))
-        clSetKernelArg(kernel, 1, Sizeof.cl_mem.toLong(), Pointer.to(bufHash))
-        clSetKernelArg(kernel, 2, Sizeof.cl_long.toLong(), Pointer.to(longArrayOf(threshold.toLong())))
-        clSetKernelArg(kernel, 3, Sizeof.cl_mem.toLong(), Pointer.to(bufFound))
+            clSetKernelArg(kernel, 0, Sizeof.cl_mem.toLong(), Pointer.to(bufResult))
+            clSetKernelArg(kernel, 1, Sizeof.cl_mem.toLong(), Pointer.to(bufHash))
+            clSetKernelArg(kernel, 2, Sizeof.cl_long.toLong(), Pointer.to(longArrayOf(threshold.toLong())))
+            clSetKernelArg(kernel, 3, Sizeof.cl_mem.toLong(), Pointer.to(bufFound))
 
-        clEnqueueNDRangeKernel(queue, kernel, 1, null, globalWorkSize, null, 0, null, null)
+            clEnqueueNDRangeKernel(queue, kernel, 1, null, globalWorkSize, null, 0, null, null)
 
-        clEnqueueReadBuffer(queue, bufResult, CL_TRUE, 0, Sizeof.cl_long.toLong(), Pointer.to(resultHostData), 0, null, null)
+            clEnqueueReadBuffer(queue, bufResult, CL_TRUE, 0, Sizeof.cl_long.toLong(), Pointer.to(resultHostData), 0, null, null)
 
-        val result =
-            Buffer().let {
-                it.writeULongLe(resultHostData[0].toULong())
-                it.readByteArray()
-            }
+            val result =
+                Buffer().let {
+                    it.writeULongLe(resultHostData[0].toULong())
+                    it.readByteArray()
+                }
 
-        clReleaseMemObject(bufResult)
-        clReleaseMemObject(bufFound)
-        clReleaseMemObject(bufHash)
-
-        return AttoWork(result)
-    }
+            AttoWork(result)
+        }
 
     override fun close() {
-        clReleaseKernel(kernel)
-        clReleaseProgram(program)
-        clReleaseCommandQueue(queue)
-        clReleaseContext(context)
+        resources.close()
     }
 }

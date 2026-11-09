@@ -9,19 +9,17 @@ actual class AttoWorkerMock internal actual constructor(
     private val configuration: AttoWorkerMockConfiguration,
 ) : AutoCloseable {
     private val lifecycle = TestcontainersLifecycle("Work server mock")
-    private var container: JsAny? = null
-    private var started = false
 
     actual val baseUrl: String
         get() {
-            require(started) { "Work server must have started to access the url" }
-            val host = getHost(container!!)
-            val port = getMappedPort(container!!, 8080)
+            val worker = lifecycle.startedResource("Work server must have started to access the url")
+            val host = getHost(worker)
+            val port = getMappedPort(worker, 8080)
             return "http://$host:$port"
         }
 
     actual suspend fun start() {
-        lifecycle.beginStart()
+        val session = lifecycle.beginStart()
         try {
             configureTestcontainersRuntime()
             awaitScheduledTestcontainersCleanup()
@@ -35,11 +33,11 @@ actual class AttoWorkerMock internal actual constructor(
                 withLogConsumer(containerInstance)
             }
 
-            container = startContainer(containerInstance).awaitTestcontainers()
-            started = true
+            val worker = session.acquire { startContainer(containerInstance) }
+            session.started(worker)
         } catch (exception: Throwable) {
             try {
-                stop()
+                lifecycle.stop(session)
             } catch (cleanupException: Throwable) {
                 exception.addSuppressed(cleanupException)
             }
@@ -48,21 +46,11 @@ actual class AttoWorkerMock internal actual constructor(
     }
 
     actual suspend fun stop() {
-        val worker = takeContainer()
-        stopTestcontainersResources(worker)
+        lifecycle.stop()
     }
 
     actual override fun close() {
-        val worker = takeContainer()
-        scheduleTestcontainersCleanup(worker)
-    }
-
-    private fun takeContainer(): JsAny? {
-        val worker = container
-        container = null
-        started = false
-        lifecycle.release()
-        return worker
+        lifecycle.close()
     }
 
     actual companion object {

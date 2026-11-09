@@ -17,7 +17,7 @@ import cash.atto.commons.node.TimeDifferenceResponse
 import io.swagger.v3.oas.models.media.ArraySchema
 import io.swagger.v3.oas.models.media.ComposedSchema
 import io.swagger.v3.oas.models.media.Discriminator
-import io.swagger.v3.oas.models.media.StringSchema
+import io.swagger.v3.oas.models.media.Schema
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.customizers.ParameterCustomizer
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -34,7 +34,7 @@ class AttoSpringDocOpenApiAutoConfiguration {
             val param = resolved ?: return@ParameterCustomizer parameter
 
             val rawType = param.parameterType
-            val type =
+            val schema: Schema<*>? =
                 if (Collection::class.java.isAssignableFrom(rawType)) {
                     val itemType =
                         ResolvableType
@@ -43,11 +43,17 @@ class AttoSpringDocOpenApiAutoConfiguration {
                             .generics
                             .firstOrNull()
                             ?.resolve()
-                    ArraySchema().apply { items = (AttoSchemas.primitiveMap[itemType?.kotlin] ?: StringSchema()) }
+                    AttoSchemas.primitiveMap[itemType?.kotlin]?.let { itemSchema ->
+                        val arraySchema =
+                            parameter.schema?.takeIf {
+                                it is ArraySchema || it.type == "array" || it.types?.contains("array") == true
+                            } ?: ArraySchema()
+                        arraySchema.apply { items = itemSchema }
+                    }
                 } else {
-                    rawType.kotlin
+                    AttoSchemas.primitiveMap[rawType.kotlin]
                 }
-            AttoSchemas.primitiveMap[type]?.let { parameter.schema = it }
+            schema?.let { parameter.schema = it }
 
             parameter
         }

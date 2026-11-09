@@ -137,17 +137,19 @@ class TestcontainersRuntimeTest {
         }
 
     @Test
-    fun `should reject duplicate starts until resources are released`() {
-        // Given
-        val lifecycle = TestcontainersLifecycle("Node mock")
-        lifecycle.beginStart()
+    fun `should reject duplicate starts until resources are released`() =
+        runTest {
+            // Given
+            val lifecycle = TestcontainersLifecycle("Node mock")
+            lifecycle.beginStart()
 
-        // When
-        val failure = assertFailsWith<IllegalStateException> { lifecycle.beginStart() }
-        lifecycle.release()
-        lifecycle.beginStart()
+            // When
+            val failure = assertFailsWith<IllegalStateException> { lifecycle.beginStart() }
+            lifecycle.stop()
+            lifecycle.beginStart()
 
-        // Then
-        assertTrue(failure.message.orEmpty().contains("already started or starting"))
-    }
+            // Then
+            assertTrue(failure.message.orEmpty().contains("already started or starting"))
+            lifecycle.stop()
+        }
 }

@@ -11,16 +11,12 @@ actual class AttoNodeMock actual constructor(
     private val configuration: AttoNodeMockConfiguration,
 ) : AutoCloseable {
     private val lifecycle = TestcontainersLifecycle("Node mock")
-    private var network: JsAny? = null
-    private var mysqlContainer: JsAny? = null
-    private var nodeContainer: JsAny? = null
-    private var started = false
 
     actual val baseUrl: String
         get() {
-            require(started) { "Node must have started to access the url" }
-            val host = getHost(nodeContainer!!)
-            val port = getMappedPort(nodeContainer!!, 8080)
+            val node = lifecycle.startedResource("Node must have started to access the url")
+            val host = getHost(node)
+            val port = getMappedPort(node, 8080)
             return "http://$host:$port"
         }
 
@@ -28,7 +24,7 @@ actual class AttoNodeMock actual constructor(
         get() = configuration.genesisTransaction
 
     actual suspend fun start() {
-        lifecycle.beginStart()
+        val session = lifecycle.beginStart()
         try {
             configureTestcontainersRuntime()
             awaitScheduledTestcontainersCleanup()
@@ -37,17 +33,17 @@ actual class AttoNodeMock actual constructor(
             val wait = getWait(testcontainersModule)
 
             val networkInstance = createNetwork(testcontainersModule)
-            network = startNetwork(networkInstance).awaitTestcontainers()
+            val network = session.acquire { startNetwork(networkInstance) }
 
             val mysqlInstance = createMySqlContainer(mysqlModule, configuration.mysqlImage)
-            withMySqlNetwork(mysqlInstance, network!!)
+            withMySqlNetwork(mysqlInstance, network)
             withMySqlNetworkAliases(mysqlInstance)
             withMySqlDatabase(mysqlInstance, configuration.dbName)
             withMySqlRootPassword(mysqlInstance, configuration.dbPassword)
-            mysqlContainer = startMySqlContainer(mysqlInstance).awaitTestcontainers()
+            session.acquire { startMySqlContainer(mysqlInstance) }
 
             val nodeInstance = createGenericContainer(testcontainersModule, configuration.image)
-            withNodeNetwork(nodeInstance, network!!)
+            withNodeNetwork(nodeInstance, network)
             withNodeNetworkAliases(nodeInstance, configuration.name)
             withNodeExposedPorts(nodeInstance)
             withNodeEnvironment(
@@ -63,12 +59,11 @@ actual class AttoNodeMock actual constructor(
             if (configuration.logOutput) {
                 withNodeLogConsumer(nodeInstance)
             }
-            nodeContainer = startNodeContainer(nodeInstance).awaitTestcontainers()
-
-            started = true
+            val node = session.acquire { startNodeContainer(nodeInstance) }
+            session.started(node)
         } catch (exception: Throwable) {
             try {
-                stop()
+                lifecycle.stop(session)
             } catch (cleanupException: Throwable) {
                 exception.addSuppressed(cleanupException)
             }
@@ -77,23 +72,11 @@ actual class AttoNodeMock actual constructor(
     }
 
     actual suspend fun stop() {
-        val resources = takeResources()
-        stopTestcontainersResources(resources.node, resources.mysql, resources.network)
+        lifecycle.stop()
     }
 
     actual override fun close() {
-        val resources = takeResources()
-        scheduleTestcontainersCleanup(resources.node, resources.mysql, resources.network)
-    }
-
-    private fun takeResources(): AttoNodeMockResources {
-        val resources = AttoNodeMockResources(nodeContainer, mysqlContainer, network)
-        nodeContainer = null
-        mysqlContainer = null
-        network = null
-        started = false
-        lifecycle.release()
-        return resources
+        lifecycle.close()
     }
 
     actual companion object {
@@ -102,12 +85,6 @@ actual class AttoNodeMock actual constructor(
         actual suspend fun create(privateKey: cash.atto.commons.AttoPrivateKey): AttoNodeMock = newAttoNodeMock(privateKey)
     }
 }
-
-private data class AttoNodeMockResources(
-    val node: JsAny?,
-    val mysql: JsAny?,
-    val network: JsAny?,
-)
 
 private fun importTestcontainers(): Promise<JsAny> = js("import('testcontainers')")
 

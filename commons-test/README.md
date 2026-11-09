@@ -66,6 +66,8 @@ The generated genesis account belongs to the supplied private key and holds the 
 
 Always await `stop()` in `finally` or a test teardown hook. Close client subscriptions and wallet jobs before stopping their services. In JavaScript, `close()` schedules cleanup but does not wait for it; it is a compatibility fallback, not a completed teardown boundary. On the JVM, `close()` performs synchronous cleanup. Use a fresh mock instance for each test lifecycle when sharing code across runtimes.
 
+On JavaScript and Wasm, stopping during startup or cancelling the coroutine that calls `start()` waits for any in-flight container startup to settle, then releases acquired resources in reverse order. External container startup cannot be cancelled. `close()` schedules this cleanup and returns immediately; a subsequent `start()` waits for scheduled cleanup before launching new resources.
+
 ## Configure services
 
 Builders expose names, images, logging, and node database/genesis settings:
@@ -90,6 +92,6 @@ Node options also include `dbName`, `dbUser`, `dbPassword`, `genesis`, and `pull
 ## Further reading
 
 - [Node mock configuration and genesis construction](src/commonMain/kotlin/cash/atto/commons/node/AttoNodeMock.kt).
-- [JVM lifecycle tests](src/jvmTest/kotlin/cash/atto/commons/node/AttoMockJvmApiTest.kt) and [JavaScript lifecycle tests](src/webTest/kotlin/cash/atto/commons/node/TestcontainersRuntimeTest.kt).
+- [JVM lifecycle tests](src/jvmTest/kotlin/cash/atto/commons/node/AttoMockJvmApiTest.kt), [JavaScript startup lifecycle tests](src/webTest/kotlin/cash/atto/commons/node/TestcontainersLifecycleTest.kt), and [cleanup tests](src/webTest/kotlin/cash/atto/commons/node/TestcontainersRuntimeTest.kt).
 - [Node client](../commons-node-remote/README.md), [Work Server client](../commons-worker-remote/README.md), and [wallet](../commons-wallet/README.md).
 - [JavaScript package migration](../MIGRATION.md#javascript-packages), [repository overview](../README.md), and [BSD 3-Clause license](../LICENSE).
