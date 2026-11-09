@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Threads
 import kotlin.time.Duration.Companion.days
 
@@ -23,6 +24,11 @@ open class AttoWorkerOpenClBenchmark {
     private var targetIndex = 0
     private val tickInstant = INITIAL_INSTANT
     private val tockInstant = tickInstant.plus(800.days)
+
+    @TearDown
+    fun close() {
+        worker.close()
+    }
 
     @Benchmark
     @Threads(4)

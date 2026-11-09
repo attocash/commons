@@ -1,3 +1,4 @@
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -108,7 +109,11 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
-        val jvmMain by getting
+        val jvmMain by getting {
+            dependencies {
+                implementation(libs.bouncycastle)
+            }
+        }
         val jvmTest by getting
 
         val jsMain by getting
@@ -126,6 +131,11 @@ benchmark {
     targets {
         register("jvmBenchmark")
     }
+}
+
+tasks.withType<Jar>().matching { it.name.endsWith("BenchmarkJar") }.configureEach {
+    // Dependency signatures no longer match after packaging the benchmark fat jar.
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
 }
 
 allOpen {

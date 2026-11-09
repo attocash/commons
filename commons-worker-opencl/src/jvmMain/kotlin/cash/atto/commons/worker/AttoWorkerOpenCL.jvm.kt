@@ -23,7 +23,6 @@ import org.jocl.CL.clCreateKernel
 import org.jocl.CL.clCreateProgramWithSource
 import org.jocl.CL.clEnqueueNDRangeKernel
 import org.jocl.CL.clEnqueueReadBuffer
-import org.jocl.CL.clFinish
 import org.jocl.CL.clGetDeviceIDs
 import org.jocl.CL.clGetDeviceInfo
 import org.jocl.CL.clGetPlatformIDs
@@ -96,8 +95,8 @@ actual class AttoWorkerOpenCL actual constructor(
         clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, Sizeof.cl_long.toLong(), Pointer.to(maxWorkGroupSizeArray), null)
         val maxWorkGroupSize = maxWorkGroupSizeArray[0]
 
-        val computeUnitsArray = LongArray(1)
-        clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, Sizeof.cl_long.toLong(), Pointer.to(computeUnitsArray), null)
+        val computeUnitsArray = IntArray(1)
+        clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, Sizeof.cl_uint.toLong(), Pointer.to(computeUnitsArray), null)
         val computeUnits = computeUnitsArray[0]
 
         globalWorkSize = LongArray(1) { maxWorkGroupSize * computeUnits }
@@ -121,7 +120,6 @@ actual class AttoWorkerOpenCL actual constructor(
         clSetKernelArg(kernel, 3, Sizeof.cl_mem.toLong(), Pointer.to(bufFound))
 
         clEnqueueNDRangeKernel(queue, kernel, 1, null, globalWorkSize, null, 0, null, null)
-        clFinish(queue)
 
         clEnqueueReadBuffer(queue, bufResult, CL_TRUE, 0, Sizeof.cl_long.toLong(), Pointer.to(resultHostData), 0, null, null)
 
