@@ -8,32 +8,19 @@ import java.util.concurrent.ExecutorService
 
 @JsExportForJs
 actual class AttoWorkerMockAsyncBuilder actual constructor() {
-    private var name: String? = null
-    private var image: String? = null
-    private var pullImage: Boolean? = null
-    private var logOutput: Boolean? = null
+    private val settings = AttoWorkerMockSettings()
 
-    actual fun name(value: String): AttoWorkerMockAsyncBuilder = apply { this.name = value }
+    actual fun name(value: String): AttoWorkerMockAsyncBuilder = apply { settings.name = value }
 
-    actual fun image(value: String): AttoWorkerMockAsyncBuilder = apply { this.image = value }
+    actual fun image(value: String): AttoWorkerMockAsyncBuilder = apply { settings.image = value }
 
-    actual fun pullImage(value: Boolean): AttoWorkerMockAsyncBuilder = apply { this.pullImage = value }
+    actual fun pullImage(value: Boolean): AttoWorkerMockAsyncBuilder = apply { settings.pullImage = value }
 
-    actual fun logOutput(value: Boolean): AttoWorkerMockAsyncBuilder = apply { this.logOutput = value }
+    actual fun logOutput(value: Boolean): AttoWorkerMockAsyncBuilder = apply { settings.logOutput = value }
 
     @JvmOverloads
-    fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoWorkerMockAsync {
-        val defaultConfiguration = AttoWorkerMockConfiguration()
-        val configuration =
-            defaultConfiguration.copy(
-                name = name ?: defaultConfiguration.name,
-                image = image ?: defaultConfiguration.image,
-                pullImage = pullImage ?: defaultConfiguration.pullImage,
-                logOutput = logOutput ?: defaultConfiguration.logOutput,
-            )
-
-        return AttoWorkerMock(configuration).toAsync(dispatcher)
-    }
+    fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoWorkerMockAsync =
+        AttoWorkerMock(settings.configuration()).toAsync(dispatcher)
 
     fun build(executorService: ExecutorService): AttoWorkerMockAsync = build(executorService.asCoroutineDispatcher())
 }

@@ -4,12 +4,14 @@ import cash.atto.commons.AttoAddress
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoInstant
-import cash.atto.commons.AttoJob
 import cash.atto.commons.AttoKeyIndex
 import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.utils.JsExportForJs
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 @OptIn(ExperimentalJsExport::class)
 @JsExportForJs
@@ -17,7 +19,7 @@ actual class AttoWalletAsync internal actual constructor(
     internal actual val wallet: AttoWallet,
     dispatcher: CoroutineDispatcher,
 ) {
-    internal var autoReceiverJob: AttoJob? = null
+    internal actual val scope = CoroutineScope(dispatcher + SupervisorJob())
 
     @JsName("openAccountCollection")
     suspend fun openAccount(indexes: Collection<AttoKeyIndex>): Collection<AttoWalletAccount> = wallet.openAccount(indexes)
@@ -81,6 +83,6 @@ actual class AttoWalletAsync internal actual constructor(
     ): AttoTransaction = wallet.change(index, representativeAddress, timestamp)
 
     actual fun close() {
-        autoReceiverJob?.cancel()
+        scope.cancel()
     }
 }

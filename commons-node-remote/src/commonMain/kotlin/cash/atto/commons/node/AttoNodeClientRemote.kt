@@ -128,13 +128,7 @@ private class AttoNodeClientRemote(
         fromHeight: AttoHeight,
         toHeight: AttoHeight?,
     ): Flow<AttoAccountEntry> {
-        val queryParams =
-            buildString {
-                append("fromHeight=$fromHeight")
-                if (toHeight != null) {
-                    append("&toHeight=$toHeight")
-                }
-            }
+        val queryParams = heightQuery(fromHeight, toHeight)
         return fetchStream("accounts/${address.publicKey}/entries/stream?$queryParams")
     }
 
@@ -151,17 +145,22 @@ private class AttoNodeClientRemote(
         fromHeight: AttoHeight,
         toHeight: AttoHeight?,
     ): Flow<AttoTransaction> {
-        val queryParams =
-            buildString {
-                append("fromHeight=$fromHeight")
-                if (toHeight != null) {
-                    append("&toHeight=$toHeight")
-                }
-            }
+        val queryParams = heightQuery(fromHeight, toHeight)
         return fetchStream("accounts/${address.publicKey}/transactions/stream?$queryParams")
     }
 
     override fun transactionStream(search: HeightSearch): Flow<AttoTransaction> = fetchStream("accounts/transactions/stream", search)
+
+    private fun heightQuery(
+        fromHeight: AttoHeight,
+        toHeight: AttoHeight?,
+    ): String =
+        buildString {
+            append("fromHeight=$fromHeight")
+            if (toHeight != null) {
+                append("&toHeight=$toHeight")
+            }
+        }
 
     override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse = get("instants/$currentTime")
 

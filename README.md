@@ -83,10 +83,9 @@ Docker-compatible container runtime.
 
 ```sh
 ./gradlew ktlintCheck allTests -Psigning.skip=true
-./gradlew :commons-spring-boot-starter:test -Psigning.skip=true
 ```
 
-The JVM-only Spring test task is separate from multiplatform `allTests`. To check core alone:
+`allTests` includes the JVM-only Spring Boot starter tests. To check core alone:
 
 ```sh
 ./gradlew :commons-core:ktlintCheck :commons-core:allTests -Psigning.skip=true

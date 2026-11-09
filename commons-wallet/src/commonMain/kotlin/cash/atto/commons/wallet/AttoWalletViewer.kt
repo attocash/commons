@@ -7,6 +7,7 @@ import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.node.AttoNodeOperations
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,17 +24,23 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 @Deprecated("Use AttoAccountMonitor instead")
-class AttoWalletViewer(
+class AttoWalletViewer internal constructor(
     val address: AttoAddress,
     private val client: AttoNodeOperations,
-    private val accountEntryRepository: AttoAccountEntryRepository? = null,
-    private val transactionRepository: AttoTransactionRepository? = null,
+    private val accountEntryRepository: AttoAccountEntryRepository?,
+    private val transactionRepository: AttoTransactionRepository?,
+    private val scope: CoroutineScope,
 ) : AutoCloseable {
+    constructor(
+        address: AttoAddress,
+        client: AttoNodeOperations,
+        accountEntryRepository: AttoAccountEntryRepository? = null,
+        transactionRepository: AttoTransactionRepository? = null,
+    ) : this(address, client, accountEntryRepository, transactionRepository, CoroutineScope(Dispatchers.Default + SupervisorJob()))
+
     private val logger = KotlinLogging.logger {}
 
     private val retryDelay = 10.seconds
-
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val accountState = MutableStateFlow<AttoAccount?>(null)
     val accountFlow = accountState.asSharedFlow().filterNotNull()
@@ -74,31 +81,15 @@ class AttoWalletViewer(
                     val fromHeight = accountEntryRepository.last(address)?.height ?: AttoHeight(0U)
 
                     client.accountEntryStream(address, fromHeight + 1U).collect {
+                        saveWithRetry(it, accountEntryRepository::save)
                         _accountEntryFlow.emit(it)
                     }
                     break
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to stream account entries. Retrying in 10s..." }
                     delay(10_000)
-                }
-            }
-        }
-    }
-
-    private fun startAccountEntrySaver() {
-        if (accountEntryRepository == null) {
-            return
-        }
-        scope.launch {
-            accountEntryFlow.collect {
-                while (isActive) {
-                    try {
-                        accountEntryRepository.save(it)
-                        return@collect
-                    } catch (e: Exception) {
-                        logger.warn(e) { "Failed to save $it. Retrying in $retryDelay..." }
-                        delay(retryDelay)
-                    }
                 }
             }
         }
@@ -115,8 +106,11 @@ class AttoWalletViewer(
                     val fromHeight = transactionRepository.last(address)?.height ?: AttoHeight(0U)
 
                     client.transactionStream(address, fromHeight + 1U).collect {
+                        saveWithRetry(it, transactionRepository::save)
                         _transactionFlow.emit(it)
                     }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to stream transactions. Retrying in 10s..." }
                     delay(10_000)
@@ -125,21 +119,19 @@ class AttoWalletViewer(
         }
     }
 
-    private fun startTransactionSaver() {
-        if (transactionRepository == null) {
-            return
-        }
-        scope.launch {
-            transactionFlow.collect {
-                while (isActive) {
-                    try {
-                        transactionRepository.save(it)
-                        return@collect
-                    } catch (e: Exception) {
-                        logger.warn(e) { "Failed to save $it. Retrying in $retryDelay..." }
-                        delay(retryDelay)
-                    }
-                }
+    private suspend fun <T> saveWithRetry(
+        value: T,
+        save: suspend (T) -> Unit,
+    ) {
+        while (true) {
+            try {
+                save(value)
+                return
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to save $value. Retrying in $retryDelay..." }
+                delay(retryDelay)
             }
         }
     }
@@ -147,9 +139,7 @@ class AttoWalletViewer(
     suspend fun start() {
         updateAccount()
         startAccountEntryStream()
-        startAccountEntrySaver()
         startTransactionStream()
-        startTransactionSaver()
         logger.info { "Started wallet viewer for $address" }
     }
 

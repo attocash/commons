@@ -109,15 +109,7 @@ internal class HttpSignerRemote(
                 timestamp = timestamp,
             )
 
-        val signature =
-            retrying("sign $challenge") {
-                transport
-                    .post<ChallengeSignatureRequest, SignatureResponse>(
-                        path = "challenges",
-                        body = request,
-                        timeouts = AttoHttpTimeouts(socket = 1.seconds),
-                    ).signature
-            }
+        val signature = requestSignature("sign $challenge", "challenges", request)
 
         if (!signature.isValid(publicKey, challenge, timestamp)) {
             throw AttoRemoteSignerInvalidSignatureException("challenge")
@@ -133,15 +125,7 @@ internal class HttpSignerRemote(
                 target = block,
             )
 
-        val signature =
-            retrying("sign $block") {
-                transport
-                    .post<BlockSignatureRequest, SignatureResponse>(
-                        path = "blocks",
-                        body = request,
-                        timeouts = AttoHttpTimeouts(socket = 1.seconds),
-                    ).signature
-            }
+        val signature = requestSignature("sign $block", "blocks", request)
 
         if (!signature.isValid(block.publicKey, block.hash)) {
             throw AttoRemoteSignerInvalidSignatureException("block")
@@ -157,21 +141,27 @@ internal class HttpSignerRemote(
                 target = vote,
             )
 
-        val signature =
-            retrying("sign $vote") {
-                transport
-                    .post<VoteSignatureRequest, SignatureResponse>(
-                        path = "votes",
-                        body = request,
-                        timeouts = AttoHttpTimeouts(socket = 1.seconds),
-                    ).signature
-            }
+        val signature = requestSignature("sign $vote", "votes", request)
 
         if (!signature.isValid(vote.publicKey, vote.hash)) {
             throw AttoRemoteSignerInvalidSignatureException("vote")
         }
         return signature
     }
+
+    private suspend inline fun <reified Request : Any> requestSignature(
+        operation: String,
+        path: String,
+        request: Request,
+    ): AttoSignature =
+        retrying(operation) {
+            transport
+                .post<Request, SignatureResponse>(
+                    path = path,
+                    body = request,
+                    timeouts = AttoHttpTimeouts(socket = 1.seconds),
+                ).signature
+        }
 
     @Serializable
     data class PublicKeyResponse(

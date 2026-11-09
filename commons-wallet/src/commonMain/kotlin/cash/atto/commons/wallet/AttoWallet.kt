@@ -185,18 +185,9 @@ class AttoWallet(
     ): AttoTransaction {
         val walletAccount = accounts.get(index)
 
-        return walletAccount.withLock {
-            val account = walletAccount.account ?: throw IllegalStateException("Account is not open yet for index $index")
-
-            val timestamp = timestampProvider.invoke()
-
-            val (block, updatedAccount) = account.send(receiverAddress, amount, timestamp)
-
-            val transaction = publish(index, block)
-
-            walletAccount.account = updatedAccount
-
-            return@withLock transaction
+        return transition(walletAccount) { account ->
+            val account = account ?: throw IllegalStateException("Account is not open yet for index $index")
+            account.send(receiverAddress, amount, timestampProvider.invoke())
         }
     }
 
@@ -220,21 +211,12 @@ class AttoWallet(
     ): AttoTransaction {
         val walletAccount = accounts.get(receivable.receiverAddress)
 
-        return walletAccount.withLock {
-            val account = walletAccount.account
-
-            val (block, updatedAccount) =
-                if (account == null) {
-                    open(representativeAddress, receivable, timestampProvider)
-                } else {
-                    receive(account, receivable, timestampProvider)
-                }
-
-            val transaction = publish(walletAccount.index, block)
-
-            walletAccount.account = updatedAccount
-
-            return@withLock transaction
+        return transition(walletAccount) { account ->
+            if (account == null) {
+                open(representativeAddress, receivable, timestampProvider)
+            } else {
+                receive(account, receivable, timestampProvider)
+            }
         }
     }
 
@@ -270,20 +252,22 @@ class AttoWallet(
     ): AttoTransaction {
         val walletAccount = accounts.get(index)
 
-        return walletAccount.withLock {
-            val account = walletAccount.account ?: throw IllegalStateException("Account is not open yet for index $index")
-
-            val timestamp = timestampProvider.invoke()
-
-            val (block, updatedAccount) = account.change(representativeAddress, timestamp)
-
-            val transaction = publish(index, block)
-
-            walletAccount.account = updatedAccount
-
-            return@withLock transaction
+        return transition(walletAccount) { account ->
+            val account = account ?: throw IllegalStateException("Account is not open yet for index $index")
+            account.change(representativeAddress, timestampProvider.invoke())
         }
     }
+
+    private suspend fun transition(
+        walletAccount: AttoWalletAccount,
+        createBlock: suspend (AttoAccount?) -> Pair<AttoBlock, AttoAccount>,
+    ): AttoTransaction =
+        walletAccount.withLock {
+            val (block, updatedAccount) = createBlock(walletAccount.account)
+            val transaction = publish(walletAccount.index, block)
+            walletAccount.account = updatedAccount
+            transaction
+        }
 
     private class WalletAccounts {
         private val accountAddressMap: MutableMap<AttoAddress, AttoWalletAccount> = mutableMapOf()

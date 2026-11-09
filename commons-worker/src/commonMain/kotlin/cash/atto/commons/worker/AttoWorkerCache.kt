@@ -5,6 +5,7 @@ import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoWork
 import cash.atto.commons.AttoWorkTarget
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -14,7 +15,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+@OptIn(ExperimentalAtomicApi::class)
 private class AttoWorkerCache(
     private val delegate: AttoWorker,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -22,14 +26,17 @@ private class AttoWorkerCache(
     private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
     private val mutex = Mutex()
-    private val cache = HashMap<AttoWorkTarget, Deferred<AttoWork>>()
+
+    // Synchronous close cannot await the mutex: detach the map atomically, keeping all map access guarded.
+    private val cache = AtomicReference<MutableMap<AttoWorkTarget, Deferred<AttoWork>>?>(HashMap())
 
     private suspend fun delegateWork(
         target: AttoWorkTarget,
         delegate: suspend (AttoWorkTarget) -> AttoWork,
     ): Deferred<AttoWork> {
         mutex.withLock {
-            var deferred = cache[target]
+            val entries = cache.load() ?: return CompletableDeferred<AttoWork>().apply { cancel() }
+            var deferred = entries[target]
             if (deferred != null) {
                 return deferred
             }
@@ -39,13 +46,13 @@ private class AttoWorkerCache(
                         return@async delegate.invoke(target)
                     } catch (e: Exception) {
                         mutex.withLock {
-                            cache.remove(target)
+                            entries.remove(target)
                         }
                         throw e
                     }
                 }
 
-            cache[target] = deferred
+            entries[target] = deferred
 
             return deferred
         }
@@ -55,16 +62,10 @@ private class AttoWorkerCache(
         threshold: ULong,
         target: AttoWorkTarget,
     ): AttoWork {
-        val deferred =
-            delegateWork(target) {
+        val work =
+            consumeWork(target) {
                 delegate.work(threshold, it)
             }
-
-        val work = deferred.await()
-
-        mutex.withLock {
-            cache.remove(target)
-        }
 
         if (AttoWork.isValid(threshold, target, work.value)) {
             return work
@@ -78,16 +79,10 @@ private class AttoWorkerCache(
         timestamp: AttoInstant,
         target: AttoWorkTarget,
     ): AttoWork {
-        val deferred =
-            delegateWork(target) {
+        val work =
+            consumeWork(target) {
                 delegate.work(network, timestamp, it)
             }
-
-        val work = deferred.await()
-
-        mutex.withLock {
-            cache.remove(target)
-        }
 
         if (AttoWork.isValid(network, timestamp, target, work.value)) {
             return work
@@ -97,16 +92,10 @@ private class AttoWorkerCache(
     }
 
     override suspend fun work(block: AttoBlock): AttoWork {
-        val deferred =
-            delegateWork(block.getTarget()) {
+        val work =
+            consumeWork(block.getTarget()) {
                 delegate.work(block)
             }
-
-        val work = deferred.await()
-
-        mutex.withLock {
-            cache.remove(block.getTarget())
-        }
 
         val nextTarget = AttoWorkTarget(block.hash.value)
         delegateWork(nextTarget) {
@@ -120,8 +109,23 @@ private class AttoWorkerCache(
         return work(block)
     }
 
+    private suspend fun consumeWork(
+        target: AttoWorkTarget,
+        request: suspend (AttoWorkTarget) -> AttoWork,
+    ): AttoWork {
+        val deferred = delegateWork(target, request)
+        val work = deferred.await()
+        mutex.withLock {
+            val entries = cache.load()
+            if (entries != null && entries[target] === deferred) {
+                entries.remove(target)
+            }
+        }
+        return work
+    }
+
     override fun close() {
-        cache.clear()
+        cache.store(null)
         scope.cancel()
         delegate.close()
     }

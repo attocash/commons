@@ -105,51 +105,17 @@ kotlin {
     }
 }
 
-val javadocJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("javadoc")
-    from(tasks.named("dokkaGenerateHtml"))
-}
-
-publishing {
-    publications.withType<MavenPublication> {
-        artifact(javadocJar)
-
-        pom {
-            name.set("Atto Commons Transport")
-            description.set(project.description)
-            url.set("https://github.com/attocash/commons")
-
-            licenses {
-                license {
-                    name.set("BSD 3-Clause License")
-                    url.set("https://github.com/attocash/commons/blob/main/LICENSE")
-                }
-            }
-
-            developers {
-                developer {
-                    id.set("atto")
-                    name.set("Atto Team")
-                    email.set("felipe@rotilho.com")
-                    organization.set("Atto")
-                    organizationUrl.set("https://atto.cash")
-                }
-            }
-
-            scm {
-                connection.set("scm:git:git://github.com/attocash/commons.git")
-                developerConnection.set("scm:git:ssh://github.com/attocash/commons.git")
-                url.set("https://github.com/attocash/commons")
-            }
+configureCommonsMavenPublication(
+    "Atto Commons Transport",
+    project.description,
+) {
+    developers {
+        developer {
+            id.set("atto")
+            name.set("Atto Team")
+            email.set("felipe@rotilho.com")
+            organization.set("Atto")
+            organizationUrl.set("https://atto.cash")
         }
-    }
-}
-
-signing {
-    val shouldSign = project.findProperty("signing.skip")?.toString()?.toBoolean() != true
-    if (shouldSign) {
-        val signingKey: String? by project
-        useInMemoryPgpKeys(signingKey, "")
-        sign(publishing.publications)
     }
 }

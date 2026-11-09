@@ -63,6 +63,8 @@ val transaction = wallet.send(
 
 Sending publishes a send block. The destination must publish a receive block to add the funds to its balance. Use `wallet.receive(receivable, representativeAddress)` explicitly, or enable the auto-receiver. Receiving the first payment opens the on-chain account and requires a representative address.
 
+Sending, receiving, and changing a representative serialize updates for each wallet account. The cached account advances after publication succeeds; operations on different accounts can proceed independently.
+
 The auto-receiver uses the wallet's address membership and a node account monitor. In an application coroutine scope:
 
 ```kotlin
@@ -82,6 +84,12 @@ try {
 Use a representative appropriate for your network. Cancel and join wallet jobs before closing workers or other closeable dependencies. The auto-receiver manages incoming receivables; the wallet's cached account state is not a general replacement for live node queries when other processes also publish for the same keys.
 
 JavaScript uses `AttoWalletAsyncBuilder`, `.signerProviderSeed(seed)`, and awaited methods such as `openAccount`, `getAddress`, `getAccountByIndex`, and `sendByIndex`. See the [runnable JavaScript example](../examples/js-client/README.md) for setup, auto-receive, and teardown.
+
+Closing an async wallet cancels its auto-receiver and monitor binding. The supplied node client, worker, and monitor remain owned by the caller.
+
+## In-memory history
+
+`AttoTransactionRepository.inMemory()` and `AttoAccountEntryRepository.inMemory()` keep an append-only history for each address. Each collection of `stream(address)` replays saved values in append order, then follows new saves without a gap. Duplicate saves remain in the history. Slow collectors do not hold the storage lock or prevent saves; the repositories retain their full history in memory.
 
 ## Further reading
 

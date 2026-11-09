@@ -4,8 +4,6 @@ import cash.atto.commons.AttoHeight
 import cash.atto.commons.HeightSupport
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.util.TreeSet
 
 /**
@@ -13,20 +11,16 @@ import java.util.TreeSet
  */
 fun <T : HeightSupport> Flow<T>.sortByHeight(initialHeight: AttoHeight): Flow<T> =
     flow {
-        val mutex = Mutex()
-
         var currentHeight = initialHeight
         val sortedSet = TreeSet<T>(Comparator.comparing { it.height })
         collect {
-            mutex.withLock {
-                if (currentHeight <= it.height) {
-                    sortedSet.add(it)
-                }
-                while (sortedSet.isNotEmpty() && sortedSet.first().height == currentHeight) {
-                    val currentAccount = sortedSet.pollFirst()!!
-                    currentHeight = currentAccount.height + 1U
-                    emit(currentAccount)
-                }
+            if (currentHeight <= it.height) {
+                sortedSet.add(it)
+            }
+            while (sortedSet.isNotEmpty() && sortedSet.first().height == currentHeight) {
+                val currentAccount = sortedSet.pollFirst()!!
+                currentHeight = currentAccount.height + 1U
+                emit(currentAccount)
             }
         }
     }
@@ -36,34 +30,27 @@ fun <T : HeightSupport> Flow<T>.sortByHeight(initialHeight: AttoHeight): Flow<T>
  */
 fun <T : HeightSupport> Flow<T>.forwardHeight(): Flow<T> =
     flow {
-        val mutex = Mutex()
-
         var lastHeight = AttoHeight(0UL)
         collect {
-            mutex.withLock {
-                if (lastHeight < it.height) {
-                    emit(it)
-                    lastHeight = it.height
-                }
+            if (lastHeight < it.height) {
+                emit(it)
+                lastHeight = it.height
             }
         }
     }
 
 fun <T : HeightSupport> Flow<T>.forwardHeightBy(keySelector: (T) -> Any): Flow<T> =
     flow {
-        val mutex = Mutex()
         val lastHeights = mutableMapOf<Any, AttoHeight>()
 
         collect { value ->
-            mutex.withLock {
-                val key = keySelector(value)
-                val currentHeight = value.height
-                val lastHeight = lastHeights[key] ?: AttoHeight(0UL)
+            val key = keySelector(value)
+            val currentHeight = value.height
+            val lastHeight = lastHeights[key] ?: AttoHeight(0UL)
 
-                if (lastHeight < currentHeight) {
-                    emit(value)
-                    lastHeights[key] = currentHeight
-                }
+            if (lastHeight < currentHeight) {
+                emit(value)
+                lastHeights[key] = currentHeight
             }
         }
     }

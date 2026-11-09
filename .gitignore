@@ -2,6 +2,7 @@ HELP.md
 .gradle
 .kotlin
 .codex
+/.agents/local/
 build/
 **/target/
 !gradle/wrapper/gradle-wrapper.jar

@@ -116,55 +116,7 @@ kotlin {
 //    }
 // }
 
-val javadocJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("javadoc")
-    from(tasks.named("dokkaGenerateHtml"))
-}
-
-publishing {
-    publications.withType<MavenPublication> {
-        artifact(javadocJar)
-
-        pom {
-            name.set("Atto Commons Worker")
-            description.set(
-                "Atto Commons Worker provides worker interface and CPU worker implementation.",
-            )
-            url.set("https://github.com/attocash/commons")
-
-            organization {
-                name.set("Atto")
-                url.set("https://atto.cash")
-            }
-
-            licenses {
-                license {
-                    name.set("BSD 3-Clause License")
-                    url.set("https://github.com/attocash/commons/blob/main/LICENSE")
-                }
-            }
-
-            developers {
-                developer {
-                    id.set("atto")
-                    name.set("Atto Team")
-                }
-            }
-
-            scm {
-                connection.set("scm:git:git://github.com/attocash/commons.git")
-                developerConnection.set("scm:git:ssh://github.com/attocash/commons.git")
-                url.set("https://github.com/attocash/commons")
-            }
-        }
-    }
-}
-
-signing {
-    val shouldSign = project.findProperty("signing.skip")?.toString()?.toBoolean() != true
-    if (shouldSign) {
-        val signingKey: String? by project
-        useInMemoryPgpKeys(signingKey, "")
-        sign(publishing.publications)
-    }
-}
+configureCommonsMavenPublication(
+    "Atto Commons Worker",
+    "Atto Commons Worker provides worker interface and CPU worker implementation.",
+)
