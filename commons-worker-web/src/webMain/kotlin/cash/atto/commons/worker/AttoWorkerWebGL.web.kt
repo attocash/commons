@@ -98,6 +98,12 @@ private class WebGLState(
     val configuration: WebGLWorkConfiguration,
 ) {
     private val pixels = uint32Array(configuration.invocations * WEBGL_RESULT_WORDS)
+    private val thresholdLowLocation = getWebGLUniformLocation(gl, program, "u_thresholdLow")
+    private val thresholdHighLocation = getWebGLUniformLocation(gl, program, "u_thresholdHigh")
+    private val startNonceLowLocation = getWebGLUniformLocation(gl, program, "u_startNonceLow")
+    private val startNonceHighLocation = getWebGLUniformLocation(gl, program, "u_startNonceHigh")
+    private val widthLocation = getWebGLUniformLocation(gl, program, "u_width")
+    private val targetLocations = List(WEBGL_TARGET_WORDS) { index -> getWebGLUniformLocation(gl, program, "u_hash$index") }
 
     fun dispatch(
         thresholdLow: Int,
@@ -111,13 +117,13 @@ private class WebGLState(
         setWebGLViewport(gl, configuration.width, configuration.height)
         clearWebGL(gl)
 
-        setWebGLUIntUniform(gl, program, "u_thresholdLow", thresholdLow)
-        setWebGLUIntUniform(gl, program, "u_thresholdHigh", thresholdHigh)
-        setWebGLUIntUniform(gl, program, "u_startNonceLow", startNonceLow)
-        setWebGLUIntUniform(gl, program, "u_startNonceHigh", startNonceHigh)
-        setWebGLUIntUniform(gl, program, "u_width", configuration.width)
+        setWebGLUIntUniform(gl, thresholdLowLocation, thresholdLow)
+        setWebGLUIntUniform(gl, thresholdHighLocation, thresholdHigh)
+        setWebGLUIntUniform(gl, startNonceLowLocation, startNonceLow)
+        setWebGLUIntUniform(gl, startNonceHighLocation, startNonceHigh)
+        setWebGLUIntUniform(gl, widthLocation, configuration.width)
         repeat(WEBGL_TARGET_WORDS) { index ->
-            setWebGLUIntUniform(gl, program, "u_hash$index", targetWords[index])
+            setWebGLUIntUniform(gl, targetLocations[index], targetWords[index])
         }
 
         drawWebGLBatch(gl)
@@ -125,19 +131,7 @@ private class WebGLState(
 
     fun readResult(): WebGLWorkResult {
         readWebGLPixels(gl, configuration.width, configuration.height, pixels)
-
-        repeat(configuration.invocations) { index ->
-            val offset = index * WEBGL_RESULT_WORDS
-            if (uint32ArrayGet(pixels, offset + 2) != 0) {
-                return WebGLWorkResult(
-                    nonceLow = uint32ArrayGet(pixels, offset),
-                    nonceHigh = uint32ArrayGet(pixels, offset + 1),
-                    found = true,
-                )
-            }
-        }
-
-        return WebGLWorkResult(0, 0, false)
+        return readWebGLWorkResult(pixels)
     }
 
     fun close() {
@@ -157,7 +151,9 @@ private external interface WebGLTexture : JsAny
 
 private external interface WebGLFramebuffer : JsAny
 
-private external interface Uint32Array : JsAny
+private external interface WebGLUniformLocation : JsAny
+
+internal external interface Uint32Array : JsAny
 
 private data class WebGLWorkConfiguration(
     val width: Int,
@@ -167,11 +163,37 @@ private data class WebGLWorkConfiguration(
     val invocations: Int = width * height
 }
 
-private data class WebGLWorkResult(
+internal data class WebGLWorkResult(
     val nonceLow: Int,
     val nonceHigh: Int,
     val found: Boolean,
 )
+
+internal fun readWebGLWorkResult(pixels: Uint32Array): WebGLWorkResult {
+    val offset = findWebGLResultOffset(pixels)
+    if (offset < 0) {
+        return WebGLWorkResult(0, 0, false)
+    }
+
+    return WebGLWorkResult(
+        nonceLow = uint32ArrayGet(pixels, offset),
+        nonceHigh = uint32ArrayGet(pixels, offset + 1),
+        found = true,
+    )
+}
+
+private fun findWebGLResultOffset(pixels: Uint32Array): Int =
+    // Scan on the JavaScript side to avoid one Wasm host call for every pixel.
+    js(
+        """
+        (() => {
+            for (let offset = 0; offset < pixels.length; offset += 4) {
+                if (pixels[offset + 2] !== 0) return offset;
+            }
+            return -1;
+        })()
+        """,
+    )
 
 private const val WEBGL_WORK_TARGET_SIZE = 32
 private const val WEBGL_TARGET_WORDS = 8
@@ -410,12 +432,17 @@ private fun clearWebGL(gl: WebGL2RenderingContext): Unit =
         """,
     )
 
-private fun setWebGLUIntUniform(
+private fun getWebGLUniformLocation(
     gl: WebGL2RenderingContext,
     program: WebGLProgram,
     name: String,
+): WebGLUniformLocation? = js("gl.getUniformLocation(program, name)")
+
+private fun setWebGLUIntUniform(
+    gl: WebGL2RenderingContext,
+    location: WebGLUniformLocation?,
     value: Int,
-): Unit = js("gl.uniform1ui(gl.getUniformLocation(program, name), value >>> 0)")
+): Unit = js("gl.uniform1ui(location, value >>> 0)")
 
 private fun drawWebGLBatch(gl: WebGL2RenderingContext): Unit = js("gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)")
 
@@ -451,7 +478,7 @@ private fun uint32Array(size: Int): Uint32Array = js("new Uint32Array(size)")
 private fun uint32ArrayGet(
     array: Uint32Array,
     index: Int,
-): Int = js("array[index]")
+): Int = js("array[index] | 0")
 
 private fun webGLVertexShaderSource(): String =
     """

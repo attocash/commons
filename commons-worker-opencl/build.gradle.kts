@@ -1,3 +1,4 @@
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -71,6 +72,11 @@ benchmark {
     targets {
         register("jvmBenchmark")
     }
+}
+
+tasks.withType<Jar>().matching { it.name.endsWith("BenchmarkJar") }.configureEach {
+    // Dependency signatures no longer match after packaging the benchmark fat jar.
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
 }
 
 allOpen {

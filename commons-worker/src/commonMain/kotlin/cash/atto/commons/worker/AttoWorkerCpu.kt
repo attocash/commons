@@ -77,8 +77,11 @@ private class WorkerController(
             }
         }
 
-    private fun tryComplete(work: ByteArray): Boolean {
-        if (!AttoWork.isValid(threshold, target, work)) {
+    private fun tryComplete(
+        hasher: AttoCpuWorkHasher,
+        work: ByteArray,
+    ): Boolean {
+        if (!hasher.isValid(threshold, work)) {
             return false
         }
         return result.complete(AttoWork(work.copyOf()))
@@ -89,13 +92,14 @@ private class WorkerController(
 
         repeat(parallelism.toInt()) { i ->
             scope.launch {
+                val hasher = AttoCpuWorkHasher(target)
                 val start = i.toULong() * rangeSize
                 val end = start + rangeSize
                 val work = start.toByteArray()
                 var current = start
                 var iterationsUntilYield = 4_096
                 while (current != end && isActive) {
-                    if (tryComplete(work)) return@launch
+                    if (tryComplete(hasher, work)) return@launch
                     incrementByteArray(work)
                     current++
                     iterationsUntilYield--
