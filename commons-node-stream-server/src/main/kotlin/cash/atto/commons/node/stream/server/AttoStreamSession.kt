@@ -12,12 +12,13 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
@@ -50,7 +51,11 @@ class AttoStreamSession(
             launch {
                 try {
                     send(outgoing.receiveAsFlow())
+                    currentCoroutineContext().ensureActive()
                     finished.complete(Unit)
+                } catch (failure: CancellationException) {
+                    if (failure !is StreamCleanupCancellation) this@coroutineScope.cancel(failure)
+                    throw failure
                 } catch (failure: Throwable) {
                     finished.completeExceptionally(failure)
                 }
@@ -83,8 +88,10 @@ class AttoStreamSession(
                             commands.send(Control.Command(command))
                         }
                     }
+                    currentCoroutineContext().ensureActive()
                     finished.complete(Unit)
                 } catch (failure: CancellationException) {
+                    if (failure !is StreamCleanupCancellation) this@coroutineScope.cancel(failure)
                     throw failure
                 } catch (failure: Throwable) {
                     commands.send(Control.Failed(failure))
@@ -98,7 +105,7 @@ class AttoStreamSession(
                 var terminalQueued = false
 
                 suspend fun cancelMembers() {
-                    members.values.forEach { it.job.cancel() }
+                    members.values.forEach { it.job.cancel(StreamCleanupCancellation()) }
                     members.values.forEach { it.job.join() }
                 }
 
@@ -121,7 +128,11 @@ class AttoStreamSession(
                             throw badStreamRequest("Filters and ranges of retained stream members cannot change")
                         }
                     }
-                    members.keys.filter { it !in plan.members }.forEach { key -> members.remove(key)!!.job.cancelAndJoin() }
+                    members.keys.filter { it !in plan.members }.forEach { key ->
+                        val job = members.remove(key)!!.job
+                        job.cancel(StreamCleanupCancellation())
+                        job.join()
+                    }
                     val added = mutableListOf<ActiveMember>()
                     plan.members.forEach { (key, definition) ->
                         if (key !in members) {
@@ -129,10 +140,16 @@ class AttoStreamSession(
                             val job =
                                 launch(start = CoroutineStart.LAZY) {
                                     try {
-                                        definition.stream().collect { records.send(Record.Value(token, it)) }
+                                        val stream = definition.stream()
+                                        currentCoroutineContext().ensureActive()
+                                        stream.collect { records.send(Record.Value(token, it)) }
+                                        currentCoroutineContext().ensureActive()
                                         commands.send(Control.Completed(key, token))
                                     } catch (failure: Throwable) {
-                                        if (failure is CancellationException && !currentCoroutineContext().isActive) throw failure
+                                        if (failure is CancellationException && !currentCoroutineContext().isActive) {
+                                            if (failure !is StreamCleanupCancellation) this@coroutineScope.cancel(failure)
+                                            throw failure
+                                        }
                                         commands.send(Control.MemberFailed(token, failure))
                                     }
                                 }
@@ -161,6 +178,7 @@ class AttoStreamSession(
                                     controls.send(WriteControl.Begin)
                                     val initialRequest = requireNotNull(command.request)
                                     val plan = planner(initialRequest, command.mutable)
+                                    currentCoroutineContext().ensureActive()
                                     subscription = initialRequest
                                     mutable = command.mutable
                                     applyPlan(plan, AttoStreamResponseType.SUBSCRIBED)
@@ -183,7 +201,9 @@ class AttoStreamSession(
                                                 ) {
                                                     throw badStreamRequest("An update may change only the subscription body")
                                                 }
-                                                applyPlan(planner(next, true), AttoStreamResponseType.UPDATED)
+                                                val plan = planner(next, true)
+                                                currentCoroutineContext().ensureActive()
+                                                applyPlan(plan, AttoStreamResponseType.UPDATED)
                                             } catch (failure: Throwable) {
                                                 if (failure is CancellationException &&
                                                     !currentCoroutineContext().isActive
@@ -239,7 +259,10 @@ class AttoStreamSession(
                         }
                     }
                 } catch (failure: Throwable) {
-                    if (failure is CancellationException && !currentCoroutineContext().isActive) throw failure
+                    if (failure is CancellationException && !currentCoroutineContext().isActive) {
+                        if (failure !is StreamCleanupCancellation) this@coroutineScope.cancel(failure)
+                        throw failure
+                    }
                     cancelMembers()
                     controls.send(WriteControl.Fatal(errorResponse(failure)))
                 }
@@ -247,7 +270,7 @@ class AttoStreamSession(
             try {
                 finished.await()
             } finally {
-                currentCoroutineContext().cancelChildren()
+                currentCoroutineContext().cancelChildren(StreamCleanupCancellation())
                 outgoing.cancel()
                 records.cancel()
                 controls.cancel()
@@ -301,3 +324,5 @@ class AttoStreamSession(
         const val REQUEST_TIMEOUT_MILLIS = 10_000L
     }
 }
+
+private class StreamCleanupCancellation : CancellationException("Stream work ended by its session owner")

@@ -9,8 +9,12 @@ import cash.atto.commons.node.AttoStreamResponse
 import cash.atto.commons.node.AttoStreamResponseType
 import cash.atto.commons.node.stream.server.AttoStreamMember
 import cash.atto.commons.node.stream.server.AttoStreamPlan
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -58,6 +62,79 @@ import java.util.function.Supplier
 
 @Timeout(15)
 class AttoStreamWebSocketHandlerTest {
+    @Test
+    fun `self cancelling planner or producer closes the real socket without completing and stops other producers`() {
+        for (cancelPlanner in listOf(false, true)) {
+            for (returnsNormally in listOf(false, true)) {
+                // Given
+                val cancel = CompletableDeferred<Unit>()
+                val stopped = CompletableFuture<Unit>()
+                val otherStarted = CompletableFuture<Unit>()
+                val otherStopped = CompletableFuture<Unit>()
+                val planner: suspend (AttoStreamRequest, HandshakeInfo, Boolean) -> AttoStreamPlan = { _, _, _ ->
+                    if (cancelPlanner) {
+                        try {
+                            cancel.await()
+                            currentCoroutineContext().cancel(CancellationException("planner stopped"))
+                            if (!returnsNormally) awaitCancellation()
+                        } finally {
+                            stopped.complete(Unit)
+                        }
+                        AttoStreamPlan(emptyMap())
+                    } else {
+                        AttoStreamPlan(
+                            mapOf(
+                                "cancelled" to
+                                    AttoStreamMember("fixed") {
+                                        flow {
+                                            try {
+                                                emit(JsonPrimitive("accepted"))
+                                                cancel.await()
+                                                currentCoroutineContext().cancel(CancellationException("producer stopped"))
+                                                if (!returnsNormally) awaitCancellation()
+                                            } finally {
+                                                stopped.complete(Unit)
+                                            }
+                                        }
+                                    },
+                                "other" to
+                                    AttoStreamMember("fixed") {
+                                        flow {
+                                            otherStarted.complete(Unit)
+                                            try {
+                                                awaitCancellation()
+                                            } finally {
+                                                otherStopped.complete(Unit)
+                                            }
+                                        }
+                                    },
+                            ),
+                        )
+                    }
+                }
+                withPlanServer(planner) { uri ->
+                    withConnection(uri) { socket, listener ->
+                        socket.sendText(request(), true).join()
+                        if (!cancelPlanner) {
+                            listener.next(AttoStreamResponseType.DATA)
+                            otherStarted.get(5, TimeUnit.SECONDS)
+                        }
+                        listener.next(AttoStreamResponseType.HEARTBEAT)
+
+                        // When
+                        cancel.complete(Unit)
+                        listener.closed.handle { _, _ -> Unit }.get(5, TimeUnit.SECONDS)
+
+                        // Then
+                        stopped.get(5, TimeUnit.SECONDS)
+                        if (!cancelPlanner) otherStopped.get(5, TimeUnit.SECONDS)
+                        assertFalse(listener.messages.any { it.type == AttoStreamResponseType.COMPLETE })
+                    }
+                }
+            }
+        }
+    }
+
     @Test
     fun `protocol errors still close when a terminal marker is blocked behind a full data queue`() {
         // Given
