@@ -6,6 +6,10 @@ import cash.atto.commons.utils.JsExportForJs
 actual class AttoNodeClientAsyncBuilder actual constructor(
     private val url: String,
 ) {
+    private var streamTransport = AttoNodeStreamTransport.HTTP
+
+    actual fun streamTransport(value: AttoNodeStreamTransport) = apply { streamTransport = value }
+
     private var headers: Map<String, String> = emptyMap()
 
     actual fun headers(value: Map<String, String>) = apply { headers = value }
@@ -15,5 +19,5 @@ actual class AttoNodeClientAsyncBuilder actual constructor(
         value: String,
     ) = apply { headers = headers + (name to value) }
 
-    actual fun build(): AttoNodeClientAsync = AttoNodeClient.remote(url, { headers }).toAsync()
+    actual fun build(): AttoNodeClientAsync = AttoNodeClient.remote(url, streamTransport, { headers }).toAsync()
 }

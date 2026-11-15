@@ -54,10 +54,10 @@ The script uses Promise methods including `openAccount`, `getAddress`, and `getA
 
 The script cancels and joins its stream jobs, closes the wallet, account monitor, and node client, then awaits worker and node `stop()`. Both mock starts occur before the inner cleanup block; if startup fails between them, use your container runtime to inspect any remaining test resources. For reusable tests, put startup inside the same `try/finally` that owns teardown, as shown in [commons-test](../../commons-test/README.md#start-and-stop-local-services).
 
-Long-lived subscriptions keep work running until canceled. See [subscription completion](../../MIGRATION.md#subscription-completion) for completion callback behavior.
+Long-lived subscriptions keep work running until canceled. See [subscription completion](../../commons-node/README.md#async-subscriptions) for completion callback behavior.
 
 ## Further reading
 
 - [Wallet API](../../commons-wallet/README.md) and [remote node client](../../commons-node-remote/README.md).
 - [Java version](../java-client/README.md).
-- [JavaScript package migration](../../MIGRATION.md#javascript-packages), [repository overview](../../README.md), and [BSD 3-Clause license](../../LICENSE).
+- [JavaScript package migration](../../commons-js/README.md#replace-aggregate-imports), [repository overview](../../README.md), and [BSD 3-Clause license](../../LICENSE).

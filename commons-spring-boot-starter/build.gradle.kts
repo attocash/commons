@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     kotlin("jvm")
     alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.kotlin.serialization)
 
     id("maven-publish")
     signing
@@ -32,7 +33,9 @@ kotlin {
 dependencies {
     api(project(":commons-core"))
     api(project(":commons-node"))
+    api(project(":commons-node-stream-server"))
     api(libs.kotlinx.coroutines.core)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
     implementation(platform(libs.spring.boot.dependencies))
 

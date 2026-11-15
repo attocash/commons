@@ -81,8 +81,8 @@ class AttoMockSettingsTest {
 
             // Then
             assertSame(explicitGenesis, explicit.genesisTransaction)
-            assertEquals(privateKey.toPublicKey(), generated.genesisTransaction.block.publicKey)
-            assertNotEquals(explicitGenesis.block.publicKey, generated.genesisTransaction.block.publicKey)
+            assertEquals(privateKey.toPublicKey(), generated.genesisTransaction.block.address.publicKey)
+            assertNotEquals(explicitGenesis.block.address.publicKey, generated.genesisTransaction.block.address.publicKey)
         }
 
     @Test

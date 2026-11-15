@@ -12,6 +12,8 @@ class AttoAccountEntryMonitor(
     accountMonitor: AttoAccountMonitor,
     heightProvider: suspend (AttoAddress) -> AttoHeight = { AttoHeight.MIN },
 ) : AttoHeightMonitor<AttoAccountEntry>(accountMonitor, heightProvider) {
+    override fun stream(searches: Flow<HeightSearch>): Flow<AttoAccountEntry> = nodeClient.accountEntryStream(searches)
+
     override fun stream(search: HeightSearch): Flow<AttoAccountEntry> = nodeClient.accountEntryStream(search)
 }
 

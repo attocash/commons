@@ -35,4 +35,4 @@ The normal success path cancels subscriptions and closes the wallet, monitors, a
 
 - [Wallet APIs](../../commons-wallet/README.md) and [node monitors](../../commons-node/README.md).
 - [JavaScript version](../js-client/README.md).
-- [Cryptographic API migration](../../MIGRATION.md#suspending-cryptography), [repository overview](../../README.md), and [BSD 3-Clause license](../../LICENSE).
+- [Cryptographic APIs for Java](../../commons-core/README.md#java-callers), [repository overview](../../README.md), and [BSD 3-Clause license](../../LICENSE).

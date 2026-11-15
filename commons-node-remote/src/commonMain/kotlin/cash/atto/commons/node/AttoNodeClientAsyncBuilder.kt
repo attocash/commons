@@ -13,5 +13,7 @@ expect class AttoNodeClientAsyncBuilder private constructor(
         value: String,
     ): AttoNodeClientAsyncBuilder
 
+    fun streamTransport(value: AttoNodeStreamTransport): AttoNodeClientAsyncBuilder
+
     fun build(): AttoNodeClientAsync
 }

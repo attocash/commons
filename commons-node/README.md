@@ -42,7 +42,7 @@ suspend fun main(args: Array<String>) {
 }
 ```
 
-`monitor(address)` and `monitor(addresses)` add membership; `stopMonitoring(address)` removes it. Membership changes restart streams for the new set, and emitted values are filtered to that set. `getAccount(address)` requires the address to be monitored; `getAccounts()` fetches snapshots for all members. `receivableStream(minAmount)` emits receivables for monitored receiver addresses.
+`monitor(address)` and `monitor(addresses)` add membership; `stopMonitoring(address)` removes it. Clients that support subscription updates change membership in place; other clients restart streams for the new set. Emitted values are filtered to that set. `getAccount(address)` requires the address to be monitored; `getAccounts()` fetches snapshots for all members. `receivableStream(minAmount)` emits receivables for monitored receiver addresses.
 
 ## Resume from acknowledged heights
 
@@ -69,7 +69,7 @@ Account streams and height monitors retry stream failures after ten seconds; the
 
 `AttoNodeClientAsync` and async monitor builders expose callback subscriptions that return an `AttoJob`. Cancel the job to stop one subscription; close the client or monitor to cancel its owned subscriptions. On JavaScript, one-shot operations return promises; JVM wrappers use `CompletableFuture`.
 
-The completion callback is named `onCancel` and accepts `Throwable?`: failures are passed through unchanged, while normal completion and cancellation report `null`. See [subscription migration notes](../MIGRATION.md#subscription-completion) when updating typed callbacks.
+The completion callback is named `onCancel` and accepts `Throwable?`: failures are passed through unchanged, while normal completion and cancellation report `null`. Typed callbacks that used `Exception?` must accept `Throwable?`.
 
 For the full operation set, see [AttoNodeOperations](src/commonMain/kotlin/cash/atto/commons/node/AttoNodeOperations.kt). See [monitor filtering tests](src/commonTest/kotlin/cash/atto/commons/node/monitor/AttoMonitorFilteringTest.kt) and the [wallet guide](../commons-wallet/README.md) for related flows.
 

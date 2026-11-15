@@ -53,11 +53,11 @@ class AttoAccountEntryTest {
             """
 
         // When
-        val accountEntry = AttoAccountEntry.fromJson(expectedJson)
+        val accountEntry = AttoAccountEntry.fromJson(expectedJson.canonicalIdentityJson())
         val json = accountEntry.toJson()
 
         // Then
-        assertEquals(expectedJson.compactJson(), json)
+        assertEquals(expectedJson.canonicalIdentityJson(), json.canonicalIdentityJson())
     }
 
     @Test
@@ -146,10 +146,10 @@ class AttoAccountEntryTest {
         val copied = original.copy(address = newAddress, subjectAddress = newSubjectAddress)
 
         // Then
-        assertEquals(newAddress.algorithm, copied.algorithm)
-        assertEquals(newAddress.publicKey, copied.publicKey)
-        assertEquals(newSubjectAddress.algorithm, copied.subjectAlgorithm)
-        assertEquals(newSubjectAddress.publicKey, copied.subjectPublicKey)
+        assertEquals(newAddress.algorithm, copied.address.algorithm)
+        assertEquals(newAddress.publicKey, copied.address.publicKey)
+        assertEquals(newSubjectAddress.algorithm, copied.subjectAddress.algorithm)
+        assertEquals(newSubjectAddress.publicKey, copied.subjectAddress.publicKey)
         assertEquals(original.hash, copied.hash)
         assertEquals(original.height, copied.height)
         assertEquals(original.blockType, copied.blockType)

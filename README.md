@@ -12,6 +12,7 @@ facades; JavaScript and TypeScript callers use ESM packages with Promise-based A
 | --- | --- |
 | Work with mnemonics, keys, addresses, amounts, and transactions | [commons-core](commons-core/README.md) |
 | Query accounts and consume node streams | [commons-node](commons-node/README.md) |
+| Implement a node stream server | [commons-node-stream-server](commons-node-stream-server/README.md) |
 | Connect to a node over HTTP | [commons-node-remote](commons-node-remote/README.md) |
 | Share HTTP transport between remote adapters | [commons-transport](commons-transport/README.md) |
 | Sign through an external signer service on the JVM | [commons-signer-remote](commons-signer-remote/README.md) |
@@ -85,7 +86,7 @@ Docker-compatible container runtime.
 ./gradlew ktlintCheck allTests -Psigning.skip=true
 ```
 
-`allTests` includes the JVM-only Spring Boot starter tests. To check core alone:
+`allTests` includes the JVM-only stream server and Spring Boot starter tests. To check core alone:
 
 ```sh
 ./gradlew :commons-core:ktlintCheck :commons-core:allTests -Psigning.skip=true
@@ -103,8 +104,16 @@ The [JavaScript example](examples/js-client/README.md) describes local package i
 
 ## Upgrading and help
 
-Read [the migration guide](MIGRATION.md) when updating existing applications. It covers address-based APIs,
-raw mnemonic entropy, Unicode passphrases, JSON numeric fields, and asynchronous APIs.
+The next major release uses v2 Node streams by default. Local coordinated builds use `10.0.0-SNAPSHOT`;
+upgrade all Commons modules together. Optional WebSockets cover 13 read-stream routes; transaction
+publication always uses HTTP `POST /v2/transactions` with NDJSON confirmation. Read [v2 stream compatibility and rollout](V2-STREAMS.md) before
+upgrading a remote client. Server adoption and downstream dependency upgrades are separate work.
+
+See the [core guide](commons-core/README.md) for mnemonic entropy, Unicode passphrases, JSON numeric fields,
+and cryptographic APIs, and the [JavaScript package guide](commons-js/README.md#replace-aggregate-imports) for module imports.
+
+Commons JSON requires canonical owner and role addresses. Legacy HTTP adaptation belongs in application
+boundaries; generic ProtoBuf retains its previous wire format. See [the core contract](commons-core/README.md#addresses-and-numeric-values).
 
 Use [GitHub issues](https://github.com/attocash/commons/issues) for bugs and questions, and
 [releases](https://github.com/attocash/commons/releases) for published changes.

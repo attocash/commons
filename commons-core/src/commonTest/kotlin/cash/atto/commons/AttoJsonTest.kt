@@ -110,7 +110,7 @@ class AttoJsonTest {
                 "representativeAlgorithm":"V1",
                 "representativePublicKey":"$otherPublicKey"
             }
-            """.trimIndent()
+            """.trimIndent().canonicalIdentityJson()
         val mixedJson = legacyJson.replace("\"height\":18446744073709551615", "\"height\":\"18446744073709551615\"")
 
         // When

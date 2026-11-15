@@ -50,11 +50,11 @@ class AttoReceivableTest {
             """
 
         // When
-        val receivable = AttoReceivable.fromJson(expectedJson)
+        val receivable = AttoReceivable.fromJson(expectedJson.canonicalIdentityJson())
         val json = receivable.toJson()
 
         // Then
-        assertEquals(expectedJson.compactJson(), json)
+        assertEquals(expectedJson.canonicalIdentityJson(), json.canonicalIdentityJson())
     }
 
     @Test
@@ -112,10 +112,10 @@ class AttoReceivableTest {
         val copied = original.copy(address = original.receiverAddress, receiverAddress = original.address)
 
         // Then
-        assertEquals(original.receiverAddress.algorithm, copied.algorithm)
-        assertEquals(original.receiverAddress.publicKey, copied.publicKey)
-        assertEquals(original.address.algorithm, copied.receiverAlgorithm)
-        assertEquals(original.address.publicKey, copied.receiverPublicKey)
+        assertEquals(original.receiverAddress.algorithm, copied.address.algorithm)
+        assertEquals(original.receiverAddress.publicKey, copied.address.publicKey)
+        assertEquals(original.address.algorithm, copied.receiverAddress.algorithm)
+        assertEquals(original.address.publicKey, copied.receiverAddress.publicKey)
         assertEquals(copied, AttoReceivable.fromJson(copied.toJson()))
     }
 }

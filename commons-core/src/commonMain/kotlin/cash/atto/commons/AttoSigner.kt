@@ -19,14 +19,14 @@ interface AttoSigner {
     @JsName("signBlock")
     @JvmSynthetic
     suspend fun sign(block: AttoBlock): AttoSignature {
-        checkPublicKey(block.publicKey)
+        checkPublicKey(block.address.publicKey)
         return sign(block.hash)
     }
 
     @JsName("signVote")
     @JvmSynthetic
     suspend fun sign(vote: AttoVote): AttoSignature {
-        checkPublicKey(vote.publicKey)
+        checkPublicKey(vote.address.publicKey)
         return sign(vote.hash)
     }
 

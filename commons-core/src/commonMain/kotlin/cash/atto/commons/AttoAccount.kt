@@ -22,18 +22,6 @@ data class AttoAccount(
     val representativeAddress: AttoAddress,
 ) : HeightSupport,
     AddressSupport {
-    val algorithm: AttoAlgorithm
-        get() = address.algorithm
-
-    val publicKey: AttoPublicKey
-        get() = address.publicKey
-
-    val representativeAlgorithm: AttoAlgorithm
-        get() = representativeAddress.algorithm
-
-    val representativePublicKey: AttoPublicKey
-        get() = representativeAddress.publicKey
-
     companion object {
         @JsStatic
         fun fromJson(value: String): AttoAccount = attoJson.decodeFromString<AttoAccount>(value)
@@ -51,7 +39,7 @@ data class AttoAccount(
                     address = receivable.receiverAddress,
                     balance = receivable.amount,
                     timestamp = timestamp,
-                    sendHashAlgorithm = receivable.algorithm,
+                    sendHashAlgorithm = receivable.address.algorithm,
                     sendHash = receivable.hash,
                     representativeAddress = representativeAddress,
                 )
@@ -76,7 +64,7 @@ data class AttoAccount(
         amount: AttoAmount,
         timestamp: AttoInstant = AttoInstant.now(),
     ): Pair<AttoSendBlock, AttoAccount> {
-        if (receiverAddress.publicKey == publicKey) {
+        if (receiverAddress == address) {
             throw IllegalArgumentException("You can't send money to yourself")
         }
         val newBalance = balance.minus(amount)
@@ -122,7 +110,7 @@ data class AttoAccount(
                 balance = newBalance,
                 timestamp = timestamp,
                 previous = lastTransactionHash,
-                sendHashAlgorithm = receivable.algorithm,
+                sendHashAlgorithm = receivable.address.algorithm,
                 sendHash = receivable.hash,
             )
         val updatedAccount =

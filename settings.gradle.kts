@@ -5,6 +5,7 @@ rootProject.name = "commons"
 include("commons-core")
 include("commons-transport")
 include("commons-node")
+include("commons-node-stream-server")
 include("commons-node-remote")
 include("commons-test")
 include("commons-signer-remote")

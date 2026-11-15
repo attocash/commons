@@ -20,7 +20,7 @@ For JavaScript, use matching versions of the split packages:
 npm install @attocash/commons-core @attocash/commons-worker @attocash/commons-worker-remote
 ```
 
-See the [root README](../README.md) for shared setup and [JavaScript package migration](../MIGRATION.md#javascript-packages) for the package layout.
+See the [root README](../README.md) for shared setup and [JavaScript package migration](../commons-js/README.md#replace-aggregate-imports) for the package layout.
 
 ## Calculate work from Kotlin
 

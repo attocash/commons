@@ -118,7 +118,7 @@ internal class HttpSignerRemote(
     }
 
     override suspend fun sign(block: AttoBlock): AttoSignature {
-        checkPublicKey(block.publicKey)
+        checkPublicKey(block.address.publicKey)
 
         val request =
             BlockSignatureRequest(
@@ -127,14 +127,14 @@ internal class HttpSignerRemote(
 
         val signature = requestSignature("sign $block", "blocks", request)
 
-        if (!signature.isValid(block.publicKey, block.hash)) {
+        if (!signature.isValid(block.address.publicKey, block.hash)) {
             throw AttoRemoteSignerInvalidSignatureException("block")
         }
         return signature
     }
 
     override suspend fun sign(vote: AttoVote): AttoSignature {
-        checkPublicKey(vote.publicKey)
+        checkPublicKey(vote.address.publicKey)
 
         val request =
             VoteSignatureRequest(
@@ -143,7 +143,7 @@ internal class HttpSignerRemote(
 
         val signature = requestSignature("sign $vote", "votes", request)
 
-        if (!signature.isValid(vote.publicKey, vote.hash)) {
+        if (!signature.isValid(vote.address.publicKey, vote.hash)) {
             throw AttoRemoteSignerInvalidSignatureException("vote")
         }
         return signature

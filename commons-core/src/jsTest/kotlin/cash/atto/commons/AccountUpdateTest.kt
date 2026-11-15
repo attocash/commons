@@ -53,7 +53,7 @@ class AccountUpdateTest {
         val openBlock = attoAccountOpen(representativeAddress, receivable, timestamp.toString()).block
         val sendBlock = attoAccountSend(account, representativeAddress, 100.toAttoAmount(), timestamp.toString()).block
 
-        assertEquals(openBlock.publicKey.toString(), attoBlockWorkTarget(openBlock))
+        assertEquals(openBlock.address.publicKey.toString(), attoBlockWorkTarget(openBlock))
         assertEquals(account.lastTransactionHash.toString(), attoBlockWorkTarget(sendBlock))
     }
 

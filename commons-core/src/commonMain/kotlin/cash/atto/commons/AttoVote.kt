@@ -26,11 +26,6 @@ data class AttoVote(
     val timestamp: AttoInstant,
 ) : AttoHashable,
     AttoSerializable {
-    val algorithm: AttoAlgorithm
-        get() = address.algorithm
-    val publicKey: AttoPublicKey
-        get() = address.publicKey
-
     override val hash by lazy { toBuffer().hash() }
 
     companion object {
@@ -62,8 +57,8 @@ data class AttoVote(
     override fun toBuffer(): Buffer =
         Buffer().apply {
             this.writeAttoVersion(version)
-            this.writeAttoAlgorithm(algorithm)
-            this.writeAttoPublicKey(publicKey)
+            this.writeAttoAlgorithm(address.algorithm)
+            this.writeAttoPublicKey(address.publicKey)
             this.writeAttoAlgorithm(blockAlgorithm)
             this.writeAttoHash(blockHash)
             this.writeInstant(timestamp)
@@ -94,7 +89,7 @@ data class AttoSignedVote(
     fun isFinal() = vote.isFinal()
 
     @JvmSynthetic
-    suspend fun isValid(): Boolean = vote.isValid() && signature.isValid(vote.publicKey, hash)
+    suspend fun isValid(): Boolean = vote.isValid() && signature.isValid(vote.address.publicKey, hash)
 
     override fun toBuffer(): Buffer =
         Buffer().apply {

@@ -3,6 +3,8 @@
 package cash.atto.commons
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.json.JsonObject
@@ -11,7 +13,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AttoAddressSerializationConfigurationTest {
     private val send = AttoBlockTest.sendBlock
@@ -40,7 +42,7 @@ class AttoAddressSerializationConfigurationTest {
         )
 
     @Test
-    fun `should preserve legacy address omission with configured defaults`() {
+    fun `should emit canonical addresses with configured defaults`() {
         // Given
         val json = Json { encodeDefaults = true }
 
@@ -50,10 +52,10 @@ class AttoAddressSerializationConfigurationTest {
         val encodedEntry = json.encodeToJsonElement(AttoAccountEntry.serializer(), entry).jsonObject
 
         // Then
-        assertFalse("address" in encodedAccount)
-        assertFalse("representativeAddress" in encodedAccount)
-        assertFalse("address" in encodedReceivable)
-        assertFalse("receiverAddress" in encodedReceivable)
+        assertEquals(JsonPrimitive(account.address.toString()), encodedAccount["address"])
+        assertEquals(JsonPrimitive(account.representativeAddress.toString()), encodedAccount["representativeAddress"])
+        assertEquals(JsonPrimitive(receivable.address.toString()), encodedReceivable["address"])
+        assertEquals(JsonPrimitive(receivable.receiverAddress.toString()), encodedReceivable["receiverAddress"])
         assertEquals(JsonPrimitive(entry.address.toString()), encodedEntry["address"])
         assertEquals(JsonPrimitive(entry.subjectAddress.toString()), encodedEntry["subjectAddress"])
         assertEquals(account, json.decodeFromJsonElement(AttoAccount.serializer(), encodedAccount))
@@ -83,9 +85,13 @@ class AttoAddressSerializationConfigurationTest {
     }
 
     @Test
-    fun `should ignore malformed identity projections with snake case field names`() {
+    fun `should ignore unknown identity fields with configured snake case JSON`() {
         // Given
-        val json = Json { namingStrategy = JsonNamingStrategy.SnakeCase }
+        val json =
+            Json {
+                namingStrategy = JsonNamingStrategy.SnakeCase
+                ignoreUnknownKeys = true
+            }
         val open = AttoBlockTest.openBlock
         val malformedSend =
             malformedProjections(json, send, "algorithm", "public_key", "receiver_algorithm", "receiver_public_key")
@@ -127,6 +133,89 @@ class AttoAddressSerializationConfigurationTest {
         assertEquals(expected, decoded)
         assertEquals(expected.map { JsonPrimitive(it.type.name) }, encoded.map { json.parseToJsonElement(it).jsonObject["kind"] })
     }
+
+    @Test
+    fun `should decode sealed block JSON with strict concrete serializers`() {
+        // Given
+        val blocks = listOf(send, AttoBlockTest.receiveBlock, AttoBlockTest.openBlock, AttoBlockTest.changeBlock)
+        val formats = concreteFormats()
+
+        // When
+        val decoded =
+            formats.map { json ->
+                blocks.map { block ->
+                    decodeConcrete(json, json.encodeToString(AttoBlock.serializer(), block), block)
+                }
+            }
+
+        // Then
+        assertEquals(formats.map { blocks }, decoded)
+    }
+
+    @Test
+    fun `should reject other unknown fields when decoding sealed JSON as concrete blocks`() {
+        // Given
+        val blocks = listOf(send, AttoBlockTest.receiveBlock, AttoBlockTest.openBlock, AttoBlockTest.changeBlock)
+        val formats = concreteFormats()
+
+        // When
+        val failures =
+            formats.flatMap { json ->
+                blocks.flatMap { block ->
+                    val encoded = json.encodeToJsonElement(AttoBlock.serializer(), block).jsonObject
+                    listOf("unexpected", "publicKey").map { field ->
+                        val input = JsonObject(encoded + (field to JsonPrimitive(true)))
+                        runCatching { decodeConcrete(json, input.toString(), block) }.exceptionOrNull()
+                    }
+                }
+            }
+
+        // Then
+        assertEquals(formats.size * blocks.size * 2, failures.size)
+        assertTrue(failures.all { it is SerializationException })
+    }
+
+    private fun concreteFormats(): List<Json> {
+        val namingStrategies =
+            listOf(
+                null,
+                JsonNamingStrategy.SnakeCase,
+                object : JsonNamingStrategy {
+                    override fun serialNameForJson(
+                        descriptor: SerialDescriptor,
+                        elementIndex: Int,
+                        serialName: String,
+                    ): String = "${descriptor.serialName}_$serialName"
+                },
+                object : JsonNamingStrategy {
+                    override fun serialNameForJson(
+                        descriptor: SerialDescriptor,
+                        elementIndex: Int,
+                        serialName: String,
+                    ): String = "${elementIndex}_$serialName"
+                },
+            )
+        return listOf("type", "kind").flatMap { discriminator ->
+            namingStrategies.map { naming ->
+                Json {
+                    classDiscriminator = discriminator
+                    namingStrategy = naming
+                }
+            }
+        }
+    }
+
+    private fun decodeConcrete(
+        json: Json,
+        input: String,
+        block: AttoBlock,
+    ): AttoBlock =
+        when (block) {
+            is AttoSendBlock -> json.decodeFromString<AttoSendBlock>(input)
+            is AttoReceiveBlock -> json.decodeFromString<AttoReceiveBlock>(input)
+            is AttoOpenBlock -> json.decodeFromString<AttoOpenBlock>(input)
+            is AttoChangeBlock -> json.decodeFromString<AttoChangeBlock>(input)
+        }
 
     private inline fun <reified T> malformedProjections(
         json: Json,

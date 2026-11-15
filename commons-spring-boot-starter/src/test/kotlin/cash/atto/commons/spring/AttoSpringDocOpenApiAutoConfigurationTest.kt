@@ -1,15 +1,19 @@
 package cash.atto.commons.spring
 
+import cash.atto.commons.AttoAccount
+import cash.atto.commons.AttoAccountEntry
 import cash.atto.commons.AttoAmount
 import cash.atto.commons.AttoBlock
 import cash.atto.commons.AttoChangeBlock
 import cash.atto.commons.AttoHeight
 import cash.atto.commons.AttoInstant
 import cash.atto.commons.AttoOpenBlock
+import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoReceiveBlock
 import cash.atto.commons.AttoSendBlock
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVersion
+import cash.atto.commons.AttoVote
 import cash.atto.commons.spring.schema.AttoSchemas
 import cash.atto.commons.spring.schema.AttoSpringDocOpenApiAutoConfiguration
 import io.swagger.v3.oas.models.Components
@@ -153,8 +157,13 @@ class AttoSpringDocOpenApiAutoConfigurationTest {
 
         // Then
         listOf(transaction, referenced, alternative, nested).forEach { schema ->
-            assertThat(schema.properties).containsOnlyKeys("block")
-            assertThat(schema.required).containsExactly("block")
+            if (schema === transaction) {
+                assertThat(schema.properties).containsOnlyKeys("block", "signature", "work")
+                assertThat(schema.required).containsExactlyInAnyOrder("block", "signature", "work")
+            } else {
+                assertThat(schema.properties).containsOnlyKeys("block")
+                assertThat(schema.required).containsExactly("block")
+            }
         }
     }
 
@@ -197,6 +206,56 @@ class AttoSpringDocOpenApiAutoConfigurationTest {
         // Then
         assertThat(withoutComponents.components).isNull()
         assertThat(withoutSchemas.components.schemas).isNull()
+    }
+
+    @Test
+    fun `should describe canonical identities without legacy projections`() {
+        // Given
+        val modelNames =
+            listOf(
+                AttoBlock::class,
+                AttoSendBlock::class,
+                AttoReceiveBlock::class,
+                AttoOpenBlock::class,
+                AttoChangeBlock::class,
+                AttoAccount::class,
+                AttoAccountEntry::class,
+                AttoReceivable::class,
+                AttoVote::class,
+            ).map { it.simpleName!! }
+        val projections =
+            listOf(
+                "algorithm",
+                "publicKey",
+                "receiverAlgorithm",
+                "receiverPublicKey",
+                "representativeAlgorithm",
+                "representativePublicKey",
+                "subjectAlgorithm",
+                "subjectPublicKey",
+            )
+        val canonical =
+            listOf("address", "representativeAddress", "receiverAddress", "subjectAddress", "sendHashAlgorithm", "blockAlgorithm")
+        val schemas =
+            modelNames
+                .associateWith {
+                    Schema<Any>().apply {
+                        properties = (projections + canonical).associateWith { StringSchema() as Schema<*> }.toMutableMap()
+                        required = (projections + canonical).toMutableList()
+                    }
+                }.mapValues { it.value as Schema<*> }
+                .toMutableMap()
+        val openApi = OpenAPI().components(Components().schemas(schemas))
+
+        // When
+        AttoSpringDocOpenApiAutoConfiguration().attoOpenApiCustomizer().customise(openApi)
+
+        // Then
+        modelNames.forEach { name ->
+            assertThat(schemas.getValue(name).properties.keys).doesNotContainAnyElementsOf(projections)
+            assertThat(schemas.getValue(name).properties).containsKey("address")
+            assertThat(schemas.getValue(name).required).contains("address")
+        }
     }
 
     private fun transactionProperties(): Schema<Any> =

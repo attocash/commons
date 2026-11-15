@@ -86,23 +86,18 @@ class AttoWallet(
     suspend fun openAccount(indexes: Collection<AttoKeyIndex>): Collection<AttoWalletAccount> {
         if (indexes.isEmpty()) return emptyList()
         mutex.withLock {
-            val indexMap = mutableMapOf<AttoAddress, AttoKeyIndex>()
-
-            indexes.forEach {
-                val signer = signerProvider.invoke(it)
-                indexMap[signer.address] = it
-            }
+            val signersByIndex = indexes.distinct().associateWith { signerProvider.invoke(it) }
 
             val attoAccountMap =
                 client
-                    .account(indexMap.keys.toList())
+                    .account(signersByIndex.values.map { it.address })
                     .asSequence()
                     .map { it.address to it }
                     .toMap()
 
             val newAccounts =
-                indexMap.map {
-                    AttoWalletAccount(it.value, it.key, attoAccountMap[it.key])
+                signersByIndex.map { (index, signer) ->
+                    AttoWalletAccount(index, signer.address, attoAccountMap[signer.address])
                 }
 
             accounts.add(newAccounts)
@@ -270,6 +265,7 @@ class AttoWallet(
         }
 
     private class WalletAccounts {
+        // The index map, address map, and address snapshot describe the same one-to-one membership.
         private val accountAddressMap: MutableMap<AttoAddress, AttoWalletAccount> = mutableMapOf()
         private val accountIndexMap: MutableMap<AttoKeyIndex, AttoWalletAccount> = mutableMapOf()
         private val addressesState = MutableStateFlow<Set<AttoAddress>>(emptySet())
@@ -279,16 +275,19 @@ class AttoWallet(
         suspend fun add(accounts: Collection<AttoWalletAccount>) {
             if (accounts.isEmpty()) return
             mutex.withLock {
-                val accounts =
-                    accounts.map {
-                        if (accountIndexMap.containsKey(it.index)) {
-                            throw IllegalArgumentException("Account already exists for index ${it.index}")
-                        }
-                        it.index to it
+                val indexes = mutableSetOf<AttoKeyIndex>()
+                val addresses = mutableSetOf<AttoAddress>()
+                for (account in accounts) {
+                    require(account.index !in accountIndexMap && indexes.add(account.index)) {
+                        "Account already exists for index ${account.index}"
                     }
+                    require(account.address !in accountAddressMap && addresses.add(account.address)) {
+                        "Account already exists for address ${account.address}"
+                    }
+                }
 
-                accountAddressMap += accounts.map { it.second.address to it.second }
-                accountIndexMap += accounts.toMap()
+                accountAddressMap += accounts.associateBy { it.address }
+                accountIndexMap += accounts.associateBy { it.index }
                 addressesState.value = accountAddressMap.keys.toSet()
             }
         }

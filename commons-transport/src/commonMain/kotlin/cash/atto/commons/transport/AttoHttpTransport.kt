@@ -147,7 +147,7 @@ internal fun Duration?.toTimeoutMillisOrNull(): Long? =
 internal suspend inline fun <reified Response> ByteReadChannel.readNdjson(crossinline emit: suspend (Response) -> Unit) {
     while (!isClosedForRead) {
         val line = readLineStrict(NDJSON_MAX_LINE_CHARS)
-        if (line != null) {
+        if (!line.isNullOrBlank()) {
             emit(transportJson.decodeFromString<Response>(line))
         }
     }

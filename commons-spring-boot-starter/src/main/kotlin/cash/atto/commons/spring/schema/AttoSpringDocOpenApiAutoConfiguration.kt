@@ -71,6 +71,8 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 val attoBlock =
                     ensureSchema(AttoBlock::class) { ComposedSchema().description("Base type for all block variants") }
 
+                AttoSerializedModelSchemas(schemas).customize()
+
                 attoBlock.discriminator =
                     Discriminator()
                         .propertyName("type")
@@ -86,8 +88,7 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 findSchema(AttoSendBlock::class)?.let { s ->
                     setPropDesc(s, "height", "Height of the block (unsigned 64-bit)", "2")
                     setPropDesc(s, "previous", "Hash of the previous block (hex)")
-                    setPropDesc(s, "receiverAlgorithm", "Algorithm of the receiver", "V1")
-                    setPropDesc(s, "receiverPublicKey", "Public key of the receiver (hex)")
+                    setPropDesc(s, "receiverAddress", "Receiver address")
                     setPropDesc(s, "amount", "Amount being sent (raw uint64)", "1")
                     removeProps(s, "isValid", "hash")
                 }
@@ -103,16 +104,14 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 findSchema(AttoOpenBlock::class)?.let { s ->
                     setPropDesc(s, "sendHashAlgorithm", "Algorithm of the send block", "V1")
                     setPropDesc(s, "sendHash", "Hash of the send block (hex)")
-                    setPropDesc(s, "representativeAlgorithm", "Algorithm of the representative", "V1")
-                    setPropDesc(s, "representativePublicKey", "Public key of the representative (hex)")
+                    setPropDesc(s, "representativeAddress", "Representative address")
                     removeProps(s, "isValid", "hash")
                 }
 
                 findSchema(AttoChangeBlock::class)?.let { s ->
                     setPropDesc(s, "height", "Height of the block (unsigned 64-bit)", "2")
                     setPropDesc(s, "previous", "Hash of the previous block (hex)")
-                    setPropDesc(s, "representativeAlgorithm", "Algorithm of the representative", "V1")
-                    setPropDesc(s, "representativePublicKey", "Public key of the representative (hex)")
+                    setPropDesc(s, "representativeAddress", "Representative address")
                     removeProps(s, "isValid", "hash")
                 }
 
@@ -132,26 +131,14 @@ class AttoSpringDocOpenApiAutoConfiguration {
                         "0AF0F63BFE4DBC588F95FC3B154DE848AA9A5DD5604BAC99AE9E21C5EA8B4F64",
                     )
                     setPropDesc(s, "version", "Version", "0")
-                    setPropDesc(s, "algorithm", "Algorithm", "V1")
-                    setPropDesc(
-                        s,
-                        "publicKey",
-                        "Public key of the sender (hex)",
-                        "53F1A85D25EDA5021C01A77A2B1BA99CEF9DD5FD912D7465B8B652FDEDB6A4F8",
-                    )
+                    setPropDesc(s, "address", "Account address")
                     setPropDesc(
                         s,
                         "timestamp",
                         "Timestamp of the send transaction (ms since epoch)",
                         1705517157478L,
                     )
-                    setPropDesc(s, "receiverAlgorithm", "Algorithm used by the receiver", "V1")
-                    setPropDesc(
-                        s,
-                        "receiverPublicKey",
-                        "Public key of the receiver (hex)",
-                        "0C400961629D759176F009249A33899440900ABCE275F6C5C01C6F7F37A2C59A",
-                    )
+                    setPropDesc(s, "receiverAddress", "Receiver address")
                     setPropDesc(
                         s,
                         "amount",
@@ -170,15 +157,9 @@ class AttoSpringDocOpenApiAutoConfiguration {
                 }
 
                 findSchema(AttoAccount::class)?.let { s ->
-                    setPropDesc(
-                        s,
-                        "publicKey",
-                        "The public key of the account (hex)",
-                        "45B3B58C26181580EEAFC1791046D54EEC2854BF550A211E2362761077D6590C",
-                    )
+                    setPropDesc(s, "address", "Account address")
                     setPropDesc(s, "network", "Network type", "LIVE")
                     setPropDesc(s, "version", "Version", "0")
-                    setPropDesc(s, "algorithm", "Type", "V1")
                     setPropDesc(s, "height", "Height (raw uint64)", "1")
                     setPropDesc(s, "balance", "Balance (raw uint64)", "180000000000")
                     setPropDesc(
@@ -193,13 +174,7 @@ class AttoSpringDocOpenApiAutoConfiguration {
                         "Timestamp of the last transaction (ms since epoch)",
                         1705517157478L,
                     )
-                    setPropDesc(s, "representativeAlgorithm", "Representative algorithm", "V1")
-                    setPropDesc(
-                        s,
-                        "representativePublicKey",
-                        "Public key of the representative (hex)",
-                        "99E439410A4DDD2A3A8D0B667C7A090286B8553378CF3C7AA806C3E60B6C4CBE",
-                    )
+                    setPropDesc(s, "representativeAddress", "Representative address")
                 }
 
                 findSchema(AttoAccountEntry::class)?.let { s ->
@@ -209,22 +184,10 @@ class AttoSpringDocOpenApiAutoConfiguration {
                         "Unique hash of the block (hex)",
                         "68BA42CDD87328380BE32D5AA6DBB86E905B50273D37AF1DE12F47B83A001154",
                     )
-                    setPropDesc(s, "algorithm", "Block algorithm", "V1")
-                    setPropDesc(
-                        s,
-                        "publicKey",
-                        "Public key of the account (hex)",
-                        "FD595851104FDDB2FEBF3739C8006C8AAE9B8A2B1BC390D5FDF07EBDD8583FA1",
-                    )
+                    setPropDesc(s, "address", "Account address")
                     setPropDesc(s, "height", "Block height (raw uint64)", "0")
                     setPropDesc(s, "blockType", "Type of block in the account chain", "RECEIVE")
-                    setPropDesc(s, "subjectAlgorithm", "Algorithm of the subject involved in the transaction", "V1")
-                    setPropDesc(
-                        s,
-                        "subjectPublicKey",
-                        "Public key of the subject involved in the transaction (hex)",
-                        "2EB21717813E7A0E0A7E308B8E2FD8A051F8724F5C5F0047E92E19310C582E3A",
-                    )
+                    setPropDesc(s, "subjectAddress", "Subject address")
                     setPropDesc(s, "previousBalance", "Balance before this block (raw uint64)", "0")
                     setPropDesc(s, "balance", "Balance after this block (raw uint64)", "100")
                     setPropDesc(

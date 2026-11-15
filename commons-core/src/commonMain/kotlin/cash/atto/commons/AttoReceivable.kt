@@ -24,18 +24,6 @@ data class AttoReceivable(
         fun fromJson(value: String): AttoReceivable = attoJson.decodeFromString<AttoReceivable>(value)
     }
 
-    val algorithm: AttoAlgorithm
-        get() = address.algorithm
-
-    val publicKey: AttoPublicKey
-        get() = address.publicKey
-
-    val receiverAlgorithm: AttoAlgorithm
-        get() = receiverAddress.algorithm
-
-    val receiverPublicKey: AttoPublicKey
-        get() = receiverAddress.publicKey
-
     fun toJson(): String = attoJson.encodeToString(this)
 }
 
