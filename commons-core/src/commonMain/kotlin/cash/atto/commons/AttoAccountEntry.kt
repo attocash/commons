@@ -26,17 +26,5 @@ data class AttoAccountEntry(
         fun fromJson(value: String): AttoAccountEntry = attoJson.decodeFromString<AttoAccountEntry>(value)
     }
 
-    val algorithm: AttoAlgorithm
-        get() = address.algorithm
-
-    val publicKey: AttoPublicKey
-        get() = address.publicKey
-
-    val subjectAlgorithm: AttoAlgorithm
-        get() = subjectAddress.algorithm
-
-    val subjectPublicKey: AttoPublicKey
-        get() = subjectAddress.publicKey
-
     fun toJson(): String = attoJson.encodeToString(this)
 }

@@ -45,6 +45,8 @@ fun main() = runBlocking {
 
 Keep the mnemonic securely if the account will hold funds. `openAccount` must precede `getAddress`, `getAccount`, sending, or receiving for that index. Opening the same index twice fails; `closeAccount` removes it from the wallet's local membership. A wallet created from one signer supports only index zero.
 
+With a custom signer provider, each open index must resolve to a distinct address. An address collision rejects the entire opening request and leaves existing membership unchanged. Repeated indexes within one request open that index once.
+
 ## Send and receive
 
 Within a suspending context, send from an already funded, open wallet account:
@@ -95,5 +97,5 @@ Closing an async wallet cancels its auto-receiver and monitor binding. The suppl
 
 - [Wallet integration test](src/commonTest/kotlin/cash/atto/commons/wallet/AttoWalletTest.kt): a funded local genesis account, transfers, acknowledgements, and auto-receive.
 - [commons-test](../commons-test/README.md): container-backed local services for integration tests.
-- [Core types and cryptography](../commons-core/README.md) and [suspending API migration](../MIGRATION.md#suspending-cryptography).
+- [Core types and cryptography](../commons-core/README.md) and [Java blocking facades](../commons-core/README.md#java-callers).
 - [Repository overview](../README.md) and [BSD 3-Clause license](../LICENSE).

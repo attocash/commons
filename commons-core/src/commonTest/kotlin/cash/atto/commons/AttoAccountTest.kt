@@ -37,7 +37,7 @@ class AttoAccountTest {
             )
 
         // Then
-        assertEquals(receivable.receiverPublicKey, newAccount.publicKey)
+        assertEquals(receivable.receiverAddress.publicKey, newAccount.address.publicKey)
         assertEquals(1U.toAttoHeight(), newAccount.height)
         assertEquals(receivable.amount, newAccount.balance)
         assertEquals(openBlock.hash, newAccount.lastTransactionHash)
@@ -216,11 +216,11 @@ class AttoAccountTest {
           """
 
         // When
-        val account = AttoAccount.fromJson(expectedJson)
+        val account = AttoAccount.fromJson(expectedJson.canonicalIdentityJson())
         val json = account.toJson()
 
         // Then
-        assertEquals(expectedJson.compactJson(), json)
+        assertEquals(expectedJson.canonicalIdentityJson(), json.canonicalIdentityJson())
     }
 
     @Test
@@ -278,10 +278,10 @@ class AttoAccountTest {
         val copied = original.copy(address = original.representativeAddress, representativeAddress = original.address)
 
         // Then
-        assertEquals(original.representativeAddress.algorithm, copied.algorithm)
-        assertEquals(original.representativeAddress.publicKey, copied.publicKey)
-        assertEquals(original.address.algorithm, copied.representativeAlgorithm)
-        assertEquals(original.address.publicKey, copied.representativePublicKey)
+        assertEquals(original.representativeAddress.algorithm, copied.address.algorithm)
+        assertEquals(original.representativeAddress.publicKey, copied.address.publicKey)
+        assertEquals(original.address.algorithm, copied.representativeAddress.algorithm)
+        assertEquals(original.address.publicKey, copied.representativeAddress.publicKey)
         assertEquals(copied, AttoAccount.fromJson(copied.toJson()))
     }
 

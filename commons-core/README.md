@@ -59,7 +59,9 @@ console.log(address.toString());
 Mnemonics use 24 English words. `fromPhrase()` validates the words and checksum; `fromEntropy()` accepts
 32 bytes of raw entropy, and `toEntropy()` returns those 32 bytes without the checksum.
 `toSeed(passphrase)` uses BIP-39 NFKD normalization and PBKDF2-HMAC-SHA512 to derive a 64-byte seed.
-See the [migration notes](../MIGRATION.md#mnemonic-entropy) when upgrading entropy or passphrase handling.
+When upgrading from the former 33-byte entropy API, remove the checksum byte before calling `fromEntropy()`.
+NFKD normalization can change derived keys for Unicode passphrases that were not normalized previously;
+empty and ASCII passphrases are unchanged.
 
 ## Sign a message
 
@@ -113,8 +115,20 @@ signature, and worker examples. Work generation requires an additional worker mo
 
 ## Addresses and numeric values
 
-Blocks and account models accept addresses as their identity. Their algorithm and public-key properties are
-projections of the address; OPEN block height is always `1`.
+Blocks, votes, accounts, entries, and receivables store addresses as their identity. Access the key and
+algorithm through `model.address.publicKey` and `model.address.algorithm`; the duplicate model properties
+have been removed. Use `representativeAddress`, `receiverAddress`, and `subjectAddress` for those roles.
+OPEN block height is always `1`.
+
+JSON output contains those addresses without the corresponding public-key or address-algorithm fields.
+Hash metadata such as `sendHashAlgorithm` and `blockAlgorithm` remains. JSON input requires each canonical
+address, including the applicable representative, receiver, or subject address. Algorithm/public-key pairs
+do not replace a missing address. Extra fields follow the configured JSON unknown-key policy.
+Node and Gatekeeper own their legacy HTTP adapters; Commons JSON does not emit legacy identities.
+Protocol bytes, transaction hashes, signatures, and proof of work retain their existing meaning.
+
+Generic ProtoBuf serialization preserves its existing wire format, including identity fields derived from
+addresses by private wire DTOs. Those fields remain absent from the domain models and JSON output.
 
 Default JSON encodes amounts, heights, and timestamps as decimal strings to preserve their 64-bit values.
 Timestamps are Unix epoch milliseconds. In JavaScript, use decimal strings or `bigint` for exact arithmetic:
@@ -128,7 +142,8 @@ console.log(value);
 ```
 
 The Kotlin `ULong` height backing value is not exposed to JavaScript. Protocol versions and key indexes remain
-JSON numbers. [Migration details](../MIGRATION.md#json-numbers) describe older numeric payloads and wire compatibility.
+JSON numbers. Decoding accepts both decimal strings and older numeric fields, including mixed payloads.
+This JSON representation does not change binary serialization or hashes.
 
 ## Java callers
 
@@ -141,6 +156,6 @@ is needed. See the [Java example](../examples/java-client/README.md).
 
 - [Mnemonic tests](src/commonTest/kotlin/cash/atto/commons/AttoMnemonicTest.kt)
 - [Seed normalization vectors](src/commonTest/kotlin/cash/atto/commons/AttoSeedNormalizationTest.kt)
-- [Address and wire migration](../MIGRATION.md#addresses)
+- [Address and wire migration](../V2-STREAMS.md#address-based-account-routes)
 - [All modules](../README.md#choose-a-module)
 - [License](../LICENSE)

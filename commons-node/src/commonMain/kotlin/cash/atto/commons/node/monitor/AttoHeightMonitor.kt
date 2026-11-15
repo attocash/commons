@@ -43,24 +43,67 @@ abstract class AttoHeightMonitor<T> internal constructor(
     internal abstract fun stream(search: HeightSearch): Flow<T>
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    internal open fun stream(searches: Flow<HeightSearch>): Flow<T> = searches.flatMapLatest { stream(it) }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun stream(): Flow<Message<T>> {
-        return accountMonitor
-            .membershipFlow()
-            .flatMapLatest { addresses ->
-                if (addresses.isEmpty()) {
-                    return@flatMapLatest emptyFlow()
-                }
-                return@flatMapLatest retryingStream(addresses)
-            }.map {
-                val address = it.address
-                val height = it.height
-                Message(it) {
-                    mutex.withLock {
-                        heightMap[AttoAddress(address.algorithm, address.publicKey)] = height
+        val values =
+            if (accountMonitor.client.supportsSubscriptionUpdates) {
+                retryingDynamicStream()
+            } else {
+                accountMonitor
+                    .membershipFlow()
+                    .flatMapLatest { addresses ->
+                        if (addresses.isEmpty()) {
+                            return@flatMapLatest emptyFlow()
+                        }
+                        return@flatMapLatest retryingStream(addresses)
                     }
+            }
+        return values.map {
+            val address = it.address
+            val height = it.height
+            Message(it) {
+                mutex.withLock {
+                    heightMap[AttoAddress(address.algorithm, address.publicKey)] = height
                 }
             }
+        }
     }
+
+    private fun retryingDynamicStream(): Flow<T> =
+        flow {
+            while (true) {
+                try {
+                    emitAll(stream(dynamicSearches()).filter { accountMonitor.isMonitored(it.address) })
+                    return@flow
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to stream monitor values. Retrying in $RETRY_DELAY..." }
+                    delay(RETRY_DELAY)
+                }
+            }
+        }
+
+    private fun dynamicSearches(): Flow<HeightSearch> =
+        flow {
+            // Retained members keep their original ranges for this connection; retries use acknowledged cursors.
+            val ranges = mutableMapOf<AttoAddress, AccountHeightSearch>()
+            accountMonitor.membershipFlow().collect { addresses ->
+                val search =
+                    mutex.withLock {
+                        ranges.keys.retainAll(addresses)
+                        heightMap.keys.retainAll(addresses)
+                        for (address in addresses - ranges.keys) {
+                            val height = heightMap[address] ?: heightProvider(address).also { heightMap[address] = it }
+                            ranges[address] = AccountHeightSearch(address, height)
+                        }
+                        HeightSearch(ranges.values.toList())
+                    }
+                emit(search)
+            }
+        }
 
     private fun retryingStream(addresses: Set<AttoAddress>): Flow<T> =
         flow {

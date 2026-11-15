@@ -83,9 +83,9 @@ data class AttoTransaction(
             )
         }
 
-        if (!signature.isValid(block.publicKey, block.hash)) {
+        if (!signature.isValid(block.address.publicKey, block.hash)) {
             return AttoValidation.Error(
-                "Signature is invalid: publicKey=${block.publicKey}, hash=${block.hash}",
+                "Signature is invalid: publicKey=${block.address.publicKey}, hash=${block.hash}",
             )
         }
 

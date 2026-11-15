@@ -144,7 +144,7 @@ class AttoWalletManager(
     ): AttoTransaction {
         val target =
             when (block) {
-                is AttoOpenBlock -> block.publicKey.value
+                is AttoOpenBlock -> block.address.publicKey.value
                 is PreviousSupport -> block.previous.value
             }
 

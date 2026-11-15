@@ -2,21 +2,28 @@ package cash.atto.commons
 
 import cash.atto.commons.worker.AttoWorker
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.protobuf.ProtoBuf
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class AttoDerivedFieldSerializationTest {
+    private val tolerantJson = Json { ignoreUnknownKeys = true }
     private val blockJsons = AttoBlockTest.validJsonBlocks.map { Json.parseToJsonElement(it).jsonObject }
     private val replacementAddress = AttoAddress(AttoAlgorithm.V1, AttoPublicKey(ByteArray(32)))
     private val addressProjectionFields =
@@ -38,31 +45,26 @@ class AttoDerivedFieldSerializationTest {
 
         // Then
         jsons.zip(blocks).forEach { (expectedJson, block) ->
-            assertEquals(expectedJson, Json.parseToJsonElement(block.toJson()))
+            assertEquals(withoutLegacyPairs(expectedJson), Json.parseToJsonElement(block.toJson()))
             assertEquals(block, AttoBlock.fromByteArray(block.toByteArray()))
-            assertEquals(AttoAddress(block.algorithm, block.publicKey), block.address)
+            assertEquals(AttoAddress(block.address.algorithm, block.address.publicKey), block.address)
         }
         assertEquals(blocks, concreteBlocks)
     }
 
     @Test
-    fun `should accept legacy pairs without addresses and preserve bytes and hashes`() {
+    fun `should reject legacy block identities without required addresses`() {
         // Given
-        val expectedBlocks = blockJsons.map { AttoBlock.fromJson(it.toString()) }
         val legacyJsons = blockJsons.map { withoutAddresses(it) }
 
         // When
-        val blocks = legacyJsons.map { AttoBlock.fromJson(it.toString()) }
-        val concreteBlocks = legacyJsons.map { decodeConcreteBlock(it) }
+        val failures = legacyJsons.map { runCatching { AttoBlock.fromJson(it.toString()) }.exceptionOrNull() }
 
         // Then
-        expectedBlocks.zip(blocks).forEach { (expected, actual) ->
-            assertEquals(expected, actual)
-            assertContentEquals(expected.toByteArray(), actual.toByteArray())
-            assertEquals(expected.hash, actual.hash)
-            assertEquals(expected.toJson(), actual.toJson())
+        assertTrue(failures.all { it is kotlinx.serialization.SerializationException })
+        legacyJsons.forEach { json ->
+            assertFailsWith<kotlinx.serialization.SerializationException> { decodeConcreteBlock(json) }
         }
-        assertEquals(expectedBlocks, concreteBlocks)
     }
 
     @Test
@@ -124,7 +126,7 @@ class AttoDerivedFieldSerializationTest {
             val output = Json.parseToJsonElement(block.toJson()).jsonObject
             val publicKeyField = addressProjectionFields.getValue(case.first).last()
             assertEquals(replacementAddress.toString(), output.getValue(case.first).jsonPrimitive.content)
-            assertEquals(replacementAddress.publicKey.toString(), output.getValue(publicKeyField).jsonPrimitive.content)
+            assertFalse(publicKeyField in output)
             assertEquals(block, AttoBlock.fromByteArray(block.toByteArray()))
         }
         assertEquals(blocks, concreteBlocks)
@@ -163,7 +165,7 @@ class AttoDerivedFieldSerializationTest {
     }
 
     @Test
-    fun `should accept address-only and legacy-pair-only blocks in transactions`() {
+    fun `should accept canonical transaction blocks and reject missing addresses`() {
         // Given
         val expected = blockJsons.map { AttoTransaction.fromJson(transactionJson(it).toString()) }
         val addressJsons = blockJsons.map { transactionJson(withoutLegacyPairs(it)) }
@@ -171,11 +173,11 @@ class AttoDerivedFieldSerializationTest {
 
         // When
         val addressTransactions = addressJsons.map { AttoTransaction.fromJson(it.toString()) }
-        val legacyTransactions = legacyJsons.map { AttoTransaction.fromJson(it.toString()) }
+        val legacyFailures = legacyJsons.map { runCatching { AttoTransaction.fromJson(it.toString()) }.exceptionOrNull() }
 
         // Then
         assertEquals(expected, addressTransactions)
-        assertEquals(expected, legacyTransactions)
+        assertTrue(legacyFailures.all { it is kotlinx.serialization.SerializationException })
         expected.zip(addressTransactions).forEach { (original, decoded) ->
             assertContentEquals(original.toByteArray(), decoded.toByteArray())
             assertEquals(original.hash, decoded.hash)
@@ -204,13 +206,13 @@ class AttoDerivedFieldSerializationTest {
         runTest {
             // Given
             val signer = AttoPrivateKey(ByteArray(32) { 1 }).toSigner()
-            val block = AttoBlockTest.openBlock.copy(address = AttoAddress(AttoBlockTest.openBlock.algorithm, signer.publicKey))
+            val block = AttoBlockTest.openBlock.copy(address = AttoAddress(AttoBlockTest.openBlock.address.algorithm, signer.publicKey))
             val work = AttoWorker.cpu(1U).use { it.work(block) }
             val expected = AttoTransaction(block, signer.sign(block), work)
             val json = Json.parseToJsonElement(expected.toJson()).jsonObject
             val blockJson = json.getValue("block").jsonObject
             val blockVariants =
-                listOf(blockJson, withoutAddresses(blockJson), withoutLegacyPairs(blockJson)) +
+                listOf(blockJson, withoutLegacyPairs(blockJson)) +
                     ignoredProjectionJsons(blockJson) +
                     JsonObject(blockJson + ("height" to JsonObject(emptyMap())))
             val jsons = blockVariants.map { JsonObject(json + ("block" to it)) }
@@ -247,15 +249,15 @@ class AttoDerivedFieldSerializationTest {
 
             // Then
             assertEquals(changedAddress, transaction.address)
-            assertEquals(changedAddress.publicKey, transaction.block.publicKey)
+            assertEquals(changedAddress.publicKey, transaction.block.address.publicKey)
             assertNotEquals(original.hash, transaction.hash)
             assertEquals(original.signature, transaction.signature)
-            assertFalse(transaction.signature.isValid(transaction.block.publicKey, transaction.hash))
+            assertFalse(transaction.signature.isValid(transaction.block.address.publicKey, transaction.hash))
             assertFalse(transaction.isValid())
         }
 
     @Test
-    fun `should accept canonical and legacy account entry identities and preserve legacy output`() {
+    fun `should accept canonical account entry identities and ignore unknown fields when configured`() {
         // Given
         val expected = accountEntry()
         val json = Json.parseToJsonElement(expected.toJson()).jsonObject
@@ -267,15 +269,17 @@ class AttoDerivedFieldSerializationTest {
                         "subjectAddress" to JsonPrimitive(expected.subjectAddress.toString()),
                     ),
             )
-        val jsons = listOf(json, canonicalJson, withoutLegacyPairs(canonicalJson)) + ignoredProjectionJsons(canonicalJson)
+        val jsons =
+            listOf(canonicalJson, withoutLegacyPairs(canonicalJson)) +
+                ignoredProjectionJsons(canonicalJson)
 
         // When
         val entries = jsons.map { AttoAccountEntry.fromJson(it.toString()) }
-        val concreteEntries = jsons.map { Json.decodeFromString<AttoAccountEntry>(it.toString()) }
+        val concreteEntries = jsons.map { tolerantJson.decodeFromString<AttoAccountEntry>(it.toString()) }
 
         // Then
-        assertFalse("address" in json)
-        assertFalse("subjectAddress" in json)
+        assertTrue("address" in json)
+        assertTrue("subjectAddress" in json)
         (entries + concreteEntries).forEach { entry ->
             assertEquals(expected, entry)
             assertEquals(json, Json.parseToJsonElement(entry.toJson()))
@@ -283,7 +287,7 @@ class AttoDerivedFieldSerializationTest {
     }
 
     @Test
-    fun `should accept canonical and legacy account identities and preserve legacy output`() {
+    fun `should accept canonical account identities and ignore unknown fields when configured`() {
         // Given
         val expected = account()
         val json = Json.parseToJsonElement(expected.toJson()).jsonObject
@@ -295,15 +299,17 @@ class AttoDerivedFieldSerializationTest {
                         "representativeAddress" to JsonPrimitive(expected.representativeAddress.toString()),
                     ),
             )
-        val jsons = listOf(json, canonicalJson, withoutLegacyPairs(canonicalJson)) + ignoredProjectionJsons(canonicalJson)
+        val jsons =
+            listOf(canonicalJson, withoutLegacyPairs(canonicalJson)) +
+                ignoredProjectionJsons(canonicalJson)
 
         // When
         val accounts = jsons.map { AttoAccount.fromJson(it.toString()) }
-        val concreteAccounts = jsons.map { Json.decodeFromString<AttoAccount>(it.toString()) }
+        val concreteAccounts = jsons.map { tolerantJson.decodeFromString<AttoAccount>(it.toString()) }
 
         // Then
-        assertFalse("address" in json)
-        assertFalse("representativeAddress" in json)
+        assertTrue("address" in json)
+        assertTrue("representativeAddress" in json)
         (accounts + concreteAccounts).forEach { account ->
             assertEquals(expected, account)
             assertEquals(json, Json.parseToJsonElement(account.toJson()))
@@ -311,7 +317,7 @@ class AttoDerivedFieldSerializationTest {
     }
 
     @Test
-    fun `should accept canonical and legacy receivable identities and preserve legacy output`() {
+    fun `should accept canonical receivable identities and ignore unknown fields when configured`() {
         // Given
         val expected = AttoBlockTest.sendBlock.toReceivable()
         val json = Json.parseToJsonElement(expected.toJson()).jsonObject
@@ -323,35 +329,340 @@ class AttoDerivedFieldSerializationTest {
                         "receiverAddress" to JsonPrimitive(expected.receiverAddress.toString()),
                     ),
             )
-        val jsons = listOf(json, canonicalJson, withoutLegacyPairs(canonicalJson)) + ignoredProjectionJsons(canonicalJson)
+        val jsons =
+            listOf(canonicalJson, withoutLegacyPairs(canonicalJson)) +
+                ignoredProjectionJsons(canonicalJson)
 
         // When
         val receivables = jsons.map { AttoReceivable.fromJson(it.toString()) }
-        val concreteReceivables = jsons.map { Json.decodeFromString<AttoReceivable>(it.toString()) }
+        val concreteReceivables = jsons.map { tolerantJson.decodeFromString<AttoReceivable>(it.toString()) }
 
         // Then
-        assertFalse("address" in json)
-        assertFalse("receiverAddress" in json)
+        assertTrue("address" in json)
+        assertTrue("receiverAddress" in json)
         (receivables + concreteReceivables).forEach { receivable ->
             assertEquals(expected, receivable)
             assertEquals(json, Json.parseToJsonElement(receivable.toJson()))
         }
     }
 
+    @Test
+    fun `should require each canonical JSON address even when legacy keys are supplied`() {
+        // Given
+        val blocks = blockJsons.map { AttoBlock.fromJson(it.toString()) }
+        val account = account()
+        val entry = accountEntry()
+        val receivable = AttoBlockTest.sendBlock.toReceivable()
+        val vote = AttoVote(AttoVersion(0U), account.address, AttoAlgorithm.V1, blocks.first().hash, account.lastTransactionTimestamp)
+
+        // When
+        val failures =
+            listOf(
+                missingAddressFailures(AttoAccount.serializer(), account),
+                missingAddressFailures(AttoAccountEntry.serializer(), entry),
+                missingAddressFailures(AttoReceivable.serializer(), receivable),
+                missingAddressFailures(AttoVote.serializer(), vote),
+            ).flatten() +
+                blocks.flatMap { block ->
+                    val concrete =
+                        when (block) {
+                            is AttoSendBlock -> missingAddressFailures(AttoSendBlock.serializer(), block)
+                            is AttoReceiveBlock -> missingAddressFailures(AttoReceiveBlock.serializer(), block)
+                            is AttoOpenBlock -> missingAddressFailures(AttoOpenBlock.serializer(), block)
+                            is AttoChangeBlock -> missingAddressFailures(AttoChangeBlock.serializer(), block)
+                        }
+                    val transaction = AttoTransaction(block, AttoSignature(ByteArray(AttoSignature.SIZE)), AttoWork(ByteArray(8)))
+                    concrete + missingAddressFailures(AttoBlock.serializer(), block) +
+                        missingAddressFailures(AttoTransaction.serializer(), transaction)
+                }
+
+        // Then
+        assertTrue(failures.isNotEmpty())
+        assertTrue(failures.all { it is kotlinx.serialization.SerializationException })
+    }
+
+    @Test
+    fun `should apply configured unknown JSON field policy to extra legacy keys`() {
+        // Given
+        val blocks = blockJsons.map { AttoBlock.fromJson(it.toString()) }
+        val account = account()
+        val vote = AttoVote(AttoVersion(0U), account.address, AttoAlgorithm.V1, blocks.first().hash, account.lastTransactionTimestamp)
+
+        // When
+        val results =
+            listOf(
+                unknownIdentityFields(AttoAccount.serializer(), account),
+                unknownIdentityFields(AttoAccountEntry.serializer(), accountEntry()),
+                unknownIdentityFields(AttoReceivable.serializer(), AttoBlockTest.sendBlock.toReceivable()),
+                unknownIdentityFields(AttoVote.serializer(), vote),
+            ) +
+                blocks.map { block ->
+                    when (block) {
+                        is AttoSendBlock -> unknownIdentityFields(AttoSendBlock.serializer(), block)
+                        is AttoReceiveBlock -> unknownIdentityFields(AttoReceiveBlock.serializer(), block)
+                        is AttoOpenBlock -> unknownIdentityFields(AttoOpenBlock.serializer(), block)
+                        is AttoChangeBlock -> unknownIdentityFields(AttoChangeBlock.serializer(), block)
+                    }
+                }
+
+        // Then
+        results.forEach { (failure, unchanged) ->
+            assertTrue(failure is kotlinx.serialization.SerializationException)
+            assertTrue(unchanged)
+        }
+    }
+
+    private fun <T> missingAddressFailures(
+        serializer: KSerializer<T>,
+        value: T,
+    ): List<Throwable?> {
+        val encoded = Json.encodeToJsonElement(serializer, value).jsonObject
+        val fields = if ("block" in encoded) encoded.getValue("block").jsonObject else encoded
+        return addressProjectionFields.keys.intersect(fields.keys).flatMap { addressField ->
+            val address = AttoAddress.parse(fields.getValue(addressField).jsonPrimitive.content)
+            val projections = addressProjectionFields.getValue(addressField)
+            val legacy =
+                fields +
+                    mapOf(
+                        projections[0] to JsonPrimitive(address.algorithm.name),
+                        projections[1] to JsonPrimitive(address.publicKey.toString()),
+                    )
+            listOf(JsonObject(legacy - addressField), JsonObject(legacy + (addressField to JsonNull))).flatMap { altered ->
+                val input = if ("block" in encoded) JsonObject(encoded + ("block" to altered)) else altered
+                listOf(Json, tolerantJson).map { json ->
+                    runCatching { json.decodeFromJsonElement(serializer, input) }.exceptionOrNull()
+                }
+            }
+        }
+    }
+
+    private fun <T> unknownIdentityFields(
+        serializer: KSerializer<T>,
+        value: T,
+    ): Pair<Throwable?, Boolean> {
+        val encoded = Json.encodeToJsonElement(serializer, value).jsonObject
+        val fields = JsonObject(encoded + mapOf("algorithm" to JsonObject(emptyMap()), "publicKey" to JsonPrimitive("ignored")))
+        val strictFailure = runCatching { Json.decodeFromJsonElement(serializer, fields) }.exceptionOrNull()
+        return strictFailure to (value == tolerantJson.decodeFromJsonElement(serializer, fields))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun `should emit canonical identities for every JSON configuration and nesting`() {
+        // Given
+        val blocks = blockJsons.map { AttoBlock.fromJson(it.toString()) }
+        val account = account()
+        val entry = accountEntry()
+        val receivable = AttoBlockTest.sendBlock.toReceivable()
+        val vote = AttoVote(AttoVersion(0U), account.address, AttoAlgorithm.V1, blocks.first().hash, account.lastTransactionTimestamp)
+        val weight = AttoVoterWeight(account.address, account.balance, account.lastTransactionTimestamp)
+        val configurations =
+            listOf(false, true).flatMap { defaults ->
+                listOf(false, true).flatMap { nulls ->
+                    listOf(null, JsonNamingStrategy.SnakeCase).map { naming ->
+                        Json {
+                            encodeDefaults = defaults
+                            explicitNulls = nulls
+                            namingStrategy = naming
+                        }
+                    }
+                }
+            }
+
+        // When
+        configurations.forEach { json ->
+            val values =
+                listOf(
+                    json.encodeToJsonElement(AttoAccount.serializer(), account),
+                    json.encodeToJsonElement(AttoAccountEntry.serializer(), entry),
+                    json.encodeToJsonElement(AttoReceivable.serializer(), receivable),
+                    json.encodeToJsonElement(AttoVote.serializer(), vote),
+                    json.encodeToJsonElement(AttoVoterWeight.serializer(), weight),
+                ) +
+                    blocks.flatMap { block ->
+                        val concrete =
+                            when (block) {
+                                is AttoSendBlock -> json.encodeToJsonElement(AttoSendBlock.serializer(), block)
+                                is AttoReceiveBlock -> json.encodeToJsonElement(AttoReceiveBlock.serializer(), block)
+                                is AttoOpenBlock -> json.encodeToJsonElement(AttoOpenBlock.serializer(), block)
+                                is AttoChangeBlock -> json.encodeToJsonElement(AttoChangeBlock.serializer(), block)
+                            }
+                        val transaction = AttoTransaction(block, AttoSignature(ByteArray(AttoSignature.SIZE)), AttoWork(ByteArray(8)))
+                        listOf(
+                            concrete,
+                            json.encodeToJsonElement(AttoBlock.serializer(), block),
+                            json.encodeToJsonElement(AttoTransaction.serializer(), transaction),
+                        )
+                    }
+
+            // Then
+            values.forEach { assertCanonicalIdentity(it) }
+            assertEquals(account, json.decodeFromJsonElement(AttoAccount.serializer(), values[0]))
+            assertEquals(entry, json.decodeFromJsonElement(AttoAccountEntry.serializer(), values[1]))
+            assertEquals(receivable, json.decodeFromJsonElement(AttoReceivable.serializer(), values[2]))
+            assertEquals(vote, json.decodeFromJsonElement(AttoVote.serializer(), values[3]))
+            blocks.forEach { block ->
+                val encoded = json.encodeToJsonElement(AttoBlock.serializer(), block)
+                assertEquals(block, json.decodeFromJsonElement(AttoBlock.serializer(), encoded))
+                if (block is ReceiveSupport) {
+                    val field = if (json.configuration.namingStrategy == null) "sendHashAlgorithm" else "send_hash_algorithm"
+                    assertEquals(JsonPrimitive(block.sendHashAlgorithm.name), encoded.jsonObject[field])
+                }
+            }
+            val blockAlgorithm = if (json.configuration.namingStrategy == null) "blockAlgorithm" else "block_algorithm"
+            assertEquals(JsonPrimitive(vote.blockAlgorithm.name), values[3].jsonObject[blockAlgorithm])
+        }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun `should preserve JSON naming strategies that inspect descriptor names and field positions`() {
+        // Given
+        val blocks = blockJsons.map { AttoBlock.fromJson(it.toString()) }
+        val account = account()
+        val entry = accountEntry()
+        val receivable = AttoBlockTest.sendBlock.toReceivable()
+        val vote = AttoVote(AttoVersion(0U), account.address, AttoAlgorithm.V1, blocks.first().hash, account.lastTransactionTimestamp)
+        val strategies =
+            listOf(
+                object : JsonNamingStrategy {
+                    override fun serialNameForJson(
+                        descriptor: SerialDescriptor,
+                        elementIndex: Int,
+                        serialName: String,
+                    ): String = "${descriptor.serialName}_$serialName"
+                },
+                object : JsonNamingStrategy {
+                    override fun serialNameForJson(
+                        descriptor: SerialDescriptor,
+                        elementIndex: Int,
+                        serialName: String,
+                    ): String = "${elementIndex}_$serialName"
+                },
+            )
+        val configurations = strategies.map { strategy -> Json { namingStrategy = strategy } }
+
+        // When
+        val roundTrips =
+            configurations.flatMap { json ->
+                listOf(
+                    jsonRoundTrip(json, AttoAccount.serializer(), account),
+                    jsonRoundTrip(json, AttoAccountEntry.serializer(), entry),
+                    jsonRoundTrip(json, AttoReceivable.serializer(), receivable),
+                    jsonRoundTrip(json, AttoVote.serializer(), vote),
+                ) +
+                    blocks.flatMap { block ->
+                        val concrete =
+                            when (block) {
+                                is AttoSendBlock -> jsonRoundTrip(json, AttoSendBlock.serializer(), block)
+                                is AttoReceiveBlock -> jsonRoundTrip(json, AttoReceiveBlock.serializer(), block)
+                                is AttoOpenBlock -> jsonRoundTrip(json, AttoOpenBlock.serializer(), block)
+                                is AttoChangeBlock -> jsonRoundTrip(json, AttoChangeBlock.serializer(), block)
+                            }
+                        val transaction = AttoTransaction(block, AttoSignature(ByteArray(AttoSignature.SIZE)), AttoWork(ByteArray(8)))
+                        listOf(
+                            concrete,
+                            jsonRoundTrip(json, AttoBlock.serializer(), block),
+                            jsonRoundTrip(json, AttoTransaction.serializer(), transaction),
+                        )
+                    }
+            }
+
+        // Then
+        roundTrips.forEach { (expected, actual) -> assertEquals(expected, actual) }
+    }
+
+    private fun <T> jsonRoundTrip(
+        json: Json,
+        serializer: KSerializer<T>,
+        value: T,
+    ): Pair<T, T> = value to json.decodeFromString(serializer, json.encodeToString(serializer, value))
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun `should round trip canonical model serializers outside JSON`() {
+        // Given
+        val blocks = blockJsons.map { AttoBlock.fromJson(it.toString()) }
+        val account = account()
+        val entry = accountEntry()
+        val receivable = AttoBlockTest.sendBlock.toReceivable()
+        val vote = AttoVote(AttoVersion(0U), account.address, AttoAlgorithm.V1, blocks.first().hash, account.lastTransactionTimestamp)
+
+        val transactions =
+            blocks.map { block ->
+                AttoTransaction(block, AttoSignature(ByteArray(AttoSignature.SIZE)), AttoWork(ByteArray(8)))
+            }
+
+        // When
+        val decodedAccount = protobufRoundTrip(AttoAccount.serializer(), account)
+        val decodedEntry = protobufRoundTrip(AttoAccountEntry.serializer(), entry)
+        val decodedReceivable = protobufRoundTrip(AttoReceivable.serializer(), receivable)
+        val decodedVote = protobufRoundTrip(AttoVote.serializer(), vote)
+        val decodedBlocks = blocks.map { protobufRoundTrip(AttoBlock.serializer(), it) }
+        val decodedTransactions = transactions.map { protobufRoundTrip(AttoTransaction.serializer(), it) }
+
+        // Then
+        assertEquals(account, decodedAccount)
+        assertEquals(entry, decodedEntry)
+        assertEquals(receivable, decodedReceivable)
+        assertEquals(vote, decodedVote)
+        assertEquals(blocks, decodedBlocks)
+        assertEquals(transactions, decodedTransactions)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private fun <T> protobufRoundTrip(
+        serializer: KSerializer<T>,
+        value: T,
+    ): T {
+        val encoded = ProtoBuf.encodeToByteArray(serializer, value)
+        return ProtoBuf.decodeFromByteArray(serializer, encoded)
+    }
+
+    private fun assertCanonicalIdentity(element: JsonElement) {
+        val fields = element.jsonObject
+        val forbidden =
+            addressProjectionFields.values.flatten().toSet() +
+                setOf(
+                    "public_key",
+                    "receiver_algorithm",
+                    "receiver_public_key",
+                    "representative_algorithm",
+                    "representative_public_key",
+                    "subject_algorithm",
+                    "subject_public_key",
+                )
+        assertTrue(fields.keys.intersect(forbidden).isEmpty(), fields.toString())
+        assertTrue(fields.values.none { it == JsonNull }, fields.toString())
+        if ("block" in fields) {
+            assertCanonicalIdentity(fields.getValue("block"))
+        } else {
+            assertTrue("address" in fields, fields.toString())
+        }
+    }
+
     private fun decodeConcreteBlock(json: JsonObject): AttoBlock {
         val concreteJson = JsonObject(json - "type").toString()
         return when (json.getValue("type").jsonPrimitive.content) {
-            "SEND" -> Json.decodeFromString<AttoSendBlock>(concreteJson)
-            "RECEIVE" -> Json.decodeFromString<AttoReceiveBlock>(concreteJson)
-            "OPEN" -> Json.decodeFromString<AttoOpenBlock>(concreteJson)
-            "CHANGE" -> Json.decodeFromString<AttoChangeBlock>(concreteJson)
+            "SEND" -> tolerantJson.decodeFromString<AttoSendBlock>(concreteJson)
+            "RECEIVE" -> tolerantJson.decodeFromString<AttoReceiveBlock>(concreteJson)
+            "OPEN" -> tolerantJson.decodeFromString<AttoOpenBlock>(concreteJson)
+            "CHANGE" -> tolerantJson.decodeFromString<AttoChangeBlock>(concreteJson)
             else -> error("Unsupported fixture block type")
         }
     }
 
     private fun withoutAddresses(json: JsonObject): JsonObject {
         val fields = addressProjectionFields.keys + if (json["type"] == JsonPrimitive("OPEN")) setOf("height") else emptySet()
-        return JsonObject(json - fields)
+        val legacy = json.toMutableMap()
+        addressProjectionFields.forEach { (addressField, projections) ->
+            json[addressField]?.jsonPrimitive?.content?.let { encoded ->
+                val address = AttoAddress.parse(encoded)
+                legacy[projections[0]] = JsonPrimitive(address.algorithm.name)
+                legacy[projections[1]] = JsonPrimitive(address.publicKey.toString())
+            }
+        }
+        return JsonObject(legacy - fields)
     }
 
     private fun withoutLegacyPairs(json: JsonObject): JsonObject = JsonObject(json - addressProjectionFields.values.flatten().toSet())

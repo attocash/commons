@@ -10,6 +10,10 @@ import java.util.concurrent.ExecutorService
 actual class AttoNodeClientAsyncBuilder actual constructor(
     private val url: String,
 ) {
+    private var streamTransport = AttoNodeStreamTransport.HTTP
+
+    actual fun streamTransport(value: AttoNodeStreamTransport) = apply { streamTransport = value }
+
     private var headers: Map<String, String> = emptyMap()
 
     actual fun headers(value: Map<String, String>) = apply { headers = value }
@@ -21,7 +25,7 @@ actual class AttoNodeClientAsyncBuilder actual constructor(
 
     fun build(dispatcher: CoroutineDispatcher = Dispatchers.Default): AttoNodeClientAsync =
         AttoNodeClient
-            .remote(url, {
+            .remote(url, streamTransport, {
                 headers
             })
             .toAsync(dispatcher)

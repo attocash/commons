@@ -36,8 +36,7 @@ owning package rather than treating `commons-js` as an alias for all modules.
 For browser and CPU workers, check the respective [worker guides](../README.md#choose-a-module) before choosing a
 JavaScript API; Kotlin support does not imply a public JavaScript factory.
 
-The [migration guide](../MIGRATION.md#javascript-packages) covers package changes. The
-[JavaScript client example](../examples/js-client/README.md) shows individual imports in an application.
+The [JavaScript client example](../examples/js-client/README.md) shows individual imports in an application.
 
 ## Build maintainers
 

@@ -65,8 +65,6 @@ sealed interface AttoBlock :
     val type: AttoBlockType
     val network: AttoNetwork
     val version: AttoVersion
-    val algorithm: AttoAlgorithm
-    val publicKey: AttoPublicKey
     override val height: AttoHeight
     val balance: AttoAmount
     val timestamp: AttoInstant
@@ -74,7 +72,7 @@ sealed interface AttoBlock :
     @JsExport.Ignore
     fun getTarget(): AttoWorkTarget =
         when (this) {
-            is AttoOpenBlock -> AttoWorkTarget(publicKey.value)
+            is AttoOpenBlock -> AttoWorkTarget(address.publicKey.value)
             is PreviousSupport -> AttoWorkTarget(previous.value)
         }
 
@@ -141,16 +139,16 @@ sealed interface AttoBlock :
             )
         }
 
-        if (algorithm.publicKeySize != publicKey.value.size) {
+        if (address.algorithm.publicKeySize != address.publicKey.value.size) {
             return AttoValidation.Error(
-                "Public key size does not match algorithm: algorithm.publicKeySize=${algorithm.publicKeySize}, " +
-                    "publicKey.size=${publicKey.value.size}",
+                "Public key size does not match algorithm: address.algorithm.publicKeySize=${address.algorithm.publicKeySize}, " +
+                    "address.publicKey.size=${address.publicKey.value.size}",
             )
         }
 
-        if (this is PreviousSupport && previous.value.size != algorithm.hashSize) {
+        if (this is PreviousSupport && previous.value.size != address.algorithm.hashSize) {
             return AttoValidation.Error(
-                "Previous hash size does not match algorithm: algorithm.hashSize=${algorithm.hashSize}, " +
+                "Previous hash size does not match algorithm: address.algorithm.hashSize=${address.algorithm.hashSize}, " +
                     "previous.size=${previous.value.size}",
             )
         }
@@ -173,12 +171,12 @@ sealed interface AttoBlock :
         }
 
         if (this is RepresentativeSupport &&
-            representativeAlgorithm.publicKeySize != representativePublicKey.value.size
+            representativeAddress.algorithm.publicKeySize != representativeAddress.publicKey.value.size
         ) {
             return AttoValidation.Error(
                 "Representative public key size does not match representative algorithm: " +
-                    "representativeAlgorithm.publicKeySize=${representativeAlgorithm.publicKeySize}, " +
-                    "representativePublicKey.size=${representativePublicKey.value.size}",
+                    "representativeAddress.algorithm.publicKeySize=${representativeAddress.algorithm.publicKeySize}, " +
+                    "representativeAddress.publicKey.size=${representativeAddress.publicKey.value.size}",
             )
         }
 
@@ -206,8 +204,7 @@ interface ReceiveSupport {
 
 @JsExportForJs
 interface RepresentativeSupport {
-    val representativeAlgorithm: AttoAlgorithm
-    val representativePublicKey: AttoPublicKey
+    val representativeAddress: AttoAddress
 }
 
 @JsExportForJs
@@ -229,18 +226,6 @@ data class AttoSendBlock(
     override val type = AttoBlockType.SEND
 
     override val hash by lazy { toBuffer().hash() }
-
-    override val algorithm: AttoAlgorithm
-        get() = address.algorithm
-
-    override val publicKey: AttoPublicKey
-        get() = address.publicKey
-
-    val receiverAlgorithm: AttoAlgorithm
-        get() = receiverAddress.algorithm
-
-    val receiverPublicKey: AttoPublicKey
-        get() = receiverAddress.publicKey
 
     @JsExport.Ignore
     fun toReceivable(): AttoReceivable =
@@ -285,14 +270,14 @@ data class AttoSendBlock(
             this.writeAttoBlockType(type)
             this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
-            this.writeAttoAlgorithm(algorithm)
-            this.writeAttoPublicKey(publicKey)
+            this.writeAttoAlgorithm(address.algorithm)
+            this.writeAttoPublicKey(address.publicKey)
             this.writeAttoHeight(height)
             this.writeAttoAmount(balance)
             this.writeInstant(timestamp)
             this.writeAttoHash(previous)
-            this.writeAttoAlgorithm(receiverAlgorithm)
-            this.writeAttoPublicKey(receiverPublicKey)
+            this.writeAttoAlgorithm(receiverAddress.algorithm)
+            this.writeAttoPublicKey(receiverAddress.publicKey)
             this.writeAttoAmount(amount)
         }
 
@@ -306,17 +291,17 @@ data class AttoSendBlock(
             return AttoValidation.Error("Amount must be greater than ${AttoAmount.MIN}")
         }
 
-        if (receiverPublicKey == publicKey) {
+        if (receiverAddress == address) {
             return AttoValidation.Error(
-                "Receiver public key must be different from public key: receiverPublicKey=$receiverPublicKey, publicKey=$publicKey",
+                "Receiver public key must be different from public key: receiverAddress.publicKey=${receiverAddress.publicKey}, address.publicKey=${address.publicKey}",
             )
         }
 
-        if (receiverAlgorithm.publicKeySize != receiverPublicKey.value.size) {
+        if (receiverAddress.algorithm.publicKeySize != receiverAddress.publicKey.value.size) {
             return AttoValidation.Error(
                 "Receiver public key size does not match receiver algorithm: " +
-                    "receiverAlgorithm.publicKeySize=${receiverAlgorithm.publicKeySize}, " +
-                    "receiverPublicKey.size=${receiverPublicKey.value.size}",
+                    "receiverAddress.algorithm.publicKeySize=${receiverAddress.algorithm.publicKeySize}, " +
+                    "receiverAddress.publicKey.size=${receiverAddress.publicKey.value.size}",
             )
         }
 
@@ -344,12 +329,6 @@ data class AttoReceiveBlock(
     override val type = AttoBlockType.RECEIVE
 
     override val hash by lazy { toBuffer().hash() }
-
-    override val algorithm: AttoAlgorithm
-        get() = address.algorithm
-
-    override val publicKey: AttoPublicKey
-        get() = address.publicKey
 
     companion object {
         @JsExport.Ignore
@@ -383,8 +362,8 @@ data class AttoReceiveBlock(
             this.writeAttoBlockType(type)
             this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
-            this.writeAttoAlgorithm(algorithm)
-            this.writeAttoPublicKey(publicKey)
+            this.writeAttoAlgorithm(address.algorithm)
+            this.writeAttoPublicKey(address.publicKey)
             this.writeAttoHeight(height)
             this.writeAttoAmount(balance)
             this.writeInstant(timestamp)
@@ -405,7 +384,7 @@ data class AttoOpenBlock(
     override val timestamp: AttoInstant,
     override val sendHashAlgorithm: AttoAlgorithm,
     override val sendHash: AttoHash,
-    val representativeAddress: AttoAddress,
+    override val representativeAddress: AttoAddress,
 ) : AttoBlock,
     ReceiveSupport,
     RepresentativeSupport {
@@ -414,20 +393,8 @@ data class AttoOpenBlock(
 
     override val hash by lazy { toBuffer().hash() }
 
-    override val algorithm: AttoAlgorithm
-        get() = address.algorithm
-
-    override val publicKey: AttoPublicKey
-        get() = address.publicKey
-
     override val height: AttoHeight
         get() = AttoHeight.MIN
-
-    override val representativeAlgorithm: AttoAlgorithm
-        get() = representativeAddress.algorithm
-
-    override val representativePublicKey: AttoPublicKey
-        get() = representativeAddress.publicKey
 
     companion object {
         @JsExport.Ignore
@@ -477,14 +444,14 @@ data class AttoOpenBlock(
             this.writeAttoBlockType(type)
             this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
-            this.writeAttoAlgorithm(algorithm)
-            this.writeAttoPublicKey(publicKey)
+            this.writeAttoAlgorithm(address.algorithm)
+            this.writeAttoPublicKey(address.publicKey)
             this.writeAttoAmount(balance)
             this.writeInstant(timestamp)
             this.writeAttoAlgorithm(sendHashAlgorithm)
             this.writeAttoHash(sendHash)
-            this.writeAttoAlgorithm(representativeAlgorithm)
-            this.writeAttoPublicKey(representativePublicKey)
+            this.writeAttoAlgorithm(representativeAddress.algorithm)
+            this.writeAttoPublicKey(representativeAddress.publicKey)
         }
 }
 
@@ -499,7 +466,7 @@ data class AttoChangeBlock(
     override val balance: AttoAmount,
     override val timestamp: AttoInstant,
     override val previous: AttoHash,
-    val representativeAddress: AttoAddress,
+    override val representativeAddress: AttoAddress,
 ) : AttoBlock,
     PreviousSupport,
     RepresentativeSupport {
@@ -507,18 +474,6 @@ data class AttoChangeBlock(
     override val type = AttoBlockType.CHANGE
 
     override val hash by lazy { toBuffer().hash() }
-
-    override val algorithm: AttoAlgorithm
-        get() = address.algorithm
-
-    override val publicKey: AttoPublicKey
-        get() = address.publicKey
-
-    override val representativeAlgorithm: AttoAlgorithm
-        get() = representativeAddress.algorithm
-
-    override val representativePublicKey: AttoPublicKey
-        get() = representativeAddress.publicKey
 
     companion object {
         @JsExport.Ignore
@@ -551,14 +506,14 @@ data class AttoChangeBlock(
             this.writeAttoBlockType(type)
             this.writeAttoNetwork(network)
             this.writeAttoVersion(version)
-            this.writeAttoAlgorithm(algorithm)
-            this.writeAttoPublicKey(publicKey)
+            this.writeAttoAlgorithm(address.algorithm)
+            this.writeAttoPublicKey(address.publicKey)
             this.writeAttoHeight(height)
             this.writeAttoAmount(balance)
             this.writeInstant(timestamp)
             this.writeAttoHash(previous)
-            this.writeAttoAlgorithm(representativeAlgorithm)
-            this.writeAttoPublicKey(representativePublicKey)
+            this.writeAttoAlgorithm(representativeAddress.algorithm)
+            this.writeAttoPublicKey(representativeAddress.publicKey)
         }
 }
 

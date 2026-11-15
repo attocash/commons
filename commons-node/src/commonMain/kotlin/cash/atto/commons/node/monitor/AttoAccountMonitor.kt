@@ -53,6 +53,13 @@ class AttoAccountMonitor internal constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun accountStream(): Flow<AttoAccount> {
+        if (client.supportsSubscriptionUpdates) {
+            return client.accountStream(membershipFlow()).filter { isMonitored(it.address) }.retryWhen { e, _ ->
+                logger.warn(e) { "Failed to stream accounts. Retrying in $RETRY_DELAY..." }
+                delay(RETRY_DELAY)
+                true
+            }
+        }
         return membershipFlow()
             .flatMapLatest { addresses ->
                 if (addresses.isEmpty()) {
@@ -75,6 +82,9 @@ class AttoAccountMonitor internal constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun receivableStream(minAmount: AttoAmount = AttoAmount.MIN): Flow<AttoReceivable> {
+        if (client.supportsSubscriptionUpdates) {
+            return client.receivableStream(membershipFlow(), minAmount).filter { isMonitored(it.receiverAddress) }
+        }
         return membershipFlow()
             .flatMapLatest { addresses ->
                 if (addresses.isEmpty()) {

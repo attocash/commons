@@ -88,6 +88,14 @@ kotlin {
                 api(project(":commons-core"))
                 api(project(":commons-node"))
                 implementation(project(":commons-transport"))
+                implementation(libs.ktor.http)
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
 
@@ -96,6 +104,8 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.ktor.server.cio)
+                implementation(libs.ktor.server.websockets)
             }
         }
 
@@ -103,6 +113,13 @@ kotlin {
 
         val jsTest by getting {
             dependencies {
+                implementation(npm("ws", "8.20.1"))
+            }
+        }
+
+        val wasmJsTest by getting {
+            dependencies {
+                implementation(npm("ws", "8.20.1"))
             }
         }
 

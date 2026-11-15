@@ -14,7 +14,7 @@ implementation("cash.atto:commons-worker:<version>")
 
 Core types and coroutines are transitive API dependencies. Use matching versions of Commons modules; see the [root README](../README.md) for setup.
 
-The npm package `@attocash/commons-worker` exposes `AttoWorkerAsync` for use by other Commons packages, but has no supported JavaScript CPU-worker constructor. The Kotlin `AttoWorker.cpu()` factory below is not an npm API. Use the [remote worker](../commons-worker-remote/README.md) from JavaScript; see [JavaScript package migration](../MIGRATION.md#javascript-packages).
+The npm package `@attocash/commons-worker` exposes `AttoWorkerAsync` for use by other Commons packages, but has no supported JavaScript CPU-worker constructor. The Kotlin `AttoWorker.cpu()` factory below is not an npm API. Use the [remote worker](../commons-worker-remote/README.md) from JavaScript; see [JavaScript package migration](../commons-js/README.md#replace-aggregate-imports).
 
 ## Calculate and validate work
 

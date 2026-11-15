@@ -16,7 +16,7 @@ Add this dependency to your browser source set; it includes `commons-worker` tra
 implementation("cash.atto:commons-worker-web:<version>")
 ```
 
-The generated npm package `@attocash/commons-worker-web` currently exports no public runtime API. Installing it does not provide a JavaScript worker constructor. The example below is for Kotlin browser source; JavaScript clients can use the [remote worker package](../commons-worker-remote/README.md). See [JavaScript package migration](../MIGRATION.md#javascript-packages) and the [root README](../README.md).
+The generated npm package `@attocash/commons-worker-web` currently exports no public runtime API. Installing it does not provide a JavaScript worker constructor. The example below is for Kotlin browser source; JavaScript clients can use the [remote worker package](../commons-worker-remote/README.md). See [JavaScript package migration](../commons-js/README.md#replace-aggregate-imports) and the [root README](../README.md).
 
 ## Calculate work in Kotlin browser code
 

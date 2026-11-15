@@ -23,8 +23,25 @@ Create `AttoHttpTransport(baseUrl, headerProvider)` with a base URL and an optio
 
 Each method accepts `AttoHttpTimeouts` with optional `request`, `socket`, and `connect` durations. Stream requests begin when the flow is collected. Collection cancellation cancels the request; the transport does not reconnect or retry.
 
-Requests use JSON bodies and set `Accept` to JSON or `application/x-ndjson`. Decoding ignores unknown JSON fields. NDJSON records have a 2,000-character line limit; malformed or oversized records fail the flow. HTTP failures propagate, and `Throwable.httpStatusCodeOrNull()` extracts a Ktor client/server error status, including from a cause.
+Requests use JSON bodies and set `Accept` to JSON or `application/x-ndjson`. Decoding ignores unknown JSON fields.
+NDJSON parsing ignores blank and whitespace-only heartbeat lines. Each line, including a heartbeat, retains
+the 2,000-character limit; malformed nonblank or oversized lines fail the flow. HTTP failures propagate, and
+`Throwable.httpStatusCodeOrNull()` extracts a Ktor client/server error status, including from a cause.
 
 See the [implementation](src/commonMain/kotlin/cash/atto/commons/transport/AttoHttpTransport.kt) and [transport tests](src/commonTest/kotlin/cash/atto/commons/transport/AttoHttpTransportTest.kt) for request configuration and adapter examples.
 
 [Project overview](../README.md) · [License](../LICENSE)
+
+`AttoWebSocketTransport.exchange` provides a raw text-message flow for one connection and one initial
+request. It converts HTTP(S) base URLs to WS(S), preserves a base path, and closes the owned connection
+on cancellation or flow completion. The caller owns the application protocol, record limits, and explicit
+completion. Receive-idle and connection deadlines are supplied by the caller. Incoming frames use a
+bounded 64-frame queue that closes on overflow, including on browser callback engines; a slow consumer
+therefore observes failure instead of silently losing records. Binary messages fail. Browser custom
+headers are rejected explicitly; JVM and Node.js handshake headers are supported.
+
+The generic WebSocket message limit is 256 KiB, separate from the node client's 2,000-character domain
+record limit. JVM transport enforces the byte limit in its frame parser. Browser and Node.js engines do
+not expose a native frame-size setter; they reject oversized received messages before text/JSON decoding,
+after their runtime has allocated the message. The raw transport accepts an outgoing text flow so the
+protocol owner can serialize subscription updates and acknowledgements on one connection.

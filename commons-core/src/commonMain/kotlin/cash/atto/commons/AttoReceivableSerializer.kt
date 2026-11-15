@@ -3,65 +3,87 @@ package cash.atto.commons
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 
 @OptIn(ExperimentalSerializationApi::class)
 internal object AttoReceivableSerializer : KSerializer<AttoReceivable> {
-    override val descriptor = SerialDescriptor("cash.atto.commons.AttoReceivable", AttoReceivableWire.serializer().descriptor)
+    override val descriptor = AttoReceivableOutput.serializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
         value: AttoReceivable,
     ) {
+        if (encoder is JsonEncoder) {
+            val wire =
+                AttoReceivableOutput(
+                    receiverAddress = value.receiverAddress,
+                    address = value.address,
+                    network = value.network,
+                    hash = value.hash,
+                    version = value.version,
+                    timestamp = value.timestamp,
+                    amount = value.amount,
+                )
+            encoder.encodeSerializableValue(AttoReceivableOutput.serializer(), wire)
+            return
+        }
+
         val wire =
-            AttoReceivableWire(
+            AttoReceivableBinaryWire(
                 network = value.network,
                 hash = value.hash,
                 version = value.version,
-                algorithm = value.algorithm,
-                publicKey = value.publicKey,
+                algorithm = value.address.algorithm,
+                publicKey = value.address.publicKey,
                 timestamp = value.timestamp,
-                receiverAlgorithm = value.receiverAlgorithm,
-                receiverPublicKey = value.receiverPublicKey,
+                receiverAlgorithm = value.receiverAddress.algorithm,
+                receiverPublicKey = value.receiverAddress.publicKey,
                 amount = value.amount,
             )
-        encoder.encodeSerializableValue(AttoReceivableWire.serializer(), wire)
+        encoder.encodeSerializableValue(AttoReceivableBinaryWire.serializer(), wire)
     }
 
-    override fun deserialize(decoder: Decoder): AttoReceivable {
-        val wire =
-            decodeWithSerializedProjections(
-                decoder,
-                AttoReceivableWire.serializer(),
-                mapOf(
-                    "address" to listOf("algorithm", "publicKey"),
-                    "receiverAddress" to listOf("receiverAlgorithm", "receiverPublicKey"),
-                ),
-            )
-        return AttoReceivable(
-            network = wire.network,
-            hash = wire.hash,
-            version = wire.version,
-            address = resolveSerializedAddress("address", wire.address, wire.algorithm, wire.publicKey),
-            timestamp = wire.timestamp,
-            receiverAddress =
-                resolveSerializedAddress(
-                    "receiverAddress",
-                    wire.receiverAddress,
-                    wire.receiverAlgorithm,
-                    wire.receiverPublicKey,
-                ),
-            amount = wire.amount,
-        )
-    }
+    override fun deserialize(decoder: Decoder): AttoReceivable =
+        if (decoder is JsonDecoder) {
+            decoder.decodeSerializableValue(AttoReceivableOutput.serializer()).toReceivable()
+        } else {
+            decoder.decodeSerializableValue(AttoReceivableBinaryWire.serializer()).toReceivable()
+        }
 }
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-private class AttoReceivableWire(
+@SerialName("cash.atto.commons.AttoReceivable")
+private class AttoReceivableOutput(
+    val network: AttoNetwork,
+    val hash: AttoHash,
+    val version: AttoVersion,
+    val timestamp: AttoInstant,
+    val amount: AttoAmount,
+    val address: AttoAddress,
+    val receiverAddress: AttoAddress,
+) {
+    fun toReceivable(): AttoReceivable =
+        AttoReceivable(
+            network = network,
+            hash = hash,
+            version = version,
+            timestamp = timestamp,
+            amount = amount,
+            address = address,
+            receiverAddress = receiverAddress,
+        )
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+@SerialName("cash.atto.commons.AttoReceivableWire")
+private class AttoReceivableBinaryWire(
     val network: AttoNetwork,
     val hash: AttoHash,
     val version: AttoVersion,
@@ -75,4 +97,15 @@ private class AttoReceivableWire(
     val address: AttoAddress? = null,
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val receiverAddress: AttoAddress? = null,
-)
+) {
+    fun toReceivable(): AttoReceivable =
+        AttoReceivable(
+            network = network,
+            hash = hash,
+            version = version,
+            timestamp = timestamp,
+            amount = amount,
+            address = resolveSerializedAddress("address", address, algorithm, publicKey),
+            receiverAddress = resolveSerializedAddress("receiverAddress", receiverAddress, receiverAlgorithm, receiverPublicKey),
+        )
+}

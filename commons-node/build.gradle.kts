@@ -88,6 +88,7 @@ kotlin {
             dependencies {
                 api(project(":commons-core"))
                 api(libs.kotlinx.coroutines.core)
+                api(libs.kotlinx.serialization.json)
 
                 implementation(libs.kotlin.logging)
             }

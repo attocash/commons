@@ -49,14 +49,14 @@ class AttoVoteTest {
             val (expected, signer) = fixture()
 
             // When
-            val fromJson = Json.decodeFromString<AttoVote>(legacyJson)
+            val fromJson = Json.decodeFromString<AttoVote>(legacyJson.canonicalIdentityJson())
             val fromBytes = AttoVote.fromBuffer(legacyBytes.toBuffer())
             val signedVote = AttoSignedVote.fromBuffer(legacySignedBytes.toBuffer())
             val regeneratedSignature = signer.sign(expected)
 
             // Then
             assertEquals(expected, fromJson)
-            assertEquals(Json.encodeToString(Json.parseToJsonElement(legacyJson)), Json.encodeToString(fromJson))
+            assertEquals(legacyJson.canonicalIdentityJson(), Json.encodeToString(fromJson).canonicalIdentityJson())
             assertEquals(expected, fromBytes)
             assertEquals(expected, signedVote.vote)
             assertEquals(legacyHash, expected.hash)
@@ -84,13 +84,13 @@ class AttoVoteTest {
 
             // Then
             assertEquals(address, copied.address)
-            assertEquals(address.algorithm, copied.algorithm)
-            assertEquals(address.publicKey, copied.publicKey)
+            assertEquals(address.algorithm, copied.address.algorithm)
+            assertEquals(address.publicKey, copied.address.publicKey)
             assertEquals(copied, decoded)
         }
 
     @Test
-    fun `should emit only original JSON fields`() =
+    fun `should emit canonical identity and retain block algorithm`() =
         runTest {
             // Given
             val vote = fixture().first
@@ -101,34 +101,40 @@ class AttoVoteTest {
 
             // Then
             assertEquals(
-                listOf("version", "algorithm", "publicKey", "blockAlgorithm", "blockHash", "timestamp"),
-                encoded.keys.toList(),
+                setOf("address", "version", "blockAlgorithm", "blockHash", "timestamp"),
+                encoded.keys,
             )
-            assertEquals(JsonPrimitive(vote.algorithm.name), encoded["algorithm"])
-            assertEquals(JsonPrimitive(vote.publicKey.toString()), encoded["publicKey"])
+            assertEquals(JsonPrimitive(vote.address.toString()), encoded["address"])
             assertEquals(encoded, encodedWithDefaults)
         }
 
     @Test
-    fun `should decode legacy and address only JSON with identical signed bytes`() =
+    fun `should require an address in JSON and preserve canonical signed bytes`() =
         runTest {
             // Given
             val (vote, signer) = fixture()
             val signature = signer.sign(vote)
             val encoded = Json.encodeToJsonElement(AttoVote.serializer(), vote).jsonObject
-            val legacy = encoded
+            val legacy =
+                JsonObject(
+                    (encoded - "address") +
+                        mapOf(
+                            "algorithm" to JsonPrimitive(vote.address.algorithm.name),
+                            "publicKey" to JsonPrimitive(vote.address.publicKey.toString()),
+                        ),
+                )
             val canonical = JsonObject((encoded - setOf("algorithm", "publicKey")) + ("address" to JsonPrimitive(vote.address.value)))
 
             // When
-            val decoded = listOf(legacy, canonical).map { Json.decodeFromJsonElement(AttoVote.serializer(), it) }
+            val decoded = Json.decodeFromJsonElement(AttoVote.serializer(), canonical)
+            val legacyFailure = runCatching { Json.decodeFromJsonElement(AttoVote.serializer(), legacy) }.exceptionOrNull()
 
             // Then
-            for (value in decoded) {
-                assertEquals(vote, value)
-                assertEquals(vote.hash, value.hash)
-                assertContentEquals(vote.toBuffer().readByteArray(), value.toBuffer().readByteArray())
-                assertTrue(AttoSignedVote(value, signature).isValid())
-            }
+            assertIs<kotlinx.serialization.SerializationException>(legacyFailure)
+            assertEquals(vote, decoded)
+            assertEquals(vote.hash, decoded.hash)
+            assertContentEquals(vote.toBuffer().readByteArray(), decoded.toBuffer().readByteArray())
+            assertTrue(AttoSignedVote(decoded, signature).isValid())
         }
 
     @Test
@@ -148,7 +154,7 @@ class AttoVoteTest {
                 )
 
             // When
-            val decoded = Json.decodeFromJsonElement(AttoVote.serializer(), malformed)
+            val decoded = Json { ignoreUnknownKeys = true }.decodeFromJsonElement(AttoVote.serializer(), malformed)
 
             // Then
             assertEquals(vote, decoded)

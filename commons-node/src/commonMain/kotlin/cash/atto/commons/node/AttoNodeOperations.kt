@@ -12,7 +12,10 @@ import cash.atto.commons.AttoReceivable
 import cash.atto.commons.AttoTransaction
 import cash.atto.commons.AttoVoterWeight
 import cash.atto.commons.utils.JsExportForJs
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.serialization.Serializable
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
@@ -20,6 +23,26 @@ import kotlin.time.Duration.Companion.milliseconds
 
 interface AttoNodeOperations {
     companion object {}
+
+    val supportsSubscriptionUpdates: Boolean get() = false
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun accountStream(addresses: Flow<Collection<AttoAddress>>): Flow<AttoAccount> =
+        addresses.flatMapLatest { if (it.isEmpty()) emptyFlow() else accountStream(it) }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun receivableStream(
+        addresses: Flow<Collection<AttoAddress>>,
+        minAmount: AttoAmount = AttoAmount(1U),
+    ): Flow<AttoReceivable> = addresses.flatMapLatest { if (it.isEmpty()) emptyFlow() else receivableStream(it, minAmount) }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun accountEntryStream(searches: Flow<HeightSearch>): Flow<AttoAccountEntry> =
+        searches.flatMapLatest { if (it.search.isEmpty()) emptyFlow() else accountEntryStream(it) }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun transactionStream(searches: Flow<HeightSearch>): Flow<AttoTransaction> =
+        searches.flatMapLatest { if (it.search.isEmpty()) emptyFlow() else transactionStream(it) }
 
     suspend fun account(address: AttoAddress): AttoAccount?
 

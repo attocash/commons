@@ -7,30 +7,52 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 object AttoSendBlockSerializer : KSerializer<AttoSendBlock> {
-    override val descriptor = SerialDescriptor("SEND", AttoSendBlockWire.serializer().descriptor)
+    override val descriptor = AttoSendBlockOutput.serializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
         value: AttoSendBlock,
     ) {
+        if (encoder is JsonEncoder) {
+            encoder.encodeSerializableValue(
+                AttoSendBlockOutput.serializer(),
+                AttoSendBlockOutput(
+                    network = value.network,
+                    version = value.version,
+                    height = value.height,
+                    balance = value.balance,
+                    timestamp = value.timestamp,
+                    previous = value.previous,
+                    amount = value.amount,
+                    address = value.address,
+                    receiverAddress = value.receiverAddress,
+                ),
+            )
+            return
+        }
+
         encoder.encodeSerializableValue(
-            AttoSendBlockWire.serializer(),
-            AttoSendBlockWire(
+            AttoSendBlockBinaryWire.serializer(),
+            AttoSendBlockBinaryWire(
                 network = value.network,
                 version = value.version,
-                algorithm = value.algorithm,
-                publicKey = value.publicKey,
+                algorithm = value.address.algorithm,
+                publicKey = value.address.publicKey,
                 height = value.height,
                 balance = value.balance,
                 timestamp = value.timestamp,
                 previous = value.previous,
-                receiverAlgorithm = value.receiverAlgorithm,
-                receiverPublicKey = value.receiverPublicKey,
+                receiverAlgorithm = value.receiverAddress.algorithm,
+                receiverPublicKey = value.receiverAddress.publicKey,
                 amount = value.amount,
                 address = value.address,
                 receiverAddress = value.receiverAddress,
@@ -39,30 +61,45 @@ object AttoSendBlockSerializer : KSerializer<AttoSendBlock> {
     }
 
     override fun deserialize(decoder: Decoder): AttoSendBlock =
-        decodeWithSerializedProjections(
-            decoder,
-            AttoSendBlockWire.serializer(),
-            mapOf(
-                "address" to listOf("algorithm", "publicKey"),
-                "receiverAddress" to listOf("receiverAlgorithm", "receiverPublicKey"),
-            ),
-        ).toBlock()
+        if (decoder is JsonDecoder) {
+            decodeBlockJson(decoder, AttoSendBlockOutput.serializer()).toBlock()
+        } else {
+            decoder.decodeSerializableValue(AttoSendBlockBinaryWire.serializer()).toBlock()
+        }
 }
 
 object AttoReceiveBlockSerializer : KSerializer<AttoReceiveBlock> {
-    override val descriptor = SerialDescriptor("RECEIVE", AttoReceiveBlockWire.serializer().descriptor)
+    override val descriptor = AttoReceiveBlockOutput.serializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
         value: AttoReceiveBlock,
     ) {
+        if (encoder is JsonEncoder) {
+            encoder.encodeSerializableValue(
+                AttoReceiveBlockOutput.serializer(),
+                AttoReceiveBlockOutput(
+                    network = value.network,
+                    version = value.version,
+                    height = value.height,
+                    balance = value.balance,
+                    timestamp = value.timestamp,
+                    previous = value.previous,
+                    sendHashAlgorithm = value.sendHashAlgorithm,
+                    sendHash = value.sendHash,
+                    address = value.address,
+                ),
+            )
+            return
+        }
+
         encoder.encodeSerializableValue(
-            AttoReceiveBlockWire.serializer(),
-            AttoReceiveBlockWire(
+            AttoReceiveBlockBinaryWire.serializer(),
+            AttoReceiveBlockBinaryWire(
                 network = value.network,
                 version = value.version,
-                algorithm = value.algorithm,
-                publicKey = value.publicKey,
+                algorithm = value.address.algorithm,
+                publicKey = value.address.publicKey,
                 height = value.height,
                 balance = value.balance,
                 timestamp = value.timestamp,
@@ -75,33 +112,51 @@ object AttoReceiveBlockSerializer : KSerializer<AttoReceiveBlock> {
     }
 
     override fun deserialize(decoder: Decoder): AttoReceiveBlock =
-        decodeWithSerializedProjections(
-            decoder,
-            AttoReceiveBlockWire.serializer(),
-            mapOf("address" to listOf("algorithm", "publicKey")),
-        ).toBlock()
+        if (decoder is JsonDecoder) {
+            decodeBlockJson(decoder, AttoReceiveBlockOutput.serializer()).toBlock()
+        } else {
+            decoder.decodeSerializableValue(AttoReceiveBlockBinaryWire.serializer()).toBlock()
+        }
 }
 
 object AttoOpenBlockSerializer : KSerializer<AttoOpenBlock> {
-    override val descriptor = SerialDescriptor("OPEN", AttoOpenBlockWire.serializer().descriptor)
+    override val descriptor = AttoOpenBlockOutput.serializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
         value: AttoOpenBlock,
     ) {
+        if (encoder is JsonEncoder) {
+            encoder.encodeSerializableValue(
+                AttoOpenBlockOutput.serializer(),
+                AttoOpenBlockOutput(
+                    network = value.network,
+                    version = value.version,
+                    balance = value.balance,
+                    timestamp = value.timestamp,
+                    sendHashAlgorithm = value.sendHashAlgorithm,
+                    sendHash = value.sendHash,
+                    height = value.height,
+                    address = value.address,
+                    representativeAddress = value.representativeAddress,
+                ),
+            )
+            return
+        }
+
         encoder.encodeSerializableValue(
-            AttoOpenBlockWire.serializer(),
-            AttoOpenBlockWire(
+            AttoOpenBlockBinaryWire.serializer(),
+            AttoOpenBlockBinaryWire(
                 network = value.network,
                 version = value.version,
-                algorithm = value.algorithm,
-                publicKey = value.publicKey,
+                algorithm = value.address.algorithm,
+                publicKey = value.address.publicKey,
                 balance = value.balance,
                 timestamp = value.timestamp,
                 sendHashAlgorithm = value.sendHashAlgorithm,
                 sendHash = value.sendHash,
-                representativeAlgorithm = value.representativeAlgorithm,
-                representativePublicKey = value.representativePublicKey,
+                representativeAlgorithm = value.representativeAddress.algorithm,
+                representativePublicKey = value.representativeAddress.publicKey,
                 height = value.height,
                 address = value.address,
                 representativeAddress = value.representativeAddress,
@@ -110,37 +165,67 @@ object AttoOpenBlockSerializer : KSerializer<AttoOpenBlock> {
     }
 
     override fun deserialize(decoder: Decoder): AttoOpenBlock =
-        decodeWithSerializedProjections(
-            decoder,
-            AttoOpenBlockWire.serializer(),
-            mapOf(
-                "address" to listOf("algorithm", "publicKey"),
-                "representativeAddress" to listOf("representativeAlgorithm", "representativePublicKey"),
-            ),
-            ignoredFields = setOf("height"),
-        ).toBlock()
+        if (decoder is JsonDecoder) {
+            decodeJson(decoder)
+        } else {
+            decoder.decodeSerializableValue(AttoOpenBlockBinaryWire.serializer()).toBlock()
+        }
+
+    private fun decodeJson(decoder: JsonDecoder): AttoOpenBlock {
+        val element = decoder.decodeJsonElement()
+        val normalized =
+            if (element is JsonObject) {
+                val index = descriptor.getElementIndex("height")
+                val name = descriptor.getElementName(index)
+                val fieldName =
+                    decoder.json.configuration.namingStrategy
+                        ?.serialNameForJson(descriptor, index, name) ?: name
+                // OPEN height is a computed protocol constant, including on input.
+                JsonObject(element + (fieldName to JsonPrimitive("1")))
+            } else {
+                element
+            }
+        return decodeBlockJson(decoder, AttoOpenBlockOutput.serializer(), normalized).toBlock()
+    }
 }
 
 object AttoChangeBlockSerializer : KSerializer<AttoChangeBlock> {
-    override val descriptor = SerialDescriptor("CHANGE", AttoChangeBlockWire.serializer().descriptor)
+    override val descriptor = AttoChangeBlockOutput.serializer().descriptor
 
     override fun serialize(
         encoder: Encoder,
         value: AttoChangeBlock,
     ) {
+        if (encoder is JsonEncoder) {
+            encoder.encodeSerializableValue(
+                AttoChangeBlockOutput.serializer(),
+                AttoChangeBlockOutput(
+                    network = value.network,
+                    version = value.version,
+                    height = value.height,
+                    balance = value.balance,
+                    timestamp = value.timestamp,
+                    previous = value.previous,
+                    address = value.address,
+                    representativeAddress = value.representativeAddress,
+                ),
+            )
+            return
+        }
+
         encoder.encodeSerializableValue(
-            AttoChangeBlockWire.serializer(),
-            AttoChangeBlockWire(
+            AttoChangeBlockBinaryWire.serializer(),
+            AttoChangeBlockBinaryWire(
                 network = value.network,
                 version = value.version,
-                algorithm = value.algorithm,
-                publicKey = value.publicKey,
+                algorithm = value.address.algorithm,
+                publicKey = value.address.publicKey,
                 height = value.height,
                 balance = value.balance,
                 timestamp = value.timestamp,
                 previous = value.previous,
-                representativeAlgorithm = value.representativeAlgorithm,
-                representativePublicKey = value.representativePublicKey,
+                representativeAlgorithm = value.representativeAddress.algorithm,
+                representativePublicKey = value.representativeAddress.publicKey,
                 address = value.address,
                 representativeAddress = value.representativeAddress,
             ),
@@ -148,19 +233,146 @@ object AttoChangeBlockSerializer : KSerializer<AttoChangeBlock> {
     }
 
     override fun deserialize(decoder: Decoder): AttoChangeBlock =
-        decodeWithSerializedProjections(
-            decoder,
-            AttoChangeBlockWire.serializer(),
-            mapOf(
-                "address" to listOf("algorithm", "publicKey"),
-                "representativeAddress" to listOf("representativeAlgorithm", "representativePublicKey"),
-            ),
-        ).toBlock()
+        if (decoder is JsonDecoder) {
+            decodeBlockJson(decoder, AttoChangeBlockOutput.serializer()).toBlock()
+        } else {
+            decoder.decodeSerializableValue(AttoChangeBlockBinaryWire.serializer()).toBlock()
+        }
+}
+
+private fun <T> decodeBlockJson(
+    decoder: JsonDecoder,
+    serializer: KSerializer<T>,
+    element: JsonElement = decoder.decodeJsonElement(),
+): T {
+    if (element !is JsonObject) {
+        return decoder.json.decodeFromJsonElement(serializer, element)
+    }
+    val descriptor = serializer.descriptor
+    val naming = decoder.json.configuration.namingStrategy
+
+    fun fieldName(index: Int): String {
+        val name = descriptor.getElementName(index)
+        return naming?.serialNameForJson(descriptor, index, name) ?: name
+    }
+    val fields = element.toMutableMap()
+    val discriminator = decoder.json.configuration.classDiscriminator
+    if ((0 until descriptor.elementsCount).none { fieldName(it) == discriminator }) {
+        fields.remove(discriminator)
+    }
+    return decoder.json.decodeFromJsonElement(serializer, JsonObject(fields))
+}
+
+@Serializable
+@SerialName("SEND")
+private class AttoSendBlockOutput(
+    val network: AttoNetwork,
+    val version: AttoVersion,
+    val height: AttoHeight,
+    val balance: AttoAmount,
+    val timestamp: AttoInstant,
+    val previous: AttoHash,
+    val amount: AttoAmount,
+    val address: AttoAddress,
+    val receiverAddress: AttoAddress,
+) {
+    fun toBlock(): AttoSendBlock =
+        AttoSendBlock(
+            network = network,
+            version = version,
+            address = address,
+            height = height,
+            balance = balance,
+            timestamp = timestamp,
+            previous = previous,
+            receiverAddress = receiverAddress,
+            amount = amount,
+        )
+}
+
+@Serializable
+@SerialName("RECEIVE")
+private class AttoReceiveBlockOutput(
+    val network: AttoNetwork,
+    val version: AttoVersion,
+    val height: AttoHeight,
+    val balance: AttoAmount,
+    val timestamp: AttoInstant,
+    val previous: AttoHash,
+    val sendHashAlgorithm: AttoAlgorithm,
+    val sendHash: AttoHash,
+    val address: AttoAddress,
+) {
+    fun toBlock(): AttoReceiveBlock =
+        AttoReceiveBlock(
+            network = network,
+            version = version,
+            address = address,
+            height = height,
+            balance = balance,
+            timestamp = timestamp,
+            previous = previous,
+            sendHashAlgorithm = sendHashAlgorithm,
+            sendHash = sendHash,
+        )
+}
+
+@Serializable
+@SerialName("OPEN")
+private class AttoOpenBlockOutput(
+    val network: AttoNetwork,
+    val version: AttoVersion,
+    val balance: AttoAmount,
+    val timestamp: AttoInstant,
+    val sendHashAlgorithm: AttoAlgorithm,
+    val sendHash: AttoHash,
+    val height: AttoHeight,
+    val address: AttoAddress,
+    val representativeAddress: AttoAddress,
+) {
+    fun toBlock(): AttoOpenBlock =
+        AttoOpenBlock(
+            network = network,
+            version = version,
+            address = address,
+            balance = balance,
+            timestamp = timestamp,
+            sendHashAlgorithm = sendHashAlgorithm,
+            sendHash = sendHash,
+            representativeAddress =
+            representativeAddress,
+        )
+}
+
+@Serializable
+@SerialName("CHANGE")
+private class AttoChangeBlockOutput(
+    val network: AttoNetwork,
+    val version: AttoVersion,
+    val height: AttoHeight,
+    val balance: AttoAmount,
+    val timestamp: AttoInstant,
+    val previous: AttoHash,
+    val address: AttoAddress,
+    val representativeAddress: AttoAddress,
+) {
+    fun toBlock(): AttoChangeBlock =
+        AttoChangeBlock(
+            network = network,
+            version = version,
+            address = address,
+            height = height,
+            balance = balance,
+            timestamp = timestamp,
+            previous = previous,
+            representativeAddress =
+            representativeAddress,
+        )
 }
 
 @Serializable
 @SerialName("AttoSendBlockWire")
-private data class AttoSendBlockWire(
+private data class AttoSendBlockBinaryWire(
     val network: AttoNetwork,
     val version: AttoVersion,
     val algorithm: AttoAlgorithm? = null,
@@ -193,7 +405,7 @@ private data class AttoSendBlockWire(
 
 @Serializable
 @SerialName("AttoReceiveBlockWire")
-private data class AttoReceiveBlockWire(
+private data class AttoReceiveBlockBinaryWire(
     val network: AttoNetwork,
     val version: AttoVersion,
     val algorithm: AttoAlgorithm? = null,
@@ -223,7 +435,7 @@ private data class AttoReceiveBlockWire(
 
 @Serializable
 @SerialName("AttoOpenBlockWire")
-private data class AttoOpenBlockWire(
+private data class AttoOpenBlockBinaryWire(
     val network: AttoNetwork,
     val version: AttoVersion,
     val algorithm: AttoAlgorithm? = null,
@@ -257,7 +469,7 @@ private data class AttoOpenBlockWire(
 
 @Serializable
 @SerialName("AttoChangeBlockWire")
-private data class AttoChangeBlockWire(
+private data class AttoChangeBlockBinaryWire(
     val network: AttoNetwork,
     val version: AttoVersion,
     val algorithm: AttoAlgorithm? = null,

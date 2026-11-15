@@ -76,6 +76,7 @@ kotlin {
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
             }
@@ -85,6 +86,16 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.ktor.client.mock)
+            }
+        }
+        val jsTest by getting {
+            dependencies {
+                implementation(npm("ws", "8.20.1"))
+            }
+        }
+        val wasmJsTest by getting {
+            dependencies {
+                implementation(npm("ws", "8.20.1"))
             }
         }
         val jvmMain by getting {

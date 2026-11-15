@@ -48,7 +48,7 @@ class AttoBlockTest {
             val json = block.toJson()
 
             // then
-            assertEquals(expectedJson.compactJson(), json)
+            assertEquals(expectedJson.canonicalIdentityJson(), json.canonicalIdentityJson())
         }
     }
 
@@ -107,8 +107,8 @@ class AttoBlockTest {
         // Then
         copies.zip(originalHashes).forEach { (copy, originalHash) ->
             assertEquals(address, copy.address)
-            assertEquals(address.algorithm, copy.algorithm)
-            assertEquals(address.publicKey, copy.publicKey)
+            assertEquals(address.algorithm, copy.address.algorithm)
+            assertEquals(address.publicKey, copy.address.publicKey)
             assertNotEquals(originalHash, copy.hash)
             assertEquals(copy, AttoBlock.fromByteArray(copy.toByteArray()))
             assertEquals(copy, AttoBlock.fromJson(copy.toJson()))
@@ -130,12 +130,12 @@ class AttoBlockTest {
         val copies = listOf(send, open, change)
 
         // Then
-        assertEquals(address.algorithm, send.receiverAlgorithm)
-        assertEquals(address.publicKey, send.receiverPublicKey)
+        assertEquals(address.algorithm, send.receiverAddress.algorithm)
+        assertEquals(address.publicKey, send.receiverAddress.publicKey)
         assertEquals(address, send.toReceivable().receiverAddress)
         listOf<RepresentativeSupport>(open, change).forEach { representative ->
-            assertEquals(address.algorithm, representative.representativeAlgorithm)
-            assertEquals(address.publicKey, representative.representativePublicKey)
+            assertEquals(address.algorithm, representative.representativeAddress.algorithm)
+            assertEquals(address.publicKey, representative.representativeAddress.publicKey)
         }
         copies.zip(originalHashes).forEach { (copy, originalHash) ->
             assertNotEquals(originalHash, copy.hash)
@@ -307,6 +307,6 @@ class AttoBlockTest {
                "representativeAddress":"atto://abu4aefiu5esjued2h6ienegdnftk5jq6qrucsclj262nom7aryql4esxmsae"
             }
             """,
-            )
+            ).map { it.canonicalIdentityJson() }.toTypedArray()
     }
 }

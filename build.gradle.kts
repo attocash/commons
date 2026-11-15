@@ -42,7 +42,7 @@ allprojects {
     val webOnlyPublicationProjects = setOf("commons-js", "commons-worker-web")
 
     apply {
-        if (name != "commons-spring-boot-starter" && name != rootProject.name) {
+        if (name != "commons-spring-boot-starter" && name != "commons-node-stream-server" && name != rootProject.name) {
             apply(plugin = "org.jetbrains.kotlin.multiplatform")
         }
         plugin("org.jetbrains.dokka")

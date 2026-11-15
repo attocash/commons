@@ -31,6 +31,10 @@ The default images are:
 
 Image tags can change. Override the images with compatible pinned tags or digests when reproducibility matters, and ensure they support the container host's architecture.
 
+Commons 10 remote clients require v2 Node streaming routes. For container-backed wallet or client tests,
+select a verified v2 Node image explicitly; the moving default image is not a compatibility guarantee.
+See [v2 stream compatibility](../V2-STREAMS.md) before upgrading.
+
 ## Start and stop local services
 
 Save this as `services.mjs` and run `node services.mjs`. The builders prepare mocks and generate a signed local genesis transaction; `start()` launches the containers. Read `baseUrl` only after startup completes.
@@ -94,4 +98,4 @@ Node options also include `dbName`, `dbUser`, `dbPassword`, `genesis`, and `pull
 - [Node mock configuration and genesis construction](src/commonMain/kotlin/cash/atto/commons/node/AttoNodeMock.kt).
 - [JVM lifecycle tests](src/jvmTest/kotlin/cash/atto/commons/node/AttoMockJvmApiTest.kt), [JavaScript startup lifecycle tests](src/webTest/kotlin/cash/atto/commons/node/TestcontainersLifecycleTest.kt), and [cleanup tests](src/webTest/kotlin/cash/atto/commons/node/TestcontainersRuntimeTest.kt).
 - [Node client](../commons-node-remote/README.md), [Work Server client](../commons-worker-remote/README.md), and [wallet](../commons-wallet/README.md).
-- [JavaScript package migration](../MIGRATION.md#javascript-packages), [repository overview](../README.md), and [BSD 3-Clause license](../LICENSE).
+- [JavaScript package migration](../commons-js/README.md#replace-aggregate-imports), [repository overview](../README.md), and [BSD 3-Clause license](../LICENSE).
