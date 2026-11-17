@@ -46,7 +46,14 @@ kotlin {
 
         useEsModules()
 
-        nodejs()
+        nodejs {
+            testTask {
+                useMocha {
+                    // Mock genesis generation runs CPU proof of work, whose duration varies.
+                    timeout = "60000"
+                }
+            }
+        }
 
         generateTypeScriptDefinitions()
 
