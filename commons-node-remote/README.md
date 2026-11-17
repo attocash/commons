@@ -35,6 +35,13 @@ val client = AttoNodeClient.remote(nodeUrl) {
 }
 ```
 
+Use `client.publish(transaction, deduplicate = true)` to reuse a stored confirmation or pending
+publication for the same transaction hash. It sends `POST /transactions/stream?deduplicate=true`.
+The flag defaults to false; publication still waits for a matching acknowledgement and propagates
+failures, which can leave its outcome uncertain. Different transaction hashes are separate attempts.
+Java async clients expose one- and two-argument `publish`; JavaScript uses `publish(transaction, true)`
+with an optional flag that defaults to false.
+
 Streams are Kotlin `Flow` values: collecting starts the request, and cancelling collection cancels it. This partial snippet collects receivables for `address`:
 
 ```kotlin

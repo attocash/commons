@@ -164,10 +164,13 @@ private class AttoNodeClientRemote(
 
     override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse = get("instants/$currentTime")
 
-    override suspend fun publish(transaction: AttoTransaction) {
+    override suspend fun publish(
+        transaction: AttoTransaction,
+        deduplicate: Boolean,
+    ) {
         val accepted =
             fetchStream<AttoTransaction, AttoTransaction>(
-                "transactions/stream",
+                "transactions/stream" + if (deduplicate) "?deduplicate=true" else "",
                 transaction,
                 requestTimeout = 1.minutes,
                 socketTimeout = 1.minutes,

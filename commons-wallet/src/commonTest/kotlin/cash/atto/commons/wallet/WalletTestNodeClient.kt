@@ -84,7 +84,10 @@ internal open class WalletTestNodeClient(
 
     override suspend fun now(): AttoInstant = WalletTestData.timestamp
 
-    override suspend fun publish(transaction: AttoTransaction) = Unit
+    override suspend fun publish(
+        transaction: AttoTransaction,
+        deduplicate: Boolean,
+    ) = Unit
 
     override suspend fun voterWeight(address: AttoAddress): AttoVoterWeight = throw UnsupportedOperationException()
 }

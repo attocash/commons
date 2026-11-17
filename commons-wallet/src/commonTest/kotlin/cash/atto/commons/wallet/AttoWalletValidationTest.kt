@@ -300,7 +300,10 @@ class AttoWalletValidationTest {
 
         override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse = TimeDifferenceResponse(currentTime, currentTime, 0)
 
-        override suspend fun publish(transaction: AttoTransaction) {
+        override suspend fun publish(
+            transaction: AttoTransaction,
+            deduplicate: Boolean,
+        ) {
             published += transaction
             requireMatchingPublish(transaction, publishResponse(transaction))
         }

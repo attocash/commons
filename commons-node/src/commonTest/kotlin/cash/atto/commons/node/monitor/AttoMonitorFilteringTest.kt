@@ -149,7 +149,10 @@ class AttoMonitorFilteringTest {
 
         override suspend fun now(currentTime: AttoInstant): TimeDifferenceResponse = TimeDifferenceResponse(currentTime, currentTime, 0)
 
-        override suspend fun publish(transaction: AttoTransaction) {
+        override suspend fun publish(
+            transaction: AttoTransaction,
+            deduplicate: Boolean,
+        ) {
         }
 
         override suspend fun voterWeight(address: AttoAddress): AttoVoterWeight = throw UnsupportedOperationException()

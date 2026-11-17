@@ -202,7 +202,10 @@ actual class AttoNodeClientAsync
 
         suspend fun now(): AttoInstant = client.now()
 
-        suspend fun publish(transaction: AttoTransaction): Unit = client.publish(transaction)
+        suspend fun publish(
+            transaction: AttoTransaction,
+            deduplicate: Boolean = false,
+        ): Unit = client.publish(transaction, deduplicate)
 
         suspend fun voterWeight(address: AttoAddress): AttoVoterWeight = client.voterWeight(address)
 

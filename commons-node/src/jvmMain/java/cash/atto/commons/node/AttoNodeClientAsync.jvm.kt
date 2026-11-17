@@ -187,7 +187,11 @@ actual class AttoNodeClientAsync actual constructor(
 
     fun now(): CompletableFuture<AttoInstant> = scope.future { client.now() }
 
-    fun publish(transaction: AttoTransaction): CompletableFuture<Unit> = scope.future { client.publish(transaction) }
+    @JvmOverloads
+    fun publish(
+        transaction: AttoTransaction,
+        deduplicate: Boolean = false,
+    ): CompletableFuture<Unit> = scope.future { client.publish(transaction, deduplicate) }
 
     fun voterWeight(address: AttoAddress): CompletableFuture<AttoVoterWeight> = scope.future { client.voterWeight(address) }
 

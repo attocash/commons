@@ -39,7 +39,10 @@ class AttoWalletTransitionTest {
             val firstPublishStarted = CompletableDeferred<Unit>()
             val client =
                 object : WalletTestNodeClient(listOf(original)) {
-                    override suspend fun publish(transaction: AttoTransaction) {
+                    override suspend fun publish(
+                        transaction: AttoTransaction,
+                        deduplicate: Boolean,
+                    ) {
                         published.add(transaction)
                         if (published.size == 1) {
                             firstPublishStarted.complete(Unit)
@@ -86,7 +89,10 @@ class AttoWalletTransitionTest {
             val entered = mutableListOf<AttoAddress>()
             val client =
                 object : WalletTestNodeClient(listOf(firstAccount, secondAccount)) {
-                    override suspend fun publish(transaction: AttoTransaction) {
+                    override suspend fun publish(
+                        transaction: AttoTransaction,
+                        deduplicate: Boolean,
+                    ) {
                         entered.add(transaction.address)
                         if (transaction.address == firstSigner.address) {
                             firstPublishStarted.complete(Unit)
@@ -125,7 +131,10 @@ class AttoWalletTransitionTest {
 
             fun client(accounts: List<AttoAccount>) =
                 object : WalletTestNodeClient(accounts) {
-                    override suspend fun publish(transaction: AttoTransaction) {
+                    override suspend fun publish(
+                        transaction: AttoTransaction,
+                        deduplicate: Boolean,
+                    ) {
                         attempts++
                         throw failure
                     }
@@ -173,7 +182,10 @@ class AttoWalletTransitionTest {
             val publicationFinished = CompletableDeferred<Unit>()
             val client =
                 object : WalletTestNodeClient(listOf(original)) {
-                    override suspend fun publish(transaction: AttoTransaction) {
+                    override suspend fun publish(
+                        transaction: AttoTransaction,
+                        deduplicate: Boolean,
+                    ) {
                         publicationStarted.complete(Unit)
                         publicationFinished.await()
                     }

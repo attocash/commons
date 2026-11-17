@@ -76,7 +76,11 @@ interface AttoNodeOperations {
         return AttoInstant.now().plus(difference.milliseconds)
     }
 
-    suspend fun publish(transaction: AttoTransaction)
+    /** When enabled, reuse confirmation or pending publication for the same transaction hash. */
+    suspend fun publish(
+        transaction: AttoTransaction,
+        deduplicate: Boolean = false,
+    )
 
     suspend fun voterWeight(address: AttoAddress): AttoVoterWeight
 }
