@@ -42,7 +42,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: read
@@ -65,6 +65,9 @@ jobs:
 
       - run: |
           ./gradlew --info --no-daemon ktlintCheck allTests --stacktrace
+
+      - name: Verify Kotlin contracts with SnaKt
+        uses: ./verification/snakt
 
   npm-snapshot:
     runs-on: ubuntu-latest
