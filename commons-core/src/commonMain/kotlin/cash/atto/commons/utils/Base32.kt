@@ -31,7 +31,7 @@ object Base32 {
 
     fun decode(base32: String): ByteArray {
         val data = base32.filter { it != '=' }.lowercase()
-        val output = ByteArray((data.length * 5) / 8)
+        val output = ByteArray(base32DecodedSize(data.length))
         var buffer = 0
         var bitsLeft = 0
         var index = 0
@@ -48,3 +48,7 @@ object Base32 {
         return output
     }
 }
+
+// Inline so the SnaKt proof can inspect the arithmetic at the call site.
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun base32DecodedSize(characterCount: Int): Int = (characterCount * 5) / 8

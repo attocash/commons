@@ -91,6 +91,8 @@ Docker-compatible container runtime.
 ./gradlew :commons-core:ktlintCheck :commons-core:allTests -Psigning.skip=true
 ```
 
+The Base32 decoder’s allocation formula has a [SnaKt proof](verification/snakt/README.md).
+
 To try an unreleased checkout from npm, pack matching local versions:
 
 ```sh
