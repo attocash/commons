@@ -39,7 +39,7 @@ actual class AttoNodeMock actual constructor(
             withMySqlNetwork(mysqlInstance, network)
             withMySqlNetworkAliases(mysqlInstance)
             withMySqlDatabase(mysqlInstance, configuration.dbName)
-            withMySqlRootPassword(mysqlInstance, configuration.dbPassword)
+            withMySqlCredentials(mysqlInstance, configuration.dbUser, configuration.dbPassword)
             session.acquire { startMySqlContainer(mysqlInstance) }
 
             val nodeInstance = createGenericContainer(testcontainersModule, configuration.image)
@@ -113,10 +113,18 @@ private fun withMySqlDatabase(
     dbName: String,
 ): JsAny = js("container.withDatabase(dbName)")
 
-private fun withMySqlRootPassword(
+internal fun withMySqlCredentials(
     container: JsAny,
+    username: String,
     password: String,
-): JsAny = js("container.withRootPassword(password)")
+): JsAny =
+    js(
+        """
+        username === 'root'
+            ? container.withRootPassword(password)
+            : container.withUsername(username).withUserPassword(password)
+        """,
+    )
 
 private fun startMySqlContainer(container: JsAny): Promise<JsAny> = js("container.start()")
 
