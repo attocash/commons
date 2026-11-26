@@ -87,7 +87,7 @@ const worker = await new AttoWorkerMockAsyncBuilder()
     .build()
 ```
 
-Node options also include `dbName`, `dbUser`, `dbPassword`, `genesis`, and `pullImages`; the worker exposes `pullImage`. The current JavaScript implementation configures the MySQL root password, so keep `dbUser('root')` when changing database settings. The pull flags force fresh image pulls on the JVM; the JavaScript implementation currently uses Testcontainers' default pull behavior. Container output is disabled by default; enabling it can copy test keys into logs.
+Node options also include `dbName`, `dbUser`, `dbPassword`, `genesis`, and `pullImages`; the worker exposes `pullImage`. For a non-root database account, set `dbUser` and `dbPassword` together. The mock configures MySQL and the node with that login. The pull flags force fresh image pulls on the JVM; the JavaScript implementation currently uses Testcontainers' default pull behavior. Container output is disabled by default; enabling it can copy test keys into logs.
 
 ## Further reading
 
