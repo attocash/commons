@@ -76,11 +76,12 @@ class AttoSpringDocOpenApiAutoConfiguration {
                         .propertyName("type")
                         .mapping(
                             mapOf(
-                                "SEND" to "#/components/schemas/${AttoSendBlock::class.simpleName}",
-                                "RECEIVE" to "#/components/schemas/${AttoReceiveBlock::class.simpleName}",
-                                "OPEN" to "#/components/schemas/${AttoOpenBlock::class.simpleName}",
-                                "CHANGE" to "#/components/schemas/${AttoChangeBlock::class.simpleName}",
-                            ),
+                                "SEND" to AttoSendBlock::class,
+                                "RECEIVE" to AttoReceiveBlock::class,
+                                "OPEN" to AttoOpenBlock::class,
+                                "CHANGE" to AttoChangeBlock::class,
+                            ).filterValues { type -> findSchema(type) != null }
+                                .mapValues { (_, type) -> "#/components/schemas/${type.simpleName}" },
                         )
 
                 findSchema(AttoSendBlock::class)?.let { s ->
