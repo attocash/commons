@@ -76,6 +76,30 @@ class AttoSpringDocOpenApiAutoConfigurationTest {
     }
 
     @Test
+    fun `block discriminator mappings resolve within a partial API document`() {
+        val customizer = AttoSpringDocOpenApiAutoConfiguration().attoOpenApiCustomizer()
+        val schema = Schema<Any>()
+        val document =
+            OpenAPI().components(
+                Components().schemas(
+                    mutableMapOf(
+                        AttoSendBlock::class.simpleName!! to schema,
+                        "TransferSummary" to Schema<Any>(),
+                    ),
+                ),
+            )
+
+        customizer.customise(document)
+
+        val components = document.components.schemas
+        val discriminator = components.getValue(AttoBlock::class.simpleName!!).discriminator
+        assertThat(discriminator.propertyName).isEqualTo("type")
+        assertThat(discriminator.mapping).containsOnlyKeys("SEND")
+        assertThat(discriminator.mapping["SEND"]).isEqualTo("#/components/schemas/AttoSendBlock")
+        assertThat(components["AttoSendBlock"]).isSameAs(schema)
+    }
+
+    @Test
     fun `should update direct property descriptions and preserve unspecified examples`() {
         // Given
         val height = StringSchema()
@@ -181,6 +205,7 @@ class AttoSpringDocOpenApiAutoConfigurationTest {
         assertThat(schemas["Unrelated"]).isSameAs(unrelated)
         assertThat(schemas[AttoBlock::class.simpleName]?.description).isEqualTo("Base type for all block variants")
         assertThat(schemas[AttoBlock::class.simpleName]?.discriminator?.propertyName).isEqualTo("type")
+        assertThat(schemas[AttoBlock::class.simpleName]?.discriminator?.mapping).isNullOrEmpty()
     }
 
     @Test
